@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env
+.env.*
+server/.env
+bank.db
+bank.db.tmp
+backups/
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,16 @@
+{
+  "name": "bank-management-system",
+  "version": "2.0.0",
+  "description": "Gabiley Bank Management System (GBMS)",
+  "scripts": {
+    "server": "cd server && node index.js",
+    "server:seed": "cd server && node seed.js",
+    "client": "cd client && npm run dev",
+    "client:build": "cd client && npm run build",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "start": "concurrently \"npm run server\" \"cd client && npm run start\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

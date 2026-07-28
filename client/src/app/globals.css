@@ -1,0 +1,1060 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Premium Banking Color Palette - Light Mode */
+    --background: 0 0% 97%;
+    --foreground: 30 4% 10%;
+
+    /* Card Colors */
+    --card: 0 0% 100%;
+    --card-foreground: 30 4% 10%;
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 4% 10%;
+
+    /* Primary - Emerald Green */
+    --primary: 147 63% 39%;
+    --primary-foreground: 0 0% 97%;
+
+    /* Secondary - Gold */
+    --secondary: 43 90% 66%;
+    --secondary-foreground: 30 4% 10%;
+
+    /* Muted */
+    --muted: 40 20% 95%;
+    --muted-foreground: 30 4% 46%;
+
+    /* Accent */
+    --accent: 43 90% 66%;
+    --accent-foreground: 30 4% 10%;
+
+    /* Destructive/Error - Red */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 97%;
+
+    /* Border */
+    --border: 40 20% 90%;
+    --input: 40 20% 90%;
+    --ring: 147 63% 39%;
+
+    /* Border Radius */
+    --radius: 0.75rem;
+
+    /* Success - Emerald */
+    --success: 147 63% 39%;
+    --success-foreground: 0 0% 97%;
+
+    /* Warning - Gold */
+    --warning: 43 90% 66%;
+    --warning-foreground: 30 4% 10%;
+
+    /* Sidebar - Dark Emerald */
+    --sidebar-background: 147 63% 35%;
+    --sidebar-foreground: 0 0% 97%;
+    --sidebar-primary: 0 0% 97%;
+    --sidebar-primary-foreground: 147 63% 39%;
+    --sidebar-accent: 147 50% 25%;
+    --sidebar-accent-foreground: 0 0% 97%;
+    --sidebar-border: 147 40% 30%;
+    --sidebar-ring: 147 63% 39%;
+
+    /* Banking Specific - Emerald & Gold */
+    --bank-emerald: #1F8A4D;
+    --bank-emerald-light: #2BA85E;
+    --bank-gold: #F8CC58;
+    --bank-gold-dark: #E4B155;
+    --bank-cream: #EBD6A3;
+    --bank-success: #1F8A4D;
+    --bank-error: #dc2626;
+    --bank-gray: #64748b;
+    --bank-gray-light: #94a3b8;
+    --bank-bg: #F7F7F7;
+    --bank-black: #1A1918;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --shadow-gold: 0 4px 14px 0 rgba(248, 204, 88, 0.39);
+  }
+
+  /* Dark Mode - Premium Banking */
+  .dark {
+    /* Background - Black Accent */
+    --background: 30 4% 10%;
+    --foreground: 0 0% 97%;
+
+    /* Card Colors */
+    --card: 30 4% 12%;
+    --card-foreground: 0 0% 97%;
+
+    /* Popover */
+    --popover: 30 4% 12%;
+    --popover-foreground: 0 0% 97%;
+
+    /* Primary - Lighter Emerald for Dark */
+    --primary: 147 63% 45%;
+    --primary-foreground: 0 0% 97%;
+
+    /* Secondary - Darker Gold */
+    --secondary: 43 90% 60%;
+    --secondary-foreground: 0 0% 97%;
+
+    /* Muted */
+    --muted: 30 4% 15%;
+    --muted-foreground: 30 4% 60%;
+
+    /* Accent */
+    --accent: 43 90% 60%;
+    --accent-foreground: 0 0% 97%;
+
+    /* Destructive/Error */
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 97%;
+
+    /* Border */
+    --border: 30 4% 20%;
+    --input: 30 4% 20%;
+    --ring: 147 63% 45%;
+
+    /* Success - Lighter Emerald */
+    --success: 147 63% 45%;
+    --success-foreground: 0 0% 97%;
+
+    /* Warning - Darker Gold */
+    --warning: 43 90% 55%;
+    --warning-foreground: 0 0% 97%;
+
+    /* Sidebar - Dark */
+    --sidebar-background: 30 4% 8%;
+    --sidebar-foreground: 0 0% 97%;
+    --sidebar-primary: 0 0% 97%;
+    --sidebar-primary-foreground: 147 63% 45%;
+    --sidebar-accent: 30 4% 14%;
+    --sidebar-accent-foreground: 0 0% 97%;
+    --sidebar-border: 30 4% 15%;
+    --sidebar-ring: 147 63% 45%;
+
+    /* Banking Specific - Dark Mode */
+    --bank-emerald: #2BA85E;
+    --bank-emerald-light: #3EBD76;
+    --bank-gold: #E4B155;
+    --bank-gold-dark: #D4A044;
+    --bank-cream: #C9B896;
+    --bank-success: #2BA85E;
+    --bank-error: #ef4444;
+    --bank-gray: #94a3b8;
+    --bank-gray-light: #cbd5e1;
+    --bank-bg: #1A1918;
+
+    /* Shadows - Dark Mode */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    --shadow-gold: 0 4px 14px 0 rgba(248, 204, 88, 0.25);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+
+  /* Focus Styles */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+}
+
+/* ========================
+   GLASSMORPHISM UTILITIES
+   ======================== */
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+  }
+
+  .glass-dark {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .dark .glass-card {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-surface {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .glass-surface {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* ========================
+   SCROLLBAR STYLING
+   ======================== */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  .scrollbar-premium {
+    scrollbar-width: thin;
+    scrollbar-color: #1F8A4D #F7F7F7;
+  }
+
+  .scrollbar-premium::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-premium::-webkit-scrollbar-track {
+    background: #F7F7F7;
+    border-radius: 9999px;
+  }
+
+  .scrollbar-premium::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #1F8A4D, #176B3D);
+    border-radius: 9999px;
+    border: 2px solid #F7F7F7;
+  }
+
+  .scrollbar-premium::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #2BA85E, #1F8A4D);
+  }
+
+  .dark .scrollbar-premium {
+    scrollbar-color: #1F8A4D #1A1918;
+  }
+
+  .dark .scrollbar-premium::-webkit-scrollbar-track {
+    background: #1A1918;
+  }
+
+  .dark .scrollbar-premium::-webkit-scrollbar-thumb {
+    border-color: #1A1918;
+  }
+}
+
+/* ========================
+   ANIMATION KEYFRAMES
+   ======================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(31, 138, 77, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(31, 138, 77, 0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes gold-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(248, 204, 88, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(248, 204, 88, 0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes borderGlow {
+  0%, 100% {
+    border-color: rgba(31, 138, 77, 0.3);
+  }
+  50% {
+    border-color: rgba(31, 138, 77, 0.8);
+  }
+}
+
+/* ========================
+   ANIMATION UTILITIES
+   ======================== */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.4s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
+  }
+
+  .animate-gold-pulse {
+    animation: gold-pulse 2s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+  }
+
+  .animate-border-glow {
+    animation: borderGlow 2s ease-in-out infinite;
+  }
+}
+
+/* ========================
+   SKELETON LOADING
+   ======================== */
+@layer utilities {
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: 0.375rem;
+  }
+
+  .skeleton-text {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    height: 1rem;
+    border-radius: 0.25rem;
+  }
+
+  .skeleton-circle {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: 9999px;
+  }
+}
+
+/* ========================
+   GRADIENT BACKGROUNDS
+   ======================== */
+@layer utilities {
+  .bg-bank-gradient {
+    background: linear-gradient(135deg, #1F8A4D 0%, #176B3D 100%);
+  }
+
+  .bg-bank-gradient-light {
+    background: linear-gradient(135deg, #2BA85E 0%, #1F8A4D 100%);
+  }
+
+  .bg-gold-gradient {
+    background: linear-gradient(135deg, #F8CC58 0%, #E4B155 100%);
+  }
+
+  .bg-hero-gradient {
+    background: linear-gradient(135deg, #1A1918 0%, #1F8A4D 50%, #176B3D 100%);
+  }
+
+  .bg-card-gradient {
+    background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(247,247,247,1) 100%);
+  }
+
+  .dark .bg-card-gradient {
+    background: linear-gradient(180deg, rgba(30,29,28,1) 0%, rgba(26,25,24,1) 100%);
+  }
+
+  .bg-surface-gradient {
+    background: linear-gradient(135deg, #F7F7F7 0%, #EBD6A3 10%);
+  }
+
+  .dark .bg-surface-gradient {
+    background: linear-gradient(135deg, #1A1918 0%, #252423 100%);
+  }
+
+  .bg-success-gradient {
+    background: linear-gradient(135deg, #1F8A4D 0%, #176B3D 100%);
+  }
+
+  .bg-error-gradient {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  }
+
+  .bg-warning-gradient {
+    background: linear-gradient(135deg, #F8CC58 0%, #E4B155 100%);
+  }
+
+  .bg-mesh-gradient {
+    background:
+      radial-gradient(at 40% 20%, rgba(31, 138, 77, 0.15) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(248, 204, 88, 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(31, 138, 77, 0.1) 0px, transparent 50%),
+      radial-gradient(at 80% 50%, rgba(248, 204, 88, 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(228, 177, 85, 0.1) 0px, transparent 50%);
+  }
+
+  .dark .bg-mesh-gradient {
+    background:
+      radial-gradient(at 40% 20%, rgba(31, 138, 77, 0.08) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(248, 204, 88, 0.05) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(31, 138, 77, 0.05) 0px, transparent 50%),
+      radial-gradient(at 80% 50%, rgba(248, 204, 88, 0.05) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(228, 177, 85, 0.05) 0px, transparent 50%);
+  }
+}
+
+/* ========================
+   PROFESSIONAL SHADOWS
+   ======================== */
+@layer utilities {
+  .shadow-bank {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-bank-md {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-bank-lg {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-bank-xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  .shadow-gold {
+    box-shadow: 0 4px 14px 0 rgba(248, 204, 88, 0.39);
+  }
+
+  .shadow-gold-lg {
+    box-shadow: 0 10px 28px 0 rgba(248, 204, 88, 0.45);
+  }
+
+  .shadow-inner-glow {
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .shadow-glass {
+    box-shadow: 0 8px 32px 0 rgba(31, 138, 77, 0.15);
+  }
+
+  .dark .shadow-glass {
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* ========================
+   TRANSITION UTILITIES
+   ======================== */
+@layer utilities {
+  .transition-bank {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-bank-slow {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-bank-fast {
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-colors-bank {
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+
+  .transition-transform-bank {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  }
+
+  .hover-scale {
+    transition: transform 0.2s ease;
+  }
+
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+}
+
+/* ========================
+   RESPONSIVE TYPOGRAPHY
+   ======================== */
+@layer base {
+  html {
+    font-size: 16px;
+  }
+
+  @media (min-width: 640px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
+  h1 {
+    @apply text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-xl sm:text-2xl font-semibold tracking-tight;
+  }
+
+  h4 {
+    @apply text-lg sm:text-xl font-medium;
+  }
+
+  h5 {
+    @apply text-base sm:text-lg font-medium;
+  }
+
+  h6 {
+    @apply text-sm sm:text-base font-medium;
+  }
+
+  p {
+    @apply leading-relaxed;
+  }
+}
+
+/* ========================
+   BANKING COMPONENT STYLES
+   ======================== */
+@layer components {
+  /* Card Hover Effect */
+  .bank-card {
+    @apply bg-card rounded-xl border border-border shadow-sm;
+    transition: all 0.2s ease;
+  }
+
+  .bank-card:hover {
+    @apply shadow-bank-md;
+    transform: translateY(-1px);
+  }
+
+  /* Button Base */
+  .bank-btn {
+    @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .bank-btn-primary {
+    @apply bank-btn bg-primary text-primary-foreground;
+    @apply hover:bg-primary-700 focus:ring-primary;
+  }
+
+  .bank-btn-secondary {
+    @apply bank-btn bg-secondary text-secondary-foreground;
+    @apply hover:bg-secondary-100 focus:ring-secondary-500;
+  }
+
+  .bank-btn-gold {
+    @apply bank-btn bg-gold-gradient text-white;
+    @apply hover:shadow-gold focus:ring-secondary-gold;
+  }
+
+  .bank-btn-outline {
+    @apply bank-btn bg-transparent border border-border text-foreground;
+    @apply hover:bg-muted focus:ring-primary;
+  }
+
+  .bank-btn-ghost {
+    @apply bank-btn bg-transparent text-foreground;
+    @apply hover:bg-muted focus:ring-primary;
+  }
+
+  /* Input Base */
+  .bank-input {
+    @apply w-full rounded-lg border border-input bg-background px-4 py-2.5;
+    @apply text-foreground placeholder:text-muted-foreground;
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1;
+    @apply transition-all duration-200;
+  }
+
+  .bank-input:hover {
+    @apply border-primary-400;
+  }
+
+  /* Badge */
+  .bank-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .bank-badge-success {
+    @apply bank-badge bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400;
+  }
+
+  .bank-badge-warning {
+    @apply bank-badge bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400;
+  }
+
+  .bank-badge-error {
+    @apply bank-badge bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400;
+  }
+
+  .bank-badge-info {
+    @apply bank-badge bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400;
+  }
+
+  /* Table */
+  .bank-table {
+    @apply w-full border-collapse;
+  }
+
+  .bank-table th {
+    @apply bg-muted/50 px-4 py-3 text-left text-sm font-semibold text-muted-foreground;
+  }
+
+  .bank-table td {
+    @apply border-t border-border px-4 py-3;
+  }
+
+  .bank-table tbody tr {
+    @apply transition-colors hover:bg-muted/30;
+  }
+
+  /* Stat Card */
+  .stat-card {
+    @apply bg-card rounded-xl p-6 border border-border;
+    @apply transition-all duration-200;
+  }
+
+  .stat-card:hover {
+    @apply shadow-bank-md;
+    transform: translateY(-2px);
+  }
+
+  .stat-card-gradient-1 {
+    background: linear-gradient(135deg, #1F8A4D 0%, #176B3D 100%);
+  }
+
+  .stat-card-gradient-2 {
+    background: linear-gradient(135deg, #F8CC58 0%, #E4B155 100%);
+  }
+
+  .stat-card-gradient-3 {
+    background: linear-gradient(135deg, #1A1918 0%, #2A2928 100%);
+  }
+
+  .stat-card-gradient-4 {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  }
+
+  .stat-card-gradient-5 {
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+  }
+
+  .stat-card-gradient-6 {
+    background: linear-gradient(135deg, #EBD6A3 0%, #D4C08E 100%);
+  }
+}
+
+/* ========================
+   UTILITY CLASSES
+   ======================== */
+@layer utilities {
+  /* Text Gradient */
+  .text-gradient-blue {
+    @apply bg-clip-text text-transparent bg-bank-gradient;
+  }
+
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gold-gradient;
+  }
+
+  /* Border Utilities */
+  .border-glow {
+    @apply border border-primary-400 animate-border-glow;
+  }
+
+  .border-gold {
+    @apply border-2 border-secondary-gold;
+  }
+
+  /* Container Utilities */
+  .container-banking {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Visual Divider */
+  .divider-gold {
+    @apply border-t-2 border-secondary-gold/30;
+  }
+}
+
+/* ========================
+   PREMIUM AUTH ANIMATIONS
+   ======================== */
+@keyframes authCardFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes authGlowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(248, 204, 88, 0.1), 0 0 40px rgba(31, 138, 77, 0.05); }
+  50% { box-shadow: 0 0 30px rgba(248, 204, 88, 0.2), 0 0 60px rgba(31, 138, 77, 0.1); }
+}
+
+@keyframes authBorderGlow {
+  0%, 100% { border-color: rgba(255, 255, 255, 0.1); }
+  50% { border-color: rgba(248, 204, 88, 0.25); }
+}
+
+@keyframes authInputFocus {
+  0% { box-shadow: 0 0 0 0 rgba(248, 204, 88, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(248, 204, 88, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(248, 204, 88, 0); }
+}
+
+@keyframes authRipple {
+  0% { transform: scale(0); opacity: 0.6; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+@keyframes authSuccessPulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes authShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes authShieldPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+@layer utilities {
+  .animate-auth-float {
+    animation: authCardFloat 6s ease-in-out infinite;
+  }
+
+  .animate-auth-glow {
+    animation: authGlowPulse 4s ease-in-out infinite;
+  }
+
+  .animate-auth-border {
+    animation: authBorderGlow 3s ease-in-out infinite;
+  }
+
+  .animate-auth-input-focus {
+    animation: authInputFocus 0.4s ease-out;
+  }
+
+  .animate-auth-success {
+    animation: authSuccessPulse 0.5s ease-out;
+  }
+
+  .animate-auth-shimmer {
+    background: linear-gradient(90deg, transparent 0%, rgba(248, 204, 88, 0.1) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: authShimmer 3s linear infinite;
+  }
+
+  .animate-auth-shield {
+    animation: authShieldPulse 2s ease-in-out infinite;
+  }
+}
+
+/* Premium input focus ring */
+.auth-input-focus:focus {
+  animation: authInputFocus 0.4s ease-out;
+}
+
+/* Ripple effect container */
+.auth-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(248, 204, 88, 0.3) 0%, transparent 70%);
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.5s;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.auth-ripple:active::after {
+  transform: scale(2.5);
+  opacity: 1;
+  transition: 0s;
+}
+
+/* Card hover glow effect */
+.auth-card-glow {
+  position: relative;
+}
+
+.auth-card-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(248, 204, 88, 0.15), rgba(31, 138, 77, 0.1), rgba(248, 204, 88, 0.15));
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+  filter: blur(8px);
+}
+
+.auth-card-glow:hover::before {
+  opacity: 1;
+}
+
+/* Premium glassmorphism for auth cards */
+.auth-glass-premium {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 1px rgba(248, 204, 88, 0.05);
+}
+
+/* Premium button hover effect */
+.auth-btn-premium {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-btn-premium::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.auth-btn-premium:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Shield security animation */
+.auth-security-badge {
+  position: relative;
+}
+
+.auth-security-badge::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(248, 204, 88, 0.2), transparent, rgba(31, 138, 77, 0.2));
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: -1;
+}
+
+.auth-security-badge:hover::after {
+  opacity: 1;
+}
