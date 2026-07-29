@@ -50,7 +50,7 @@ export default function Home() {
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center gap-5 animate-fade-in">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F8CC58] to-[#E4B155] shadow-xl shadow-[#F8CC58]/25">
-          <Landmark className="h-8 w-8 text-[#1A1918]" />
+          <Landmark className="h-8 w-8 text-[#1A1918] dark:text-white" />
         </div>
         <div className="flex flex-col items-center gap-1">
           <h1 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight">Gabiley Bank</h1>

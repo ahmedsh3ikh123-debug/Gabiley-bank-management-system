@@ -118,7 +118,7 @@ function LoanApplyForm() {
             <Button
               variant="ghost"
               onClick={() => router.push("/loans")}
-              className="gap-2 text-gray-600 hover:text-gray-900"
+              className="gap-2 text-gray-600 hover:text-gray-900 dark:text-white"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Loans
@@ -129,7 +129,7 @@ function LoanApplyForm() {
                 <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50">
                   <CheckCircle className="h-10 w-10 text-green-500" />
                 </div>
-                <h2 className="mt-4 text-xl font-bold text-gray-900">Application Submitted</h2>
+                <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">Application Submitted</h2>
                 <p className="mt-2 text-sm text-gray-500 text-center max-w-sm">
                   {isOnline
                     ? "Your loan application has been submitted successfully. You will be notified once it's reviewed."
@@ -174,13 +174,13 @@ function LoanApplyForm() {
             <Button
               variant="ghost"
               onClick={() => router.push("/loans")}
-              className="gap-2 text-gray-600 hover:text-gray-900"
+              className="gap-2 text-gray-600 hover:text-gray-900 dark:text-white"
             >
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
             <div>
-              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918]">
+              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white">
                 Apply for a Loan
               </h1>
               <p className="mt-1 text-gray-500">Fill in the details below to submit your application</p>
@@ -219,7 +219,7 @@ function LoanApplyForm() {
                       step="0.01"
                       min="0"
                       placeholder="0.00"
-                      className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-12"
+                      className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-12"
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                       required
@@ -236,7 +236,7 @@ function LoanApplyForm() {
                       min="1"
                       max="360"
                       placeholder="e.g. 12"
-                      className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-12"
+                      className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-12"
                       value={formData.term_months}
                       onChange={(e) => setFormData({ ...formData, term_months: e.target.value })}
                       required
@@ -250,7 +250,7 @@ function LoanApplyForm() {
                     <FileText className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <Input
                       placeholder="e.g. Business expansion, Home renovation"
-                      className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-12"
+                      className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-12"
                       value={formData.purpose}
                       onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
                       required
@@ -267,7 +267,7 @@ function LoanApplyForm() {
                       step="0.01"
                       min="0"
                       placeholder="0.00"
-                      className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-12"
+                      className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-12"
                       value={formData.monthly_income}
                       onChange={(e) => setFormData({ ...formData, monthly_income: e.target.value })}
                       required

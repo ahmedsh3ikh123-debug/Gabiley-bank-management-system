@@ -168,7 +168,7 @@ export default function AuditLogsPage() {
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918]">Audit Logs</h1>
+              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white">Audit Logs</h1>
               <p className="mt-1 text-gray-500">Monitor system activity and security events</p>
             </div>
             <Button variant="outline" onClick={handleExport} className="border-gray-200">
@@ -191,7 +191,7 @@ export default function AuditLogsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                      <p className="mt-1 text-2xl font-bold text-gray-900">{stat.value}</p>
+                      <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
                     </div>
                     <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${stat.color} text-white shadow-lg`}>
                       {stat.icon}
@@ -212,11 +212,11 @@ export default function AuditLogsPage() {
                     placeholder="Search by action, module, user, or details..."
                     value={searchQuery}
                     onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                    className="pl-10 border-gray-200 bg-gray-50 focus:bg-white"
+                    className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800"
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
-                  <SelectTrigger className="w-full sm:w-[160px] border-gray-200 bg-gray-50">
+                  <SelectTrigger className="w-full sm:w-[160px] border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
                     <Filter className="mr-2 h-4 w-4" />
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
@@ -227,7 +227,7 @@ export default function AuditLogsPage() {
                   </SelectContent>
                 </Select>
                 <Select value={moduleFilter} onValueChange={(v) => { setModuleFilter(v); setCurrentPage(1); }}>
-                  <SelectTrigger className="w-full sm:w-[160px] border-gray-200 bg-gray-50">
+                  <SelectTrigger className="w-full sm:w-[160px] border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
                     <SelectValue placeholder="Module" />
                   </SelectTrigger>
                   <SelectContent>
@@ -269,7 +269,7 @@ export default function AuditLogsPage() {
                                   {log.user_name?.charAt(0)?.toUpperCase() || "U"}
                                 </div>
                                 <div>
-                                  <p className="text-sm font-medium text-gray-900">{log.user_name || "Unknown"}</p>
+                                  <p className="text-sm font-medium text-gray-900 dark:text-white">{log.user_name || "Unknown"}</p>
                                   <p className="text-xs text-gray-500">{log.user_email}</p>
                                 </div>
                               </div>
@@ -308,25 +308,25 @@ export default function AuditLogsPage() {
                                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                                   <div>
                                     <p className="text-xs font-medium text-gray-500">User</p>
-                                    <p className="text-sm font-semibold text-gray-900">{log.user_name || "Unknown"}</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{log.user_name || "Unknown"}</p>
                                   </div>
                                   <div>
                                     <p className="text-xs font-medium text-gray-500">Email</p>
-                                    <p className="text-sm font-semibold text-gray-900">{log.user_email}</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{log.user_email}</p>
                                   </div>
                                   <div>
                                     <p className="text-xs font-medium text-gray-500">IP Address</p>
-                                    <p className="text-sm font-mono font-semibold text-gray-900">{log.ip_address || "N/A"}</p>
+                                    <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white">{log.ip_address || "N/A"}</p>
                                   </div>
                                   <div>
                                     <p className="text-xs font-medium text-gray-500">Timestamp</p>
-                                    <p className="text-sm font-semibold text-gray-900">{formatDate(log.created_at)}</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(log.created_at)}</p>
                                   </div>
                                 </div>
                                 {log.details && (
                                   <div className="mt-3">
                                     <p className="text-xs font-medium text-gray-500">Details</p>
-                                    <p className="mt-1 text-sm text-gray-700 bg-white rounded-lg p-3 border border-gray-200">{log.details}</p>
+                                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">{log.details}</p>
                                   </div>
                                 )}
                               </TableCell>
@@ -372,7 +372,7 @@ export default function AuditLogsPage() {
                   <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-50">
                     <Shield className="h-10 w-10 text-blue-300" />
                   </div>
-                  <p className="mt-4 text-lg font-semibold text-gray-900">No audit logs found</p>
+                  <p className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">No audit logs found</p>
                   <p className="mt-1 text-sm text-gray-500">Try adjusting your filters</p>
                 </div>
               )}

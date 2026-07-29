@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
+import { useLanguage } from "@/contexts/language-context";
 import api from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useOnlineStatus } from "@/hooks/use-online-status";
@@ -83,6 +84,7 @@ export default function LoansPage() {
   const { user, isAdmin } = useAuth();
   const { success, error } = useToast();
   const { isOnline, setSyncing, setPendingItems } = useOnlineStatus();
+  const { t } = useLanguage();
 
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -207,10 +209,10 @@ export default function LoansPage() {
   };
 
   const loanStatsCards = [
-    { label: "Total Applications", value: loanStats.total, icon: <FileText className="h-5 w-5" />, color: "from-blue-500 to-indigo-600" },
-    { label: "Pending Review", value: loanStats.pending, icon: <Clock className="h-5 w-5" />, color: "from-amber-500 to-orange-600" },
-    { label: "Approved", value: loanStats.approved, icon: <CheckCircle className="h-5 w-5" />, color: "from-emerald-500 to-green-600" },
-    { label: "Total Value", value: formatCurrency(loanStats.totalAmount), icon: <DollarSign className="h-5 w-5" />, color: "from-violet-500 to-purple-600" },
+    { label: t("total_accounts"), value: loanStats.total, icon: <FileText className="h-5 w-5" />, color: "from-blue-500 to-indigo-600" },
+    { label: t("pending"), value: loanStats.pending, icon: <Clock className="h-5 w-5" />, color: "from-amber-500 to-orange-600" },
+    { label: t("approved"), value: loanStats.approved, icon: <CheckCircle className="h-5 w-5" />, color: "from-emerald-500 to-green-600" },
+    { label: t("total_balance"), value: formatCurrency(loanStats.totalAmount), icon: <DollarSign className="h-5 w-5" />, color: "from-violet-500 to-purple-600" },
   ];
 
   const calculatorDetails = calculateLoanDetails(
@@ -225,9 +227,9 @@ export default function LoansPage() {
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918]">Loans</h1>
+              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white">{t("loans")}</h1>
               <p className="mt-1 text-gray-500">
-                {isAdmin ? "Review and manage loan applications" : "Apply for loans and track your applications"}
+                {isAdmin ? t("management") : t("loans")}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -255,7 +257,7 @@ export default function LoansPage() {
                   className="bg-gradient-to-r from-[#1F8A4D] to-[#176B3D] text-white shadow-lg shadow-[#1F8A4D]/20 hover:from-[#1F8A4D]/90 hover:to-[#176B3D]/90"
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  Apply for Loan
+                  {t("apply_loan")}
                 </Button>
               )}
             </div>
@@ -270,7 +272,7 @@ export default function LoansPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                      <p className="mt-1 text-2xl font-bold text-gray-900">{stat.value}</p>
+                      <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
                     </div>
                     <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${stat.color} text-white shadow-lg`}>
                       {stat.icon}
@@ -283,15 +285,15 @@ export default function LoansPage() {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-white border border-gray-200 shadow-sm">
+            <TabsList className="bg-white border border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-700">
               <TabsTrigger value="loans" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 <FileText className="h-4 w-4" />
-                Loan Applications
+                {t("loans")}
               </TabsTrigger>
               {!isAdmin && (
                 <TabsTrigger value="calculator" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                   <Calculator className="h-4 w-4" />
-                  Loan Calculator
+                  {t("loans")}
                 </TabsTrigger>
               )}
             </TabsList>
@@ -326,9 +328,9 @@ export default function LoansPage() {
                     <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50">
                       <Banknote className="h-10 w-10 text-blue-400" />
                     </div>
-                    <p className="mt-4 text-lg font-semibold text-gray-900">No loan applications</p>
+                    <p className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">{t("no_data")}</p>
                     <p className="mt-1 text-sm text-gray-500">
-                      {isAdmin ? "No loan applications to review yet" : "Apply for a loan to get started"}
+                      {isAdmin ? t("no_data") : t("apply_loan")}
                     </p>
                     {!isAdmin && (
                       <Button
@@ -336,7 +338,7 @@ export default function LoansPage() {
                         className="mt-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white"
                       >
                         <Plus className="mr-2 h-4 w-4" />
-                        Apply for Loan
+                        {t("apply_loan")}
                       </Button>
                     )}
                   </CardContent>
@@ -355,7 +357,7 @@ export default function LoansPage() {
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <h3 className="text-lg font-bold text-gray-900">
+                                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                                     {formatCurrency(loan.amount)}
                                   </h3>
                                   <Badge className={`${statusConfig.color} border text-xs font-medium gap-1`}>
@@ -382,7 +384,7 @@ export default function LoansPage() {
                                 onClick={() => openDetailDialog(loan)}
                               >
                                 <FileText className="mr-1.5 h-3.5 w-3.5" />
-                                Details
+                                {t("view")}
                               </Button>
                               {isAdmin && loan.status === "pending" && (
                                 <Button
@@ -391,34 +393,34 @@ export default function LoansPage() {
                                   onClick={() => openReviewDialog(loan)}
                                 >
                                   <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
-                                  Review
+                                  {t("view")}
                                 </Button>
                               )}
                             </div>
                           </div>
 
                           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                            <div className="rounded-lg bg-gray-50 p-3">
-                              <p className="text-xs font-medium text-gray-500">Amount</p>
-                              <p className="mt-0.5 font-semibold text-gray-900">{formatCurrency(loan.amount)}</p>
+                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t("amount")}</p>
+                              <p className="mt-0.5 font-semibold text-gray-900 dark:text-white">{formatCurrency(loan.amount)}</p>
                             </div>
-                            <div className="rounded-lg bg-gray-50 p-3">
-                              <p className="text-xs font-medium text-gray-500">Term</p>
-                              <p className="mt-0.5 font-semibold text-gray-900">{loan.term_months} months</p>
+                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t("date")}</p>
+                              <p className="mt-0.5 font-semibold text-gray-900 dark:text-white">{loan.term_months} months</p>
                             </div>
-                            <div className="rounded-lg bg-gray-50 p-3">
-                              <p className="text-xs font-medium text-gray-500">Purpose</p>
-                              <p className="mt-0.5 truncate font-semibold text-gray-900">{loan.purpose}</p>
+                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t("description")}</p>
+                              <p className="mt-0.5 truncate font-semibold text-gray-900 dark:text-white">{loan.purpose}</p>
                             </div>
-                            <div className="rounded-lg bg-gray-50 p-3">
-                              <p className="text-xs font-medium text-gray-500">Monthly Income</p>
-                              <p className="mt-0.5 font-semibold text-gray-900">{formatCurrency(loan.monthly_income)}</p>
+                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t("total_balance")}</p>
+                              <p className="mt-0.5 font-semibold text-gray-900 dark:text-white">{formatCurrency(loan.monthly_income)}</p>
                             </div>
                           </div>
 
                           {loan.review_notes && (
                             <div className="mt-4 rounded-lg bg-blue-50 border border-blue-100 p-3">
-                              <p className="text-xs font-medium text-blue-800">Review Notes</p>
+                              <p className="text-xs font-medium text-blue-800">{t("info")}</p>
                               <p className="mt-1 text-sm text-blue-700">{loan.review_notes}</p>
                             </div>
                           )}
@@ -438,12 +440,12 @@ export default function LoansPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-lg">
                         <Calculator className="h-5 w-5 text-blue-600" />
-                        Loan Calculator
+                        {t("loans")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">Loan Amount</Label>
+                        <Label className="text-sm font-medium text-gray-700">{t("amount")}</Label>
                         <div className="relative">
                           <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                           <Input
@@ -451,14 +453,14 @@ export default function LoansPage() {
                             step="0.01"
                             min="0"
                             placeholder="0.00"
-                            className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-12"
+                            className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-12"
                             value={calculatorData.amount}
                             onChange={(e) => setCalculatorData({ ...calculatorData, amount: e.target.value })}
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">Loan Term (Months)</Label>
+                        <Label className="text-sm font-medium text-gray-700">{t("date")}</Label>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                           <Input
@@ -466,7 +468,7 @@ export default function LoansPage() {
                             min="1"
                             max="360"
                             placeholder="e.g. 12"
-                            className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-12"
+                            className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-12"
                             value={calculatorData.term_months}
                             onChange={(e) => setCalculatorData({ ...calculatorData, term_months: e.target.value })}
                           />
@@ -485,42 +487,42 @@ export default function LoansPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-lg">
                         <TrendingUp className="h-5 w-5 text-green-600" />
-                        Calculation Results
+                        {t("reports")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-white">
-                        <p className="text-sm font-medium text-blue-100">Estimated Monthly Payment</p>
+                        <p className="text-sm font-medium text-blue-100">{t("total_balance")}</p>
                         <p className="mt-1 text-3xl font-bold">{formatCurrency(calculatorDetails.monthlyPayment)}</p>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-2 gap-3">
-                        <div className="rounded-lg bg-gray-50 p-4">
-                          <p className="text-xs font-medium text-gray-500">Total Interest</p>
-                          <p className="mt-1 text-lg font-bold text-amber-600">{formatCurrency(calculatorDetails.totalInterest)}</p>
-                        </div>
-                        <div className="rounded-lg bg-gray-50 p-4">
-                          <p className="text-xs font-medium text-gray-500">Total Payment</p>
-                          <p className="mt-1 text-lg font-bold text-gray-900">{formatCurrency(calculatorDetails.totalPayment)}</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 rounded-lg bg-green-50 p-4">
-                        <div className="flex items-center gap-3">
-                          <Percent className="h-8 w-8 text-green-600" />
-                          <div>
-                            <p className="text-sm font-medium text-green-900">Annual Interest Rate</p>
-                            <p className="text-2xl font-bold text-green-700">{(calculatorDetails.annualRate * 100).toFixed(1)}%</p>
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                          <div className="rounded-lg bg-gray-50 p-4">
+                            <p className="text-xs font-medium text-gray-500">{t("total_balance")}</p>
+                            <p className="mt-1 text-lg font-bold text-amber-600">{formatCurrency(calculatorDetails.totalInterest)}</p>
+                          </div>
+                          <div className="rounded-lg bg-gray-50 p-4">
+                            <p className="text-xs font-medium text-gray-500">{t("total_balance")}</p>
+                            <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(calculatorDetails.totalPayment)}</p>
                           </div>
                         </div>
-                      </div>
+
+                        <div className="mt-4 rounded-lg bg-green-50 p-4">
+                          <div className="flex items-center gap-3">
+                            <Percent className="h-8 w-8 text-green-600" />
+                            <div>
+                              <p className="text-sm font-medium text-green-900">{t("interest_rate")}</p>
+                              <p className="text-2xl font-bold text-green-700">{(calculatorDetails.annualRate * 100).toFixed(1)}%</p>
+                            </div>
+                          </div>
+                        </div>
 
                       <Button
                         className="mt-4 w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white"
                         onClick={() => router.push(`/loans/apply?amount=${calculatorData.amount}&term=${calculatorData.term_months}`)}
                         disabled={!calculatorData.amount || !calculatorData.term_months}
                       >
-                        Apply for This Loan
+                        {t("apply_loan")}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </CardContent>
@@ -540,15 +542,15 @@ export default function LoansPage() {
                   <CheckCircle className="h-5 w-5" />
                 </div>
                 <div>
-                  <DialogTitle className="text-lg">Review Loan Application</DialogTitle>
-                  <p className="text-sm text-gray-500">Approve or reject this application</p>
+                  <DialogTitle className="text-lg">{t("loans")}</DialogTitle>
+                  <p className="text-sm text-gray-500">{t("view")}</p>
                 </div>
               </div>
             </DialogHeader>
             {selectedLoan && (
               <div className="space-y-4">
                 <div className="rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 p-5 text-white">
-                  <p className="text-sm font-medium text-blue-100">Loan Amount</p>
+                  <p className="text-sm font-medium text-blue-100">{t("amount")}</p>
                   <p className="mt-1 text-2xl font-bold">{formatCurrency(selectedLoan.amount)}</p>
                   <div className="mt-3 flex items-center gap-3 text-sm text-blue-100">
                     <span>{selectedLoan.term_months} months</span>
@@ -558,19 +560,19 @@ export default function LoansPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">Monthly Income</p>
+                    <p className="text-xs font-medium text-gray-500">{t("total_balance")}</p>
                     <p className="mt-0.5 font-semibold">{formatCurrency(selectedLoan.monthly_income)}</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">Applied</p>
+                    <p className="text-xs font-medium text-gray-500">{t("date")}</p>
                     <p className="mt-0.5 font-semibold">{formatDate(selectedLoan.created_at)}</p>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Review Notes (Optional)</Label>
+                  <Label className="text-sm font-medium text-gray-700">{t("info")}</Label>
                   <Textarea
                     placeholder="Add notes about this decision..."
-                    className="border-gray-200 bg-gray-50 focus:bg-white min-h-[80px] resize-none"
+                    className="border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 min-h-[80px] resize-none"
                     value={reviewNotes}
                     onChange={(e) => setReviewNotes(e.target.value)}
                   />
@@ -579,7 +581,7 @@ export default function LoansPage() {
             )}
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setShowReviewDialog(false)} className="border-gray-200 hover:bg-gray-50">
-                Cancel
+                {t("cancel")}
               </Button>
               <Button
                 variant="destructive"
@@ -589,7 +591,7 @@ export default function LoansPage() {
               >
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <XCircle className="mr-1.5 h-4 w-4" />
-                Reject
+                {t("rejected")}
               </Button>
               <Button
                 disabled={submitting}
@@ -598,7 +600,7 @@ export default function LoansPage() {
               >
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <CheckCircle className="mr-1.5 h-4 w-4" />
-                Approve
+                {t("approved")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -613,15 +615,15 @@ export default function LoansPage() {
                   <FileText className="h-5 w-5" />
                 </div>
                 <div>
-                  <DialogTitle className="text-lg">Loan Details</DialogTitle>
-                  <p className="text-sm text-gray-500">Complete application information</p>
+                  <DialogTitle className="text-lg">{t("loans")}</DialogTitle>
+                  <p className="text-sm text-gray-500">{t("description")}</p>
                 </div>
               </div>
             </DialogHeader>
             {selectedLoan && (
               <div className="space-y-4">
                 <div className="rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-white">
-                  <p className="text-sm font-medium text-blue-100">Loan Amount</p>
+                  <p className="text-sm font-medium text-blue-100">{t("amount")}</p>
                   <p className="mt-1 text-3xl font-bold">{formatCurrency(selectedLoan.amount)}</p>
                   <Badge className={`mt-3 ${LOAN_STATUS_CONFIG[selectedLoan.status]?.color || ""} border-0`}>
                     {LOAN_STATUS_CONFIG[selectedLoan.status]?.label || selectedLoan.status}
@@ -629,25 +631,25 @@ export default function LoansPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">Term</p>
+                    <p className="text-xs font-medium text-gray-500">{t("date")}</p>
                     <p className="mt-0.5 font-semibold">{selectedLoan.term_months} months</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">Purpose</p>
+                    <p className="text-xs font-medium text-gray-500">{t("description")}</p>
                     <p className="mt-0.5 font-semibold">{selectedLoan.purpose}</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">Monthly Income</p>
+                    <p className="text-xs font-medium text-gray-500">{t("total_balance")}</p>
                     <p className="mt-0.5 font-semibold">{formatCurrency(selectedLoan.monthly_income)}</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">Applied</p>
+                    <p className="text-xs font-medium text-gray-500">{t("date")}</p>
                     <p className="mt-0.5 font-semibold">{formatDate(selectedLoan.created_at)}</p>
                   </div>
                 </div>
                 {selectedLoan.review_notes && (
                   <div className="rounded-lg bg-blue-50 border border-blue-100 p-3">
-                    <p className="text-xs font-medium text-blue-800">Review Notes</p>
+                    <p className="text-xs font-medium text-blue-800">{t("info")}</p>
                     <p className="mt-1 text-sm text-blue-700">{selectedLoan.review_notes}</p>
                   </div>
                 )}
@@ -655,7 +657,7 @@ export default function LoansPage() {
             )}
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowDetailDialog(false)} className="border-gray-200">
-                Close
+                {t("close")}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -566,7 +566,7 @@ export default function UsersPage() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-white border border-gray-200 shadow-sm">
+            <TabsList className="bg-white border border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-700">
               {ROLE_TABS.map((tab) => (
                 <TabsTrigger
                   key={tab.value}

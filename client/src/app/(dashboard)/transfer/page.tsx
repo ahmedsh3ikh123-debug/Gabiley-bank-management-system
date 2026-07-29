@@ -223,7 +223,7 @@ export default function TransferPage() {
         <div className="space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918]">Transfer Funds</h1>
+            <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white">Transfer Funds</h1>
             <p className="mt-1 text-gray-500">Send money to another account securely</p>
           </div>
 
@@ -236,7 +236,7 @@ export default function TransferPage() {
                     <Send className="h-5 w-5" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-extrabold tracking-tight text-[#1A1918]">Make a Transfer</CardTitle>
+                    <CardTitle className="text-lg font-extrabold tracking-tight text-[#1A1918] dark:text-white">Make a Transfer</CardTitle>
                     <p className="text-sm text-gray-500">Transfer funds to another GBMS account</p>
                   </div>
                 </div>
@@ -250,11 +250,11 @@ export default function TransferPage() {
                   className="space-y-5"
                 >
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-[#1A1918]">From Account</Label>
+                    <Label className="text-sm font-medium text-[#1A1918] dark:text-white">From Account</Label>
                     <select
                       value={fromAccount || ""}
                       onChange={(e) => setFromAccount(e.target.value || undefined)}
-                      className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:border-[#1F8A4D] focus:ring-2 focus:ring-[#1F8A4D]/20 focus:outline-none"
+                      className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm focus:bg-white dark:focus:bg-gray-800 focus:border-[#1F8A4D] focus:ring-2 focus:ring-[#1F8A4D]/20 focus:outline-none"
                     >
                       <option value="">-- Select source account --</option>
                       {allAccounts.map((account) => (
@@ -272,11 +272,11 @@ export default function TransferPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-[#1A1918]">To Account Number</Label>
+                    <Label className="text-sm font-medium text-[#1A1918] dark:text-white">To Account Number</Label>
                     <select
                       value={toAccountNumber}
                       onChange={(e) => setToAccountNumber(e.target.value)}
-                      className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:border-[#1F8A4D] focus:ring-2 focus:ring-[#1F8A4D]/20 focus:outline-none"
+                      className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm focus:bg-white dark:focus:bg-gray-800 focus:border-[#1F8A4D] focus:ring-2 focus:ring-[#1F8A4D]/20 focus:outline-none"
                     >
                       <option value="">-- Select destination account --</option>
                       {allAccounts
@@ -290,7 +290,7 @@ export default function TransferPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-[#1A1918]">Amount</Label>
+                    <Label className="text-sm font-medium text-[#1A1918] dark:text-white">Amount</Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                       <Input
@@ -300,7 +300,7 @@ export default function TransferPage() {
                         placeholder="0.00"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                        className="pl-10 border-gray-200 bg-gray-50 focus:bg-white focus:border-[#1F8A4D] focus:ring-[#1F8A4D]/20 h-12 text-lg font-semibold"
+                        className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 focus:border-[#1F8A4D] focus:ring-[#1F8A4D]/20 h-12 text-lg font-semibold"
                       />
                     </div>
                     {selectedAccount && amount && remainingBalance < 0 && (
@@ -312,17 +312,17 @@ export default function TransferPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-[#1A1918]">Description (Optional)</Label>
+                    <Label className="text-sm font-medium text-[#1A1918] dark:text-white">Description (Optional)</Label>
                     <Input
                       placeholder="What is this transfer for?"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="border-gray-200 bg-gray-50 focus:bg-white focus:border-[#1F8A4D] focus:ring-[#1F8A4D]/20 h-12"
+                      className="border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 focus:border-[#1F8A4D] focus:ring-[#1F8A4D]/20 h-12"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-[#1A1918]">Transaction PIN</Label>
+                    <Label className="text-sm font-medium text-[#1A1918] dark:text-white">Transaction PIN</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                       <Input
@@ -331,7 +331,7 @@ export default function TransferPage() {
                         placeholder="4-digit PIN"
                         value={transferPin}
                         onChange={(e) => setTransferPin(e.target.value.replace(/\D/g, ""))}
-                        className="pl-10 border-gray-200 bg-gray-50 focus:bg-white focus:border-pink-500 focus:ring-pink-500/20 h-12"
+                        className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 focus:border-pink-500 focus:ring-pink-500/20 h-12"
                       />
                     </div>
                   </div>
@@ -376,12 +376,12 @@ export default function TransferPage() {
                                 <CreditCard className="h-4 w-4" />
                               </div>
                               <div>
-                                <p className="text-sm font-mono font-medium text-gray-900">{account.account_number}</p>
+                                <p className="text-sm font-mono font-medium text-gray-900 dark:text-white">{account.account_number}</p>
                                 <p className="text-xs text-gray-500 capitalize">{account.account_type.replace("_", " ")}</p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-bold text-gray-900">{formatCurrency(account.balance)}</p>
+                              <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(account.balance)}</p>
                               <Badge className={`${getStatusColor(account.status)} border text-[10px]`} variant="outline">
                                 {account.status}
                               </Badge>
@@ -435,7 +435,7 @@ export default function TransferPage() {
                   <CardContent className="space-y-3">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Available Balance</span>
-                      <span className="font-medium text-gray-900">{formatCurrency(selectedAccount.balance)}</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(selectedAccount.balance)}</span>
                     </div>
                     {transferAmount > 0 && (
                       <>
@@ -472,14 +472,14 @@ export default function TransferPage() {
                     <FileText className="h-5 w-5" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-extrabold tracking-tight text-[#1A1918]">Recent Transfers</CardTitle>
+                    <CardTitle className="text-lg font-extrabold tracking-tight text-[#1A1918] dark:text-white">Recent Transfers</CardTitle>
                     <p className="text-sm text-gray-500">Your latest transfer activity</p>
                   </div>
                 </div>
                 <select
                   value={transferFilter}
                   onChange={(e) => setTransferFilter(e.target.value)}
-                  className="h-9 rounded-lg border border-gray-200 bg-white px-3 py-1 text-sm focus:border-[#1F8A4D] focus:ring-2 focus:ring-[#1F8A4D]/20 focus:outline-none"
+                  className="h-9 rounded-lg border border-gray-200 bg-white px-3 py-1 text-sm focus:border-[#1F8A4D] focus:ring-2 focus:ring-[#1F8A4D]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                 >
                   <option value="all">All</option>
                   <option value="sent">Sent</option>
@@ -510,13 +510,13 @@ export default function TransferPage() {
                             <TableCell className="text-sm text-gray-600">{formatDate(txn.created_at)}</TableCell>
                             <TableCell>
                               <div>
-                                <p className="font-mono text-xs font-medium text-gray-900">{txn.from_account_number || "N/A"}</p>
+                                <p className="font-mono text-xs font-medium text-gray-900 dark:text-white">{txn.from_account_number || "N/A"}</p>
                                 {txn.from_customer_name && <p className="text-xs text-gray-500">{txn.from_customer_name}</p>}
                               </div>
                             </TableCell>
                             <TableCell>
                               <div>
-                                <p className="font-mono text-xs font-medium text-gray-900">{txn.to_account_number || "N/A"}</p>
+                                <p className="font-mono text-xs font-medium text-gray-900 dark:text-white">{txn.to_account_number || "N/A"}</p>
                                 {txn.to_customer_name && <p className="text-xs text-gray-500">{txn.to_customer_name}</p>}
                               </div>
                             </TableCell>
@@ -718,7 +718,7 @@ export default function TransferPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-[#1A1918]">Transaction PIN</Label>
+                  <Label className="text-sm font-medium text-[#1A1918] dark:text-white">Transaction PIN</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <input
@@ -746,7 +746,7 @@ export default function TransferPage() {
                           }
                         }
                       }}
-                      className="flex h-12 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-3 py-2 text-sm focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 focus:outline-none"
+                      className="flex h-12 w-full rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 pl-10 pr-3 py-2 text-sm focus:bg-white dark:focus:bg-gray-800 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 focus:outline-none"
                     />
                   </div>
                 </div>

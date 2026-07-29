@@ -190,7 +190,7 @@ function SearchContent() {
         <div className="space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] flex items-center gap-2">
+            <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white flex items-center gap-2">
               <SearchIcon className="h-8 w-8 text-[#1F8A4D]" />
               Search
             </h1>

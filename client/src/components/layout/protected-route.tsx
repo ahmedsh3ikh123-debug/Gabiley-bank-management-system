@@ -42,7 +42,7 @@ export function ProtectedRoute({
         </div>
         <div className="relative z-10 flex flex-col items-center gap-5 animate-fade-in">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F8CC58] to-[#E4B155] shadow-xl shadow-[#F8CC58]/25">
-            <Landmark className="h-7 w-7 text-[#1A1918]" />
+            <Landmark className="h-7 w-7 text-[#1A1918] dark:text-white" />
           </div>
           <div className="h-6 w-6 animate-spin rounded-full border-[3px] border-[#F8CC58]/40 border-t-[#F8CC58]" />
         </div>

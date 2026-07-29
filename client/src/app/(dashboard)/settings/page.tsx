@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
+import { useLanguage } from "@/contexts/language-context";
 
 import api from "@/lib/api";
 import {
@@ -50,6 +51,7 @@ interface SettingsData {
 function SettingsContent() {
   const { user } = useAuth();
   const { success, error: toastError } = useToast();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("general");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -207,8 +209,8 @@ function SettingsContent() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918]">System Settings</h1>
-          <p className="mt-1 text-gray-500">Configure system-wide settings for the bank management system.</p>
+          <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white">{t("settings")}</h1>
+          <p className="mt-1 text-gray-500">{t("system_settings")}</p>
         </div>
         <Badge variant="outline" className="gap-1 border-gray-200 w-fit">
           <Shield className="h-3 w-3" />
@@ -218,22 +220,22 @@ function SettingsContent() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-white border border-gray-200 shadow-sm">
+        <TabsList className="bg-white border border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-700">
           <TabsTrigger value="general" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Globe className="h-4 w-4" />
-            General
+            {t("main")}
           </TabsTrigger>
           <TabsTrigger value="financial" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <DollarSign className="h-4 w-4" />
-            Financial
+            {t("banking")}
           </TabsTrigger>
           <TabsTrigger value="security" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Shield className="h-4 w-4" />
-            Security
+            {t("security")}
           </TabsTrigger>
           <TabsTrigger value="system" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Server className="h-4 w-4" />
-            System
+            {t("system")}
           </TabsTrigger>
         </TabsList>
 
@@ -246,41 +248,41 @@ function SettingsContent() {
                   <Building2 className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Bank Information</CardTitle>
-                  <CardDescription>Basic bank configuration and contact details</CardDescription>
+                  <CardTitle className="text-lg">{t("bank_name")}</CardTitle>
+                  <CardDescription>{t("main")}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Bank Name</Label>
+                  <Label className="text-sm font-medium text-gray-700">{t("bank_name")}</Label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <Input
                       value={settings.bank_name}
                       onChange={(e) => updateSetting("bank_name", e.target.value)}
                       placeholder="Gabiley Bank"
-                      className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                      className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Currency</Label>
+                  <Label className="text-sm font-medium text-gray-700">{t("currency")}</Label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <Input
                       value={settings.currency}
                       onChange={(e) => updateSetting("currency", e.target.value)}
                       placeholder="USD"
-                      className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                      className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                     />
                   </div>
                 </div>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Support Email</Label>
+                  <Label className="text-sm font-medium text-gray-700">{t("support_email")}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <Input
@@ -288,19 +290,19 @@ function SettingsContent() {
                       value={settings.support_email}
                       onChange={(e) => updateSetting("support_email", e.target.value)}
                       placeholder="support@gabileybank.com"
-                      className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                      className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Support Phone</Label>
+                  <Label className="text-sm font-medium text-gray-700">{t("support_phone")}</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <Input
                       value={settings.support_phone}
                       onChange={(e) => updateSetting("support_phone", e.target.value)}
                       placeholder="+1 (555) 000-0000"
-                      className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                      className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                     />
                   </div>
                 </div>
@@ -318,57 +320,57 @@ function SettingsContent() {
                   <DollarSign className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Financial Settings</CardTitle>
-                  <CardDescription>Configure fees, limits, and interest rates</CardDescription>
+                  <CardTitle className="text-lg">{t("banking")}</CardTitle>
+                  <CardDescription>{t("banking")}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Transfer Fee ($)</Label>
+                  <Label className="text-sm font-medium text-gray-700">{t("transfer_fee")}</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={settings.transfer_fee}
                     onChange={(e) => updateSetting("transfer_fee", e.target.value)}
                     placeholder="0.00"
-                    className="border-gray-200 bg-gray-50 focus:bg-white h-11"
+                    className="border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Minimum Balance ($)</Label>
+                  <Label className="text-sm font-medium text-gray-700">{t("min_balance")}</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={settings.min_balance}
                     onChange={(e) => updateSetting("min_balance", e.target.value)}
                     placeholder="0.00"
-                    className="border-gray-200 bg-gray-50 focus:bg-white h-11"
+                    className="border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                   />
                 </div>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Max Transfer Amount ($)</Label>
+                  <Label className="text-sm font-medium text-gray-700">{t("max_transfer")}</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={settings.max_transfer}
                     onChange={(e) => updateSetting("max_transfer", e.target.value)}
                     placeholder="100000"
-                    className="border-gray-200 bg-gray-50 focus:bg-white h-11"
+                    className="border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Interest Rate (%)</Label>
+                  <Label className="text-sm font-medium text-gray-700">{t("interest_rate")}</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={settings.interest_rate}
                     onChange={(e) => updateSetting("interest_rate", e.target.value)}
                     placeholder="0.00"
-                    className="border-gray-200 bg-gray-50 focus:bg-white h-11"
+                    className="border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                   />
                 </div>
               </div>
@@ -385,20 +387,20 @@ function SettingsContent() {
                   <Lock className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Security & Maintenance</CardTitle>
-                  <CardDescription>Control system availability and security</CardDescription>
+                  <CardTitle className="text-lg">{t("system")}</CardTitle>
+                  <CardDescription>{t("security")}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white">
                     <AlertTriangle className="h-5 w-5" />
                   </div>
                   <div>
-                    <Label className="text-base font-medium text-gray-900">Maintenance Mode</Label>
-                    <p className="text-sm text-gray-500">Temporarily disable access for non-admin users</p>
+                    <Label className="text-base font-medium text-gray-900">{t("maintenance_mode")}</Label>
+                    <p className="text-sm text-gray-500">{t("system")}</p>
                   </div>
                 </div>
                 <Switch
@@ -411,8 +413,8 @@ function SettingsContent() {
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-600" />
                     <div>
-                      <p className="text-sm font-medium text-amber-900">Maintenance mode is active</p>
-                      <p className="mt-1 text-sm text-amber-700">Only administrators can access the system. All other users will see a maintenance page.</p>
+                      <p className="text-sm font-medium text-amber-900">{t("warning")}</p>
+                      <p className="mt-1 text-sm text-amber-700">{t("system")}</p>
                     </div>
                   </div>
                 </div>
@@ -430,19 +432,19 @@ function SettingsContent() {
                   <Database className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Backup & Restore</CardTitle>
-                  <CardDescription>Manage system backups and recovery</CardDescription>
+                  <CardTitle className="text-lg">{t("backup_restore")}</CardTitle>
+                  <CardDescription>{t("system")}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
               <p className="text-sm text-gray-600">
-                Download a full backup (.zip) containing the database and all uploaded files — it extracts into a folder on your laptop. To restore, select the backup .zip file and all data will be restored.
+                {t("backup_restore")}
               </p>
               <div className="grid gap-3 md:grid-cols-2">
                 <Button
                   variant="outline"
-                  className="h-12 border-gray-200 bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
+                  className="h-12 border-gray-200 bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800"
                   onClick={handleBackup}
                   disabled={backing}
                 >
@@ -451,11 +453,11 @@ function SettingsContent() {
                   ) : (
                     <FolderArchive className="mr-2 h-4 w-4" />
                   )}
-                  Create Full Backup
+                  {t("backup_restore")}
                 </Button>
                 <Button
                   variant="outline"
-                  className="h-12 border-red-200 bg-white hover:bg-red-50 hover:text-red-700"
+                  className="h-12 border-[#1F8A4D] bg-[#1F8A4D] text-white hover:bg-[#176B3D] dark:border-[#1F8A4D] dark:bg-[#1F8A4D] dark:text-white dark:hover:bg-[#176B3D]"
                   onClick={handleRestore}
                   disabled={restoring}
                 >
@@ -464,15 +466,15 @@ function SettingsContent() {
                   ) : (
                     <Upload className="mr-2 h-4 w-4" />
                   )}
-                  Restore System
+                  {t("restore")}
                 </Button>
               </div>
               <div className="rounded-xl bg-blue-50 border border-blue-100 p-4">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="mt-0.5 h-5 w-5 text-blue-600" />
                   <div>
-                    <p className="text-sm font-medium text-blue-900">Backup Schedule</p>
-                    <p className="mt-1 text-sm text-blue-700">System backups are recommended weekly. Always verify your backups before restoring.</p>
+                    <p className="text-sm font-medium text-blue-900">{t("backup_restore")}</p>
+                    <p className="mt-1 text-sm text-blue-700">{t("backup_restore")}</p>
                   </div>
                 </div>
               </div>
@@ -493,7 +495,7 @@ function SettingsContent() {
           ) : (
             <Save className="mr-2 h-4 w-4" />
           )}
-          Save All Settings
+          {t("save_changes")}
         </Button>
       </div>
     </div>

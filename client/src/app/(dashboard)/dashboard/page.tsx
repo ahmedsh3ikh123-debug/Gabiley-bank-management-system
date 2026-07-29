@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
+import { useLanguage } from "@/contexts/language-context";
 import { ProtectedRoute } from "@/components/layout/protected-route";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import {
@@ -113,7 +114,7 @@ function LoadingSkeletons() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="space-y-6 p-6 relative animate-pulse">
+        <div className="space-y-6 p-6 relative bg-[#F9FAFB] dark:bg-[#000000] animate-pulse">
           <div className="absolute inset-0 bg-[url('/bank-bg.svg')] bg-cover bg-center opacity-[0.04] pointer-events-none" />
           <div className="h-32 rounded-2xl bg-muted/40" />
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -335,6 +336,7 @@ function CustomerRow({ customer, index }: { customer: any; index: number }) {
 function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
+  const { t } = useLanguage();
 
   const monthlyTransactions = useMemo(() => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -393,7 +395,7 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
   };
 
   return (
-    <div className="space-y-6 p-6 relative">
+    <div className="space-y-6 p-6 relative bg-[#F9FAFB] dark:bg-[#000000]">
       <div className="absolute inset-0 bg-[url('/bank-bg.svg')] bg-cover bg-center opacity-[0.04] pointer-events-none" />
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1F8A4D] via-[#1F8A4D]/90 to-[#1F8A4D]/80 text-white shadow-xl shadow-[#1F8A4D]/20">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDJ2LTJoMzRtMC00djJIMlYyOmgzNG0wLTRWMkgydjJoMzRtMC00VjBoMzR2MmgzMCIvPjwvZz48L2c+PC9zdmc+')] opacity-40" />
@@ -422,7 +424,7 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
                     {greeting}
                   </h1>
                   <p className="text-white/80 text-lg mt-1">
-                    Here&apos;s what&apos;s happening at your bank today.
+                    {t("welcome_back")}
                   </p>
                 </div>
               </div>
@@ -454,7 +456,7 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
                     isRefreshing ? "animate-spin" : ""
                   }`}
                 />
-                Refresh Data
+                {t("refresh")}
               </Button>
               <Button
                 size="sm"
@@ -462,7 +464,7 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
                 onClick={() => router.push("/reports")}
               >
                 <FileText className="h-4 w-4 mr-2" />
-                View Reports
+                {t("reports")}
               </Button>
             </div>
           </div>
@@ -472,7 +474,7 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
       {/* Stats Grid - 4 cards */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <PremiumStatCard
-          title="Total Balance"
+          title={t("total_balance")}
           value={formatCurrency(stats.totalBalance || 0)}
           icon={Landmark}
           iconColor="text-[#F8CC58]"
@@ -483,7 +485,7 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
           gradient="bg-gradient-to-br from-[#1A1918]/80 via-[#1A1918]/60 to-[#1A1918]/40 border-[#F8CC58]/20"
         />
         <PremiumStatCard
-          title="Total Customers"
+          title={t("customers")}
           value={stats.totalCustomers || 0}
           icon={Users}
           iconColor="text-blue-400"
@@ -494,7 +496,7 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
           gradient="bg-gradient-to-br from-[#001a33]/80 via-[#000d1a]/60 to-[#001426]/40 border-blue-500/20"
         />
         <PremiumStatCard
-          title="Today's Transactions"
+          title={t("transactions")}
           value={stats.totalTransactions || 0}
           icon={Activity}
           iconColor="text-emerald-400"
@@ -505,13 +507,13 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
           gradient="bg-gradient-to-br from-[#001a0d]/80 via-[#000d07]/60 to-[#00140a]/40 border-emerald-500/20"
         />
         <PremiumStatCard
-          title="Pending Loans"
+          title={t("pending_loans")}
           value={stats.pendingLoans || 0}
           icon={Clock}
           iconColor="text-amber-400"
           iconBg="bg-amber-500/20"
           trend="neutral"
-          trendValue={`${stats.approvedLoans || 0} approved`}
+          trendValue={`${stats.approvedLoans || 0} ${t("approved")}`}
           delay={150}
           gradient="bg-gradient-to-br from-[#1a1500]/80 via-[#1A1918]/60 to-[#141000]/40 border-amber-500/20"
         />
@@ -520,10 +522,10 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
       {/* Secondary Stats - Compact Row */}
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
         {[
-          { label: "Total Users", value: stats.totalUsers || 0, icon: Users, color: "text-white", hoverColor: "hover:border-emerald-400/50", bg: "bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 border-emerald-400/30 shadow-emerald-500/25", iconBg: "bg-white/20", href: "/users?role=all" },
-          { label: "Admin", value: stats.totalAdmins || 0, icon: Shield, color: "text-white", hoverColor: "hover:border-purple-400/50", bg: "bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 border-purple-400/30 shadow-purple-500/25", iconBg: "bg-white/20", href: "/users?role=super_admin" },
-          { label: "Customer", value: stats.totalCustomers || 0, icon: UserCheck, color: "text-white", hoverColor: "hover:border-blue-400/50", bg: "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 border-blue-400/30 shadow-blue-500/25", iconBg: "bg-white/20", href: "/users?role=customer" },
-          { label: "Balance", value: formatCurrency(stats.totalBalance || 0), icon: Wallet, color: "text-white", hoverColor: "hover:border-amber-400/50", bg: "bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 border-amber-400/30 shadow-amber-500/25", iconBg: "bg-white/20", href: "/accounts" },
+          { label: t("users"), value: stats.totalUsers || 0, icon: Users, color: "text-white", hoverColor: "hover:border-emerald-400/50", bg: "bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 border-emerald-400/30 shadow-emerald-500/25", iconBg: "bg-white/20", href: "/users?role=all" },
+          { label: t("employees"), value: stats.totalAdmins || 0, icon: Shield, color: "text-white", hoverColor: "hover:border-purple-400/50", bg: "bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 border-purple-400/30 shadow-purple-500/25", iconBg: "bg-white/20", href: "/users?role=super_admin" },
+          { label: t("customers"), value: stats.totalCustomers || 0, icon: UserCheck, color: "text-white", hoverColor: "hover:border-blue-400/50", bg: "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 border-blue-400/30 shadow-blue-500/25", iconBg: "bg-white/20", href: "/users?role=customer" },
+          { label: t("balance"), value: formatCurrency(stats.totalBalance || 0), icon: Wallet, color: "text-white", hoverColor: "hover:border-amber-400/50", bg: "bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 border-amber-400/30 shadow-amber-500/25", iconBg: "bg-white/20", href: "/accounts" },
         ].map((item) => (
           <button
             key={item.label}
@@ -553,10 +555,10 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1F8A4D]/10">
                     <BarChart className="h-4 w-4 text-[#1F8A4D]" />
                   </div>
-                  Monthly Transactions
+                  {t("total_transactions")}
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Deposits vs withdrawals over months
+                  {t("deposits")} vs {t("withdrawals")}
                 </CardDescription>
               </div>
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -608,14 +610,14 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
                     />
                     <Bar
                       dataKey="deposits"
-                      name="Deposits"
+                      name={t("deposits")}
                       fill="#1F8A4D"
                       radius={[4, 4, 0, 0]}
                       maxBarSize={28}
                     />
                     <Bar
                       dataKey="withdrawals"
-                      name="Withdrawals"
+                      name={t("withdrawals")}
                       fill="#ef4444"
                       radius={[4, 4, 0, 0]}
                       maxBarSize={28}
@@ -626,8 +628,8 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
             ) : (
               <EmptyState
                 icon={BarChart}
-                title="No Monthly Data"
-                description="Monthly transaction data will appear here."
+                title={t("no_data")}
+                description={t("total_transactions")}
               />
             )}
           </CardContent>
@@ -642,10 +644,10 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F8CC58]/10">
                     <PiggyBank className="h-4 w-4 text-[#F8CC58]" />
                   </div>
-                  Account Types
+                  {t("account_type")}
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Distribution by account category
+                  {t("accounts")}
                 </CardDescription>
               </div>
             </div>
@@ -709,8 +711,8 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
             ) : (
               <EmptyState
                 icon={PiggyBank}
-                title="No Accounts"
-                description="Account distribution data will appear here."
+                title={t("no_data")}
+                description={t("accounts")}
               />
             )}
           </CardContent>
@@ -725,10 +727,10 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1F8A4D]/10">
                     <Activity className="h-4 w-4 text-[#1F8A4D]" />
                   </div>
-                  Transaction Analytics
+                  {t("analytics")}
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Daily transaction volume this week
+                  {t("total_transactions")}
                 </CardDescription>
               </div>
             </div>
@@ -800,8 +802,8 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
             ) : (
               <EmptyState
                 icon={Activity}
-                title="No Transaction Data"
-                description="Transaction analytics will appear here."
+                title={t("no_data")}
+                description={t("transactions")}
               />
             )}
           </CardContent>
@@ -816,17 +818,17 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#7c3aed]/10">
                     <Banknote className="h-4 w-4 text-[#7c3aed]" />
                   </div>
-                  Loan Statistics
+                  {t("loans")}
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Approval rate: {approvedPercent}%
+                  {t("approved")}: {approvedPercent}%
                 </CardDescription>
               </div>
               <Badge
                 variant="outline"
                 className="bg-[#F8CC58]/10 text-[#F8CC58] border-[#F8CC58]/20"
               >
-                {totalLoanVolume} Total
+                {totalLoanVolume} {t("total_accounts")}
               </Badge>
             </div>
           </CardHeader>
@@ -862,7 +864,7 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
                         borderRadius: "12px",
                         boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
                       }}
-                      formatter={(value: number) => [value, "Loans"]}
+                      formatter={(value: number) => [value, t("loans")]}
                     />
                     <Bar
                       dataKey="value"
@@ -879,8 +881,8 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
             ) : (
               <EmptyState
                 icon={Banknote}
-                title="No Loan Data"
-                description="Loan statistics will appear here."
+                title={t("no_data")}
+                description={t("loans")}
               />
             )}
           </CardContent>
@@ -898,14 +900,14 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1F8A4D]/10">
                     <UserCheck className="h-4 w-4 text-[#1F8A4D]" />
                   </div>
-                  Recent Customers
+                  {t("customers")}
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Latest registered customers
+                  {t("welcome_back")}
                 </CardDescription>
               </div>
               <Button variant="ghost" size="sm" className="text-xs text-[#1F8A4D]" onClick={() => router.push("/customers")}>
-                View All
+                {t("view_all")}
                 <ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             </div>
@@ -926,8 +928,8 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
             ) : (
               <EmptyState
                 icon={Users}
-                title="No Customers"
-                description="Recent customers will appear here."
+                title={t("no_data")}
+                description={t("customers")}
               />
             )}
           </CardContent>
@@ -942,14 +944,14 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1F8A4D]/10">
                     <ArrowLeftRight className="h-4 w-4 text-[#1F8A4D]" />
                   </div>
-                  Recent Transactions
+                  {t("recent_transactions")}
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Last {Math.min(stats.recentTransactions.length, 8)} transactions
+                  {Math.min(stats.recentTransactions.length, 8)} {t("transactions")}
                 </CardDescription>
               </div>
               <Button variant="ghost" size="sm" className="text-xs text-[#1F8A4D]" onClick={() => router.push("/transactions")}>
-                View All
+                {t("view_all")}
                 <ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             </div>
@@ -966,8 +968,8 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
             ) : (
               <EmptyState
                 icon={ArrowLeftRight}
-                title="No Transactions"
-                description="Recent transactions will appear here."
+                title={t("no_data")}
+                description={t("transactions")}
               />
             )}
           </CardContent>
@@ -981,44 +983,44 @@ function AdminDashboard({ stats, user }: { stats: AdminStats; user: any }) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F8CC58]/10">
               <Sparkles className="h-4 w-4 text-[#F8CC58]" />
             </div>
-            Quick Actions
+            {t("quick_actions")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
               {
-                label: "New Transaction",
+                label: t("transactions"),
                 icon: ArrowLeftRight,
                 href: "/transactions",
                 color: "bg-[#1F8A4D]/10 text-[#1F8A4D] hover:bg-[#1F8A4D]/20 border border-[#1F8A4D]/10",
               },
               {
-                label: "View Reports",
+                label: t("reports"),
                 icon: FileText,
                 href: "/reports",
                 color: "bg-[#7c3aed]/10 text-[#7c3aed] hover:bg-[#7c3aed]/20 border border-[#7c3aed]/10",
               },
               {
-                label: "Manage Customers",
+                label: t("customers"),
                 icon: Users,
                 href: "/customers",
                 color: "bg-[#1F8A4D]/10 text-[#1F8A4D] hover:bg-[#1F8A4D]/20 border border-[#1F8A4D]/10",
               },
               {
-                label: "Loan Management",
+                label: t("loans"),
                 icon: Banknote,
                 href: "/loans",
                 color: "bg-[#F8CC58]/10 text-[#F8CC58] hover:bg-[#F8CC58]/20 border border-[#F8CC58]/10",
               },
               {
-                label: "Backup Database",
+                label: t("settings"),
                 icon: Database,
                 href: "/settings",
                 color: "bg-[#ea580c]/10 text-[#ea580c] hover:bg-[#ea580c]/20 border border-[#ea580c]/10",
               },
               {
-                label: "View Audit Logs",
+                label: t("audit_logs"),
                 icon: ClipboardList,
                 href: "/audit-logs",
                 color: "bg-muted/50 text-muted-foreground hover:bg-muted/70 border border-border/50",
@@ -1051,6 +1053,7 @@ function CustomerDashboard({
   const accounts = data.accounts || [];
   const primaryAccount = accounts[0];
   const router = useRouter();
+  const { t } = useLanguage();
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -1060,7 +1063,7 @@ function CustomerDashboard({
   }, []);
 
   return (
-    <div className="space-y-6 p-6 relative">
+    <div className="space-y-6 p-6 relative bg-[#F9FAFB] dark:bg-[#000000]">
       <div className="absolute inset-0 bg-[url('/bank-bg.svg')] bg-cover bg-center opacity-[0.04] pointer-events-none" />
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1F8A4D] via-[#1F8A4D]/90 to-[#1F8A4D]/80 text-white shadow-xl shadow-[#1F8A4D]/20">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDJ2LTJoMzRtMC00djJIMlYyOmgzNG0wLTRWMkgydjJoMzRtMC00VjBoMzR2MmgzMCIvPjwvZz48L2c+PC9zdmc+')] opacity-40" />
@@ -1088,7 +1091,7 @@ function CustomerDashboard({
                     {greeting}
                   </h1>
                   <p className="text-white/80 text-lg mt-1">
-                    Manage your accounts and transactions.
+                    {t("welcome_back")}
                   </p>
                 </div>
               </div>
@@ -1111,7 +1114,7 @@ function CustomerDashboard({
         <CardContent className="p-6 lg:p-8 relative">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <p className="text-sm font-medium text-white/70">Total Balance</p>
+              <p className="text-sm font-medium text-white/70">{t("total_balance")}</p>
               <p className="text-3xl lg:text-4xl font-bold mt-1">
                 {formatCurrency(data.totalBalance)}
               </p>
@@ -1141,19 +1144,19 @@ function CustomerDashboard({
       <div className="grid grid-cols-3 gap-3">
         {[
           {
-            label: "Deposit",
+            label: t("deposits"),
             icon: Download,
             href: "/transactions",
             color: "bg-[#1F8A4D]/10 text-[#1F8A4D] hover:bg-[#1F8A4D]/20 border border-[#1F8A4D]/10",
           },
           {
-            label: "Withdraw",
+            label: t("withdrawals"),
             icon: Upload,
             href: "/transactions",
             color: "bg-[#ef4444]/10 text-[#ef4444] hover:bg-[#ef4444]/20 border border-[#ef4444]/10",
           },
           {
-            label: "Transfer",
+            label: t("transfers"),
             icon: Send,
             href: "/transfer",
             color: "bg-[#1F8A4D]/10 text-[#1F8A4D] hover:bg-[#1F8A4D]/20 border border-[#1F8A4D]/10",
@@ -1178,7 +1181,7 @@ function CustomerDashboard({
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1F8A4D]/10">
                 <CreditCard className="h-4 w-4 text-[#1F8A4D]" />
               </div>
-              My Accounts
+              {t("accounts")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -1230,14 +1233,14 @@ function CustomerDashboard({
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1F8A4D]/10">
                   <ArrowLeftRight className="h-4 w-4 text-[#1F8A4D]" />
                 </div>
-                Recent Transactions
+                {t("recent_transactions")}
               </CardTitle>
               <CardDescription>
-                Last {Math.min(transactions.length, 10)} transactions
+                {Math.min(transactions.length, 10)} {t("transactions")}
               </CardDescription>
             </div>
             <Button variant="ghost" size="sm" className="text-xs text-[#1F8A4D]" onClick={() => router.push("/transactions")}>
-              View All
+              {t("view_all")}
               <ArrowRight className="h-3 w-3 ml-1" />
             </Button>
           </div>
@@ -1252,8 +1255,8 @@ function CustomerDashboard({
           ) : (
             <EmptyState
               icon={ArrowLeftRight}
-              title="No Transactions Yet"
-              description="Your recent transactions will appear here once you start banking."
+              title={t("no_data")}
+              description={t("transactions")}
             />
           )}
         </CardContent>
@@ -1265,6 +1268,7 @@ function CustomerDashboard({
 export default function DashboardPage() {
   const { user, isAdmin, isEmployee, isCustomer } = useAuth();
   const { registerRefresh } = useDataRefresh();
+  const { t } = useLanguage();
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1341,7 +1345,7 @@ export default function DashboardPage() {
             <CustomerDashboard data={customerData} user={user} />
           )}
           {!isAdmin && !isCustomer && (
-            <div className="space-y-6 p-6 relative">
+            <div className="space-y-6 p-6 relative bg-[#F9FAFB] dark:bg-[#000000]">
               <div className="absolute inset-0 bg-[url('/bank-bg.svg')] bg-cover bg-center opacity-[0.04] pointer-events-none" />
               <div className="relative">
                 <div className="relative px-8 py-8">
@@ -1357,8 +1361,8 @@ export default function DashboardPage() {
                 <CardContent className="py-16">
                   <EmptyState
                     icon={LayoutGrid}
-                    title="Dashboard Coming Soon"
-                    description="Your personalized dashboard is being set up. Check back soon for a tailored experience."
+                    title={t("dashboard")}
+                    description={t("loading")}
                   />
                 </CardContent>
               </Card>

@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { OfflineIndicator } from "@/components/offline/offline-banner";
+import { LanguageModal } from "@/components/ui/language-modal";
 import {
   Bell,
   Moon,
@@ -25,7 +26,6 @@ import {
   Settings,
   Search,
   Menu,
-  Check,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -38,6 +38,7 @@ export function Topbar() {
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [languageModalOpen, setLanguageModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -97,7 +98,7 @@ export function Topbar() {
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 w-full rounded-lg border-gray-200 bg-gray-50 pl-9 pr-4 text-sm placeholder:text-gray-400 focus:border-[#1F8A4D] focus:ring-[#1F8A4D]/20 dark:border-gray-700 dark:bg-gray-900 dark:placeholder:text-gray-500"
+            className="h-9 w-full rounded-lg border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 pl-9 pr-4 text-sm placeholder:text-gray-400 focus:border-[#1F8A4D] focus:ring-[#1F8A4D]/20 dark:border-gray-700 dark:bg-gray-900 dark:placeholder:text-gray-500"
           />
         </form>
       </div>
@@ -133,60 +134,15 @@ export function Topbar() {
         </Button>
 
         {/* Language Toggle */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-            >
-              <Globe className="h-4 w-4" />
-              <span className="sr-only">Change language</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44 p-2">
-            <DropdownMenuLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground pb-1">
-              Language
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {[
-              { code: "en" as const, label: "English", flag: "EN" },
-              { code: "so" as const, label: "Somali", flag: "SO" },
-              { code: "ar" as const, label: "Arabic", flag: "AR" },
-            ].map((lang) => (
-              <DropdownMenuItem
-                key={lang.code}
-                onClick={() => {
-                  setLanguage(lang.code);
-                  if (lang.code === "ar") {
-                    document.documentElement.dir = "rtl";
-                  } else {
-                    document.documentElement.dir = "ltr";
-                  }
-                }}
-                className={cn(
-                  "cursor-pointer rounded-lg flex items-center gap-3 py-2.5",
-                  language === lang.code && "bg-[#F8CC58]/[0.08] border border-[#F8CC58]/20"
-                )}
-              >
-                <div className={cn(
-                  "flex h-7 w-7 items-center justify-center rounded-md text-[10px] font-bold",
-                  language === lang.code
-                    ? "bg-[#F8CC58] text-[#1A1918]"
-                    : "bg-muted text-muted-foreground"
-                )}>
-                  {lang.flag}
-                </div>
-                <span className={cn("text-sm", language === lang.code && "font-semibold text-[#F8CC58]")}>
-                  {lang.label}
-                </span>
-                {language === lang.code && (
-                  <Check className="h-3.5 w-3.5 ml-auto text-[#F8CC58]" />
-                )}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 rounded-lg transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+          onClick={() => setLanguageModalOpen(true)}
+        >
+          <Globe className="h-4 w-4" />
+          <span className="sr-only">Change language</span>
+        </Button>
 
         {/* Notifications */}
         <Button
@@ -200,7 +156,7 @@ export function Topbar() {
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-[#F8CC58] px-1 text-[10px] font-bold text-[#1A1918]">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-[#F8CC58] px-1 text-[10px] font-bold text-[#1A1918] dark:text-white">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
@@ -278,6 +234,9 @@ export function Topbar() {
           </DropdownMenu>
         )}
       </div>
+
+      {/* Language Modal */}
+      <LanguageModal open={languageModalOpen} onOpenChange={setLanguageModalOpen} />
     </header>
   );
 }

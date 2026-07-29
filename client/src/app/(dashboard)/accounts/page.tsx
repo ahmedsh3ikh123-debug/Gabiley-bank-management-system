@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
+import { useLanguage } from "@/contexts/language-context";
 import api from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import {
@@ -61,6 +62,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 export default function AccountsPage() {
   const { user, isAdmin } = useAuth();
   const { success, error } = useToast();
+  const { t } = useLanguage();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,10 +147,10 @@ export default function AccountsPage() {
   );
 
   const accountStats = [
-    { label: "Total Accounts", value: accounts.length, icon: <CreditCard className="h-5 w-5" />, color: "from-blue-500 to-indigo-600" },
-    { label: "Total Balance", value: formatCurrency(totalBalance), icon: <DollarSign className="h-5 w-5" />, color: "from-emerald-500 to-green-600" },
-    { label: "Active Accounts", value: activeAccounts, icon: <CheckCircle className="h-5 w-5" />, color: "from-violet-500 to-purple-600" },
-    { label: "Blocked Accounts", value: accounts.filter((a) => a.status === "blocked").length, icon: <Lock className="h-5 w-5" />, color: "from-rose-500 to-red-600" },
+    { label: t("total_accounts"), value: accounts.length, icon: <CreditCard className="h-5 w-5" />, color: "from-blue-500 to-indigo-600" },
+    { label: t("total_balance"), value: formatCurrency(totalBalance), icon: <DollarSign className="h-5 w-5" />, color: "from-emerald-500 to-green-600" },
+    { label: t("active"), value: activeAccounts, icon: <CheckCircle className="h-5 w-5" />, color: "from-violet-500 to-purple-600" },
+    { label: t("inactive"), value: accounts.filter((a) => a.status === "blocked").length, icon: <Lock className="h-5 w-5" />, color: "from-rose-500 to-red-600" },
   ];
 
   return (
@@ -158,11 +160,11 @@ export default function AccountsPage() {
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918]">
-                Account Management
+              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white">
+                {t("accounts")}
               </h1>
               <p className="mt-1 text-gray-500">
-                {isAdmin ? "Manage all bank accounts" : "View and manage your accounts"}
+                {isAdmin ? t("management") : t("accounts")}
               </p>
             </div>
             {!isAdmin && (
@@ -171,7 +173,7 @@ export default function AccountsPage() {
                 className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200 hover:from-blue-700 hover:to-blue-800"
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Open New Account
+                {t("create_new")}
               </Button>
             )}
           </div>
@@ -185,7 +187,7 @@ export default function AccountsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                      <p className="mt-1 text-2xl font-bold text-gray-900">{stat.value}</p>
+                      <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
                     </div>
                     <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${stat.color} text-white shadow-lg`}>
                       {stat.icon}
@@ -203,22 +205,22 @@ export default function AccountsPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input
-                    placeholder="Search by account number or type..."
-                    className="pl-10 border-gray-200 bg-gray-50 focus:bg-white"
+                    placeholder={t("search_placeholder")}
+                    className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px] border-gray-200 bg-gray-50">
-                    <SelectValue placeholder="Account Type" />
+                  <SelectTrigger className="w-full sm:w-[180px] border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
+                    <SelectValue placeholder={t("account_type")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="savings">Savings</SelectItem>
-                    <SelectItem value="current">Current</SelectItem>
-                    <SelectItem value="fixed_deposit">Fixed Deposit</SelectItem>
-                    <SelectItem value="customer">Customer</SelectItem>
+                    <SelectItem value="all">{t("all")}</SelectItem>
+                    <SelectItem value="savings">{t("accounts")}</SelectItem>
+                    <SelectItem value="current">{t("accounts")}</SelectItem>
+                    <SelectItem value="fixed_deposit">{t("accounts")}</SelectItem>
+                    <SelectItem value="customer">{t("customers")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -255,13 +257,13 @@ export default function AccountsPage() {
                 <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50">
                   <CreditCard className="h-10 w-10 text-blue-400" />
                 </div>
-                <p className="mt-4 text-lg font-semibold text-gray-900">No accounts found</p>
+                <p className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">{t("no_results")}</p>
                 <p className="mt-1 text-sm text-gray-500">
                   {searchTerm || typeFilter !== "all"
-                    ? "Try adjusting your filters"
+                    ? t("no_results")
                     : isAdmin
-                      ? "No accounts in the system yet"
-                      : "Open your first account to get started"}
+                      ? t("no_data")
+                      : t("create_new")}
                 </p>
                 {!isAdmin && !searchTerm && typeFilter === "all" && (
                   <Button
@@ -269,7 +271,7 @@ export default function AccountsPage() {
                     className="mt-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white"
                   >
                     <Plus className="mr-2 h-4 w-4" />
-                    Open New Account
+                    {t("create_new")}
                   </Button>
                 )}
               </CardContent>
@@ -296,7 +298,7 @@ export default function AccountsPage() {
                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                               {typeConfig.label}
                             </p>
-                            <p className="mt-0.5 font-mono text-sm font-bold text-gray-900">
+                            <p className="mt-0.5 font-mono text-sm font-bold text-gray-900 dark:text-white">
                               {account.account_number}
                             </p>
                           </div>
@@ -308,8 +310,8 @@ export default function AccountsPage() {
                       </div>
 
                       <div className="mt-5">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</p>
-                        <p className="mt-1 text-2xl font-bold text-gray-900">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t("balance")}</p>
+                        <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
                           {formatCurrency(account.balance)}
                         </p>
                       </div>
@@ -327,7 +329,7 @@ export default function AccountsPage() {
                           onClick={() => setSelectedAccount(account)}
                         >
                           <Eye className="mr-1.5 h-3.5 w-3.5" />
-                          View
+                          {t("view")}
                         </Button>
                         {isAdmin && (
                           <>
@@ -340,7 +342,7 @@ export default function AccountsPage() {
                                 onClick={() => handleBlockAccount(account.id)}
                               >
                                 <Lock className="mr-1.5 h-3.5 w-3.5" />
-                                Block
+                                {t("close")}
                               </Button>
                             ) : account.status === "blocked" ? (
                               <Button
@@ -351,7 +353,7 @@ export default function AccountsPage() {
                                 onClick={() => handleUnblockAccount(account.id)}
                               >
                                 <Unlock className="mr-1.5 h-3.5 w-3.5" />
-                                Unblock
+                                {t("open")}
                               </Button>
                             ) : null}
                           </>
@@ -374,8 +376,8 @@ export default function AccountsPage() {
                   <Plus className="h-5 w-5" />
                 </div>
                 <div>
-                  <DialogTitle className="text-lg">Open New Account</DialogTitle>
-                  <p className="text-sm text-gray-500">Enter mother's name to open account</p>
+                  <DialogTitle className="text-lg">{t("create_new")}</DialogTitle>
+                  <p className="text-sm text-gray-500">{t("accounts")}</p>
                 </div>
               </div>
             </DialogHeader>
@@ -387,7 +389,7 @@ export default function AccountsPage() {
                   placeholder="Enter mother's full name"
                   value={formData.mother_name}
                   onChange={(e) => setFormData({ ...formData, mother_name: e.target.value })}
-                  className="h-12 border-gray-200 bg-gray-50"
+                  className="h-12 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
                   required
                 />
               </div>
@@ -399,7 +401,7 @@ export default function AccountsPage() {
                   onClick={() => setShowCreateDialog(false)}
                   className="border-gray-200"
                 >
-                  Cancel
+                  {t("cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -409,7 +411,7 @@ export default function AccountsPage() {
                   {submitting && (
                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   )}
-                  Create Account
+                  {t("create_new")}
                 </Button>
               </DialogFooter>
             </form>
@@ -425,8 +427,8 @@ export default function AccountsPage() {
                   <Eye className="h-5 w-5" />
                 </div>
                 <div>
-                  <DialogTitle className="text-lg">Account Details</DialogTitle>
-                  <p className="text-sm text-gray-500">Complete account information</p>
+                  <DialogTitle className="text-lg">{t("accounts")}</DialogTitle>
+                  <p className="text-sm text-gray-500">{t("details")}</p>
                 </div>
               </div>
             </DialogHeader>
@@ -434,7 +436,7 @@ export default function AccountsPage() {
               <div className="space-y-5">
                 {/* Balance Display */}
                 <div className="rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-white">
-                  <p className="text-sm font-medium text-blue-100">Current Balance</p>
+                  <p className="text-sm font-medium text-blue-100">{t("balance")}</p>
                   <p className="mt-1 text-3xl font-bold">{formatCurrency(selectedAccount.balance)}</p>
                   <div className="mt-3 flex items-center gap-2">
                     <Badge className="bg-white/20 text-white border-0 text-xs">
@@ -449,19 +451,19 @@ export default function AccountsPage() {
                 {/* Details Grid */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">Account Number</p>
-                    <p className="mt-1 font-mono font-semibold text-gray-900">{selectedAccount.account_number}</p>
+                    <p className="text-xs font-medium text-gray-500">{t("account_number")}</p>
+                    <p className="mt-1 font-mono font-semibold text-gray-900 dark:text-white">{selectedAccount.account_number}</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">Interest Rate</p>
-                    <p className="mt-1 font-semibold text-gray-900">{selectedAccount.interest_rate}% p.a.</p>
+                    <p className="text-xs font-medium text-gray-500">{t("interest_rate")}</p>
+                    <p className="mt-1 font-semibold text-gray-900 dark:text-white">{selectedAccount.interest_rate}% p.a.</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">Created</p>
-                    <p className="mt-1 font-semibold text-gray-900">{formatDate(selectedAccount.created_at)}</p>
+                    <p className="text-xs font-medium text-gray-500">{t("created")}</p>
+                    <p className="mt-1 font-semibold text-gray-900 dark:text-white">{formatDate(selectedAccount.created_at)}</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">Account ID</p>
+                    <p className="text-xs font-medium text-gray-500">{t("account_number")}</p>
                     <p className="mt-1 font-mono text-xs text-gray-600">{selectedAccount.id}</p>
                   </div>
                 </div>
@@ -469,7 +471,7 @@ export default function AccountsPage() {
             )}
             <DialogFooter>
               <Button variant="outline" onClick={() => setSelectedAccount(null)} className="border-gray-200">
-                Close
+                {t("close")}
               </Button>
             </DialogFooter>
           </DialogContent>

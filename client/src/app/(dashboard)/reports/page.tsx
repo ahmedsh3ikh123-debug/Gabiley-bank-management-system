@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/contexts/toast-context";
+import { useLanguage } from "@/contexts/language-context";
 import api from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import {
@@ -89,6 +90,7 @@ const PIE_COLORS = ["#1F8A4D", "#F8CC58", "#1A1918", "#E4B155", "#EBD6A3"];
 
 export default function ReportsPage() {
   const { success, error: toastError } = useToast();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("daily");
 
   const [dailyDate, setDailyDate] = useState(new Date().toISOString().split("T")[0]);
@@ -191,23 +193,23 @@ export default function ReportsPage() {
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918]">Reports & Analytics</h1>
-              <p className="mt-1 text-gray-500">View detailed reports and analytics for your banking operations</p>
+              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white">{t("reports")}</h1>
+              <p className="mt-1 text-gray-500">{t("analytics")}</p>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" onClick={handlePrint} className="border-gray-200">
                 <Printer className="mr-2 h-4 w-4" />
-                Print
+                {t("print")}
               </Button>
               <Select onValueChange={(value) => handleExport(value)}>
-                <SelectTrigger className="w-[180px] border-gray-200 bg-white">
+                <SelectTrigger className="w-[180px] border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                   <Download className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Export Report" />
+                  <SelectValue placeholder={t("export")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="transactions">Transactions</SelectItem>
-                  <SelectItem value="accounts">Accounts</SelectItem>
-                  <SelectItem value="users">Users</SelectItem>
+                  <SelectItem value="transactions">{t("transactions")}</SelectItem>
+                  <SelectItem value="accounts">{t("accounts")}</SelectItem>
+                  <SelectItem value="users">{t("users")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -215,18 +217,18 @@ export default function ReportsPage() {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-white border border-gray-200 shadow-sm">
+            <TabsList className="bg-white border border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-700">
               <TabsTrigger value="daily" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 <Calendar className="h-4 w-4" />
-                Daily
+                {t("daily_report")}
               </TabsTrigger>
               <TabsTrigger value="monthly" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 <BarChart3 className="h-4 w-4" />
-                Monthly
+                {t("monthly_report")}
               </TabsTrigger>
               <TabsTrigger value="analytics" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 <TrendingUp className="h-4 w-4" />
-                Analytics
+                {t("analytics")}
               </TabsTrigger>
             </TabsList>
 
@@ -237,14 +239,14 @@ export default function ReportsPage() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Calendar className="h-5 w-5 text-blue-600" />
-                      Daily Report
+                      {t("daily_report")}
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       <Input
                         type="date"
                         value={dailyDate}
                         onChange={(e) => setDailyDate(e.target.value)}
-                        className="w-[200px] border-gray-200 bg-gray-50"
+                        className="w-[200px] border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
                       />
                       <Button variant="outline" size="icon" onClick={fetchDailyReport} disabled={loading} className="border-gray-200">
                         <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -266,11 +268,11 @@ export default function ReportsPage() {
                     <div className="space-y-6">
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                         {[
-                          { label: "Total Transactions", value: dailyReport.transaction_count, icon: <CreditCard className="h-4 w-4" />, color: "from-blue-500 to-indigo-600" },
-                          { label: "Total Deposits", value: formatCurrency(dailyReport.total_deposits), icon: <TrendingUp className="h-4 w-4" />, color: "from-emerald-500 to-green-600", isCurrency: true, positive: true },
-                          { label: "Total Withdrawals", value: formatCurrency(dailyReport.total_withdrawals), icon: <TrendingDown className="h-4 w-4" />, color: "from-rose-500 to-red-600", isCurrency: true, negative: true },
-                          { label: "Fees Collected", value: formatCurrency(dailyReport.total_fees), icon: <DollarSign className="h-4 w-4" />, color: "from-amber-500 to-orange-600", isCurrency: true },
-                          { label: "New Accounts", value: dailyReport.new_accounts, icon: <Users className="h-4 w-4" />, color: "from-violet-500 to-purple-600" },
+                          { label: t("total_transactions"), value: dailyReport.transaction_count, icon: <CreditCard className="h-4 w-4" />, color: "from-blue-500 to-indigo-600" },
+                          { label: t("deposits"), value: formatCurrency(dailyReport.total_deposits), icon: <TrendingUp className="h-4 w-4" />, color: "from-emerald-500 to-green-600", isCurrency: true, positive: true },
+                          { label: t("withdrawals"), value: formatCurrency(dailyReport.total_withdrawals), icon: <TrendingDown className="h-4 w-4" />, color: "from-rose-500 to-red-600", isCurrency: true, negative: true },
+                          { label: t("total_balance"), value: formatCurrency(dailyReport.total_fees), icon: <DollarSign className="h-4 w-4" />, color: "from-amber-500 to-orange-600", isCurrency: true },
+                          { label: t("accounts"), value: dailyReport.new_accounts, icon: <Users className="h-4 w-4" />, color: "from-violet-500 to-purple-600" },
                         ].map((stat) => (
                           <Card key={stat.label} className="relative overflow-hidden shadow-md">
                             <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-5`} />
@@ -281,7 +283,7 @@ export default function ReportsPage() {
                                   {stat.icon}
                                 </div>
                               </div>
-                              <p className={`mt-2 text-xl font-bold ${stat.negative ? "text-red-600" : stat.positive ? "text-green-600" : "text-gray-900"}`}>
+                              <p className={`mt-2 text-xl font-bold ${stat.negative ? "text-red-600" : stat.positive ? "text-green-600" : "text-gray-900 dark:text-white"}`}>
                                 {stat.value}
                               </p>
                             </CardContent>
@@ -290,9 +292,9 @@ export default function ReportsPage() {
                       </div>
 
                       <div className="grid gap-4 lg:grid-cols-2">
-                        <Card className="shadow-md">
+                          <Card className="shadow-md">
                           <CardHeader>
-                            <CardTitle className="text-sm font-medium">Transaction Breakdown</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("transactions")}</CardTitle>
                           </CardHeader>
                           <CardContent>
                             <ResponsiveContainer width="100%" height={250}>
@@ -326,21 +328,21 @@ export default function ReportsPage() {
 
                         <Card className="shadow-md">
                           <CardHeader>
-                            <CardTitle className="text-sm font-medium">Summary</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("summary")}</CardTitle>
                           </CardHeader>
                           <CardContent className="space-y-3">
                             {[
-                              { label: "Deposits", value: dailyReport.total_deposits, icon: <ArrowUpRight className="h-4 w-4 text-green-500" />, positive: true },
-                              { label: "Withdrawals", value: dailyReport.total_withdrawals, icon: <ArrowDownRight className="h-4 w-4 text-red-500" />, negative: true },
-                              { label: "Transfers", value: dailyReport.total_transfers, icon: <Activity className="h-4 w-4 text-blue-500" /> },
-                              { label: "Fees Collected", value: dailyReport.total_fees, icon: <DollarSign className="h-4 w-4 text-amber-500" /> },
+                              { label: t("deposits"), value: dailyReport.total_deposits, icon: <ArrowUpRight className="h-4 w-4 text-green-500" />, positive: true },
+                              { label: t("withdrawals"), value: dailyReport.total_withdrawals, icon: <ArrowDownRight className="h-4 w-4 text-red-500" />, negative: true },
+                              { label: t("transfers"), value: dailyReport.total_transfers, icon: <Activity className="h-4 w-4 text-blue-500" /> },
+                              { label: t("total_balance"), value: dailyReport.total_fees, icon: <DollarSign className="h-4 w-4 text-amber-500" /> },
                             ].map((item) => (
-                              <div key={item.label} className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
+                              <div key={item.label} className="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
                                 <div className="flex items-center gap-3">
                                   {item.icon}
-                                  <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{item.label}</span>
                                 </div>
-                                <span className={`text-sm font-bold ${item.positive ? "text-green-600" : item.negative ? "text-red-600" : "text-gray-900"}`}>
+                                <span className={`text-sm font-bold ${item.positive ? "text-green-600" : item.negative ? "text-red-600" : "text-gray-900 dark:text-white"}`}>
                                   {formatCurrency(item.value)}
                                 </span>
                               </div>
@@ -354,7 +356,7 @@ export default function ReportsPage() {
                       <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-50">
                         <Calendar className="h-10 w-10 text-blue-300" />
                       </div>
-                      <p className="mt-4 text-sm text-gray-500">Select a date and click refresh to view the daily report</p>
+                      <p className="mt-4 text-sm text-gray-500">{t("daily_report")}</p>
                     </div>
                   )}
                 </CardContent>
@@ -368,14 +370,14 @@ export default function ReportsPage() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <BarChart3 className="h-5 w-5 text-blue-600" />
-                      Monthly Report
+                      {t("monthly_report")}
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       <Input
                         type="month"
                         value={monthlyMonth}
                         onChange={(e) => setMonthlyMonth(e.target.value)}
-                        className="w-[200px] border-gray-200 bg-gray-50"
+                        className="w-[200px] border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
                       />
                       <Button variant="outline" size="icon" onClick={fetchMonthlyReport} disabled={loading} className="border-gray-200">
                         <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -397,10 +399,10 @@ export default function ReportsPage() {
                     <div className="space-y-6">
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         {[
-                          { label: "Transactions", value: monthlyReport.transaction_count, icon: <CreditCard className="h-4 w-4" />, color: "from-blue-500 to-indigo-600" },
-                          { label: "Deposits", value: formatCurrency(monthlyReport.total_deposits), icon: <TrendingUp className="h-4 w-4" />, color: "from-emerald-500 to-green-600" },
-                          { label: "Withdrawals", value: formatCurrency(monthlyReport.total_withdrawals), icon: <TrendingDown className="h-4 w-4" />, color: "from-rose-500 to-red-600" },
-                          { label: "Fees Collected", value: formatCurrency(monthlyReport.total_fees), icon: <DollarSign className="h-4 w-4" />, color: "from-amber-500 to-orange-600" },
+                          { label: t("transactions"), value: monthlyReport.transaction_count, icon: <CreditCard className="h-4 w-4" />, color: "from-blue-500 to-indigo-600" },
+                          { label: t("deposits"), value: formatCurrency(monthlyReport.total_deposits), icon: <TrendingUp className="h-4 w-4" />, color: "from-emerald-500 to-green-600" },
+                          { label: t("withdrawals"), value: formatCurrency(monthlyReport.total_withdrawals), icon: <TrendingDown className="h-4 w-4" />, color: "from-rose-500 to-red-600" },
+                          { label: t("total_balance"), value: formatCurrency(monthlyReport.total_fees), icon: <DollarSign className="h-4 w-4" />, color: "from-amber-500 to-orange-600" },
                         ].map((stat) => (
                           <Card key={stat.label} className="relative overflow-hidden shadow-md">
                             <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-5`} />
@@ -411,7 +413,7 @@ export default function ReportsPage() {
                                   {stat.icon}
                                 </div>
                               </div>
-                              <p className="mt-2 text-xl font-bold text-gray-900">{stat.value}</p>
+                              <p className="mt-2 text-xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
                             </CardContent>
                           </Card>
                         ))}
@@ -419,10 +421,10 @@ export default function ReportsPage() {
 
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         {[
-                          { label: "New Accounts", value: monthlyReport.new_accounts, icon: <Users className="h-4 w-4 text-blue-500" /> },
-                          { label: "Loan Disbursements", value: monthlyReport.loan_disbursements, icon: <TrendingUp className="h-4 w-4 text-green-500" /> },
-                          { label: "Loan Repayments", value: monthlyReport.loan_repayments, icon: <TrendingDown className="h-4 w-4 text-blue-500" /> },
-                          { label: "Net Flow", value: formatCurrency(monthlyReport.total_deposits - monthlyReport.total_withdrawals), icon: <DollarSign className="h-4 w-4 text-violet-500" />, positive: (monthlyReport.total_deposits - monthlyReport.total_withdrawals) >= 0 },
+                          { label: t("accounts"), value: monthlyReport.new_accounts, icon: <Users className="h-4 w-4 text-blue-500" /> },
+                          { label: t("loans"), value: monthlyReport.loan_disbursements, icon: <TrendingUp className="h-4 w-4 text-green-500" /> },
+                          { label: t("loans"), value: monthlyReport.loan_repayments, icon: <TrendingDown className="h-4 w-4 text-blue-500" /> },
+                          { label: t("total_balance"), value: formatCurrency(monthlyReport.total_deposits - monthlyReport.total_withdrawals), icon: <DollarSign className="h-4 w-4 text-violet-500" />, positive: (monthlyReport.total_deposits - monthlyReport.total_withdrawals) >= 0 },
                         ].map((stat) => (
                           <Card key={stat.label} className="shadow-md">
                             <CardContent className="p-4">
@@ -432,7 +434,7 @@ export default function ReportsPage() {
                                   <p className="text-xs font-medium text-gray-500">{stat.label}</p>
                                 </div>
                               </div>
-                              <p className={`mt-2 text-xl font-bold ${stat.positive === true ? "text-green-600" : stat.positive === false ? "text-red-600" : "text-gray-900"}`}>
+                              <p className={`mt-2 text-xl font-bold ${stat.positive === true ? "text-green-600" : stat.positive === false ? "text-red-600" : "text-gray-900 dark:text-white"}`}>
                                 {stat.value}
                               </p>
                             </CardContent>
@@ -442,20 +444,20 @@ export default function ReportsPage() {
 
                       <Card className="shadow-md">
                         <CardHeader>
-                          <CardTitle className="text-sm font-medium">Monthly Summary</CardTitle>
+                          <CardTitle className="text-sm font-medium">{t("summary")}</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <div className="grid gap-4 md:grid-cols-3">
                             <div className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 p-4 border border-blue-100">
-                              <p className="text-sm font-medium text-blue-800">Total Transfers</p>
+                              <p className="text-sm font-medium text-blue-800">{t("transfers")}</p>
                               <p className="mt-1 text-2xl font-bold text-blue-900">{formatCurrency(monthlyReport.total_transfers)}</p>
                             </div>
                             <div className="rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 p-4 border border-green-100">
-                              <p className="text-sm font-medium text-green-800">Loan Disbursements</p>
+                              <p className="text-sm font-medium text-green-800">{t("loans")}</p>
                               <p className="mt-1 text-2xl font-bold text-green-900">{monthlyReport.loan_disbursements}</p>
                             </div>
                             <div className="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 p-4 border border-amber-100">
-                              <p className="text-sm font-medium text-amber-800">Loan Repayments</p>
+                              <p className="text-sm font-medium text-amber-800">{t("loans")}</p>
                               <p className="mt-1 text-2xl font-bold text-amber-900">{monthlyReport.loan_repayments}</p>
                             </div>
                           </div>
@@ -467,7 +469,7 @@ export default function ReportsPage() {
                       <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-50">
                         <BarChart3 className="h-10 w-10 text-blue-300" />
                       </div>
-                      <p className="mt-4 text-sm text-gray-500">Select a month and click refresh to view the monthly report</p>
+                      <p className="mt-4 text-sm text-gray-500">{t("monthly_report")}</p>
                     </div>
                   )}
                 </CardContent>
@@ -481,11 +483,11 @@ export default function ReportsPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <TrendingUp className="h-5 w-5 text-blue-600" />
-                      Analytics Dashboard
+                      {t("analytics")}
                     </CardTitle>
                     <Button variant="outline" size="sm" onClick={fetchAnalytics} disabled={loading} className="border-gray-200">
                       <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-                      Refresh
+                      {t("refresh")}
                     </Button>
                   </div>
                 </CardHeader>
@@ -503,10 +505,10 @@ export default function ReportsPage() {
                     <div className="space-y-6">
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         {[
-                          { label: "Pending Loans", value: analyticsData.loan_summary.total_pending, icon: <Clock className="h-4 w-4" />, color: "from-amber-500 to-orange-600" },
-                          { label: "Approved Loans", value: analyticsData.loan_summary.total_approved, icon: <CheckCircle className="h-4 w-4" />, color: "from-emerald-500 to-green-600" },
-                          { label: "Rejected Loans", value: analyticsData.loan_summary.total_rejected, icon: <XCircle className="h-4 w-4" />, color: "from-rose-500 to-red-600" },
-                          { label: "Total Loan Value", value: formatCurrency(analyticsData.loan_summary.total_amount), icon: <DollarSign className="h-4 w-4" />, color: "from-violet-500 to-purple-600" },
+                          { label: t("pending"), value: analyticsData.loan_summary.total_pending, icon: <Clock className="h-4 w-4" />, color: "from-amber-500 to-orange-600" },
+                          { label: t("approved"), value: analyticsData.loan_summary.total_approved, icon: <CheckCircle className="h-4 w-4" />, color: "from-emerald-500 to-green-600" },
+                          { label: t("rejected"), value: analyticsData.loan_summary.total_rejected, icon: <XCircle className="h-4 w-4" />, color: "from-rose-500 to-red-600" },
+                          { label: t("total_balance"), value: formatCurrency(analyticsData.loan_summary.total_amount), icon: <DollarSign className="h-4 w-4" />, color: "from-violet-500 to-purple-600" },
                         ].map((stat) => (
                           <Card key={stat.label} className="relative overflow-hidden shadow-md">
                             <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-5`} />
@@ -517,7 +519,7 @@ export default function ReportsPage() {
                                   {stat.icon}
                                 </div>
                               </div>
-                              <p className="mt-2 text-xl font-bold text-gray-900">{stat.value}</p>
+                              <p className="mt-2 text-xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
                             </CardContent>
                           </Card>
                         ))}
@@ -526,7 +528,7 @@ export default function ReportsPage() {
                       <div className="grid gap-4 lg:grid-cols-2">
                         <Card className="shadow-md">
                           <CardHeader>
-                            <CardTitle className="text-sm font-medium">Transaction Trends (30 Days)</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("transactions")}</CardTitle>
                           </CardHeader>
                           <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
@@ -554,25 +556,25 @@ export default function ReportsPage() {
 
                         <Card className="shadow-md">
                           <CardHeader>
-                            <CardTitle className="text-sm font-medium">Top Accounts by Balance</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("accounts")}</CardTitle>
                           </CardHeader>
                           <CardContent>
                             <div className="space-y-3 max-h-[300px] overflow-y-auto">
                               {analyticsData.top_accounts.length === 0 ? (
-                                <p className="text-sm text-gray-500 text-center py-4">No accounts found</p>
+                                <p className="text-sm text-gray-500 text-center py-4">{t("no_results")}</p>
                               ) : (
                                 analyticsData.top_accounts.slice(0, 10).map((account, index) => (
-                                  <div key={account.id} className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
+                                  <div key={account.id} className="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
                                     <div className="flex items-center gap-3">
                                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white">
                                         {index + 1}
                                       </div>
                                       <div>
-                                        <p className="text-sm font-medium text-gray-900">{account.full_name}</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white">{account.full_name}</p>
                                         <p className="text-xs text-gray-500">{account.account_number}</p>
                                       </div>
                                     </div>
-                                    <p className="text-sm font-bold text-gray-900">{formatCurrency(account.balance)}</p>
+                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(account.balance)}</p>
                                   </div>
                                 ))
                               )}
@@ -584,7 +586,7 @@ export default function ReportsPage() {
                       <div className="grid gap-4 lg:grid-cols-2">
                         <Card className="shadow-md">
                           <CardHeader>
-                            <CardTitle className="text-sm font-medium">User Growth</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("users")}</CardTitle>
                           </CardHeader>
                           <CardContent>
                             <ResponsiveContainer width="100%" height={280}>
@@ -601,7 +603,7 @@ export default function ReportsPage() {
 
                         <Card className="shadow-md">
                           <CardHeader>
-                            <CardTitle className="text-sm font-medium">Account Growth</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t("accounts")}</CardTitle>
                           </CardHeader>
                           <CardContent>
                             <ResponsiveContainer width="100%" height={280}>
@@ -622,7 +624,7 @@ export default function ReportsPage() {
                       <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-50">
                         <TrendingUp className="h-10 w-10 text-blue-300" />
                       </div>
-                      <p className="mt-4 text-sm text-gray-500">Click refresh to load analytics data</p>
+                      <p className="mt-4 text-sm text-gray-500">{t("analytics")}</p>
                     </div>
                   )}
                 </CardContent>

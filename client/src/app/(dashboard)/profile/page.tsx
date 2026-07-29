@@ -152,7 +152,7 @@ function ProfileContent() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918]">My Profile</h1>
+          <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white">My Profile</h1>
           <p className="mt-1 text-gray-500">Manage your account settings and personal information.</p>
         </div>
         <Badge variant="outline" className="gap-1 border-gray-200 w-fit">
@@ -186,7 +186,7 @@ function ProfileContent() {
                     .slice(0, 2)}
                 </span>
               </div>
-              <button className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-white text-blue-600 shadow-lg hover:bg-gray-50">
+              <button className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-white text-blue-600 shadow-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-gray-700">
                 <Camera className="h-4 w-4" />
               </button>
             </div>
@@ -237,17 +237,17 @@ function ProfileContent() {
               {user.branch && (
                 <div className="flex justify-between">
                   <span className="text-gray-500">Branch</span>
-                  <span className="font-medium text-gray-900">{user.branch}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{user.branch}</span>
                 </div>
               )}
               <div className="flex justify-between">
                 <span className="text-gray-500">Member Since</span>
-                <span className="font-medium text-gray-900">{formatDate(user.created_at)}</span>
+                <span className="font-medium text-gray-900 dark:text-white">{formatDate(user.created_at)}</span>
               </div>
               {user.last_login && (
                 <div className="flex justify-between">
                   <span className="text-gray-500">Last Login</span>
-                  <span className="font-medium text-gray-900">{formatDate(user.last_login)}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{formatDate(user.last_login)}</span>
                 </div>
               )}
               <div className="flex justify-between">
@@ -263,7 +263,7 @@ function ProfileContent() {
         {/* Right Column */}
         <div className="md:col-span-2">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-white border border-gray-200 shadow-sm w-full justify-start">
+            <TabsList className="bg-white border border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-700 w-full justify-start">
               <TabsTrigger value="profile" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 <Edit3 className="h-4 w-4" />
                 Edit Profile
@@ -302,7 +302,7 @@ function ProfileContent() {
                           value={profileForm.full_name}
                           onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
                           placeholder="Enter your full name"
-                          className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                          className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                         />
                       </div>
                     </div>
@@ -315,7 +315,7 @@ function ProfileContent() {
                           value={profileForm.email}
                           onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
                           placeholder="Enter your email"
-                          className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                          className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                         />
                       </div>
                     </div>
@@ -327,7 +327,7 @@ function ProfileContent() {
                           value={profileForm.phone}
                           onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                           placeholder="Enter your phone number"
-                          className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                          className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                         />
                       </div>
                     </div>
@@ -339,7 +339,7 @@ function ProfileContent() {
                           type="date"
                           value={profileForm.dob}
                           onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
-                          className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                          className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                         />
                       </div>
                     </div>
@@ -352,7 +352,7 @@ function ProfileContent() {
                         value={profileForm.address}
                         onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
                         placeholder="Enter your address"
-                        className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                        className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                       />
                     </div>
                   </div>
@@ -398,7 +398,7 @@ function ProfileContent() {
                         value={passwordForm.current_password}
                         onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
                         placeholder="Enter current password"
-                        className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                        className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                       />
                     </div>
                   </div>
@@ -411,7 +411,7 @@ function ProfileContent() {
                         value={passwordForm.new_password}
                         onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
                         placeholder="Enter new password"
-                        className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                        className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                       />
                     </div>
                   </div>
@@ -424,7 +424,7 @@ function ProfileContent() {
                         value={passwordForm.confirm_password}
                         onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
                         placeholder="Confirm new password"
-                        className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                        className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                       />
                     </div>
                   </div>
@@ -477,7 +477,7 @@ function ProfileContent() {
                           value={pinForm.current_pin}
                           onChange={(e) => setPinForm({ ...pinForm, current_pin: e.target.value })}
                           placeholder="Enter current PIN"
-                          className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                          className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                         />
                       </div>
                     </div>
@@ -492,7 +492,7 @@ function ProfileContent() {
                         value={pinForm.new_pin}
                         onChange={(e) => setPinForm({ ...pinForm, new_pin: e.target.value })}
                         placeholder="Enter 4-digit PIN"
-                        className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                        className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                       />
                     </div>
                   </div>
@@ -506,7 +506,7 @@ function ProfileContent() {
                         value={pinForm.confirm_pin}
                         onChange={(e) => setPinForm({ ...pinForm, confirm_pin: e.target.value })}
                         placeholder="Confirm 4-digit PIN"
-                        className="pl-10 border-gray-200 bg-gray-50 focus:bg-white h-11"
+                        className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                       />
                     </div>
                   </div>

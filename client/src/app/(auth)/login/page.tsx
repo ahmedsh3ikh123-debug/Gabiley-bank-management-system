@@ -180,7 +180,7 @@ export default function LoginPage() {
       <Link href="/register" className="block animate-slide-up" style={{ animationDelay: "0.25s" }}>
         <Button
           type="button"
-          className="relative w-full h-[52px] rounded-[14px] bg-gradient-to-r from-[#F8CC58] via-[#F8CC58] to-[#E4B155] hover:from-[#F8CC58]/90 hover:via-[#F8CC58]/90 hover:to-[#E4B155]/90 text-[#1A1918] text-[15px] font-extrabold shadow-lg shadow-[#F8CC58]/30 hover:shadow-xl hover:shadow-[#F8CC58]/50 transition-all duration-300 group overflow-hidden"
+          className="relative w-full h-[52px] rounded-[14px] bg-gradient-to-r from-[#F8CC58] via-[#F8CC58] to-[#E4B155] hover:from-[#F8CC58]/90 hover:via-[#F8CC58]/90 hover:to-[#E4B155]/90 text-[#1A1918] dark:text-white text-[15px] font-extrabold shadow-lg shadow-[#F8CC58]/30 hover:shadow-xl hover:shadow-[#F8CC58]/50 transition-all duration-300 group overflow-hidden"
         >
           <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.2] to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
           <span className="relative flex items-center justify-center">

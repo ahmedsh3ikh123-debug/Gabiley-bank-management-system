@@ -85,79 +85,79 @@
 
   /* Dark Mode - Premium Banking */
   .dark {
-    /* Background - Black Accent */
-    --background: 30 4% 10%;
-    --foreground: 0 0% 97%;
+    /* Background - Pure Black */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
     /* Card Colors */
-    --card: 30 4% 12%;
-    --card-foreground: 0 0% 97%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
 
     /* Popover */
-    --popover: 30 4% 12%;
-    --popover-foreground: 0 0% 97%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
 
-    /* Primary - Lighter Emerald for Dark */
-    --primary: 147 63% 45%;
-    --primary-foreground: 0 0% 97%;
+    /* Primary - #1F8A4D Emerald */
+    --primary: 142 63% 33%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Darker Gold */
-    --secondary: 43 90% 60%;
-    --secondary-foreground: 0 0% 97%;
+    /* Secondary - #F8CC58 Gold */
+    --secondary: 43 90% 66%;
+    --secondary-foreground: 0 0% 100%;
 
     /* Muted */
-    --muted: 30 4% 15%;
-    --muted-foreground: 30 4% 60%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 65%;
 
-    /* Accent */
-    --accent: 43 90% 60%;
-    --accent-foreground: 0 0% 97%;
+    /* Accent - #E4B155 Dark Gold */
+    --accent: 38 75% 60%;
+    --accent-foreground: 0 0% 100%;
 
     /* Destructive/Error */
     --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 97%;
+    --destructive-foreground: 0 0% 100%;
 
     /* Border */
-    --border: 30 4% 20%;
-    --input: 30 4% 20%;
-    --ring: 147 63% 45%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 142 63% 33%;
 
-    /* Success - Lighter Emerald */
-    --success: 147 63% 45%;
-    --success-foreground: 0 0% 97%;
+    /* Success - #1F8A4D */
+    --success: 142 63% 33%;
+    --success-foreground: 0 0% 100%;
 
-    /* Warning - Darker Gold */
-    --warning: 43 90% 55%;
-    --warning-foreground: 0 0% 97%;
+    /* Warning - #F8CC58 */
+    --warning: 43 90% 66%;
+    --warning-foreground: 0 0% 100%;
 
     /* Sidebar - Dark */
-    --sidebar-background: 30 4% 8%;
-    --sidebar-foreground: 0 0% 97%;
-    --sidebar-primary: 0 0% 97%;
-    --sidebar-primary-foreground: 147 63% 45%;
-    --sidebar-accent: 30 4% 14%;
-    --sidebar-accent-foreground: 0 0% 97%;
-    --sidebar-border: 30 4% 15%;
-    --sidebar-ring: 147 63% 45%;
+    --sidebar-background: 0 0% 3%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 142 63% 33%;
+    --sidebar-accent: 0 0% 8%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 142 63% 33%;
 
     /* Banking Specific - Dark Mode */
-    --bank-emerald: #2BA85E;
-    --bank-emerald-light: #3EBD76;
-    --bank-gold: #E4B155;
-    --bank-gold-dark: #D4A044;
-    --bank-cream: #C9B896;
-    --bank-success: #2BA85E;
-    --bank-error: #ef4444;
+    --bank-emerald: #1F8A4D;
+    --bank-emerald-light: #2BA85E;
+    --bank-gold: #F8CC58;
+    --bank-gold-dark: #E4B155;
+    --bank-cream: #E4B155;
+    --bank-success: #1F8A4D;
+    --bank-error: #dc2626;
     --bank-gray: #94a3b8;
     --bank-gray-light: #cbd5e1;
-    --bank-bg: #1A1918;
+    --bank-bg: #000000;
 
     /* Shadows - Dark Mode */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-    --shadow-gold: 0 4px 14px 0 rgba(248, 204, 88, 0.25);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    --shadow-gold: 0 4px 14px 0 rgba(248, 204, 88, 0.3);
   }
 }
 
@@ -216,9 +216,9 @@
   }
 
   .dark .glass-card {
-    background: rgba(15, 23, 42, 0.85);
+    background: rgba(0, 0, 0, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   .glass-surface {
@@ -229,7 +229,7 @@
   }
 
   .dark .glass-surface {
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(0, 0, 0, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
 }
@@ -287,15 +287,15 @@
   }
 
   .dark .scrollbar-premium {
-    scrollbar-color: #1F8A4D #1A1918;
+    scrollbar-color: #1F8A4D #000000;
   }
 
   .dark .scrollbar-premium::-webkit-scrollbar-track {
-    background: #1A1918;
+    background: #000000;
   }
 
   .dark .scrollbar-premium::-webkit-scrollbar-thumb {
-    border-color: #1A1918;
+    border-color: #000000;
   }
 }
 
@@ -521,7 +521,7 @@
   }
 
   .bg-hero-gradient {
-    background: linear-gradient(135deg, #1A1918 0%, #1F8A4D 50%, #176B3D 100%);
+    background: linear-gradient(135deg, #000000 0%, #1F8A4D 50%, #176B3D 100%);
   }
 
   .bg-card-gradient {
@@ -529,7 +529,7 @@
   }
 
   .dark .bg-card-gradient {
-    background: linear-gradient(180deg, rgba(30,29,28,1) 0%, rgba(26,25,24,1) 100%);
+    background: linear-gradient(180deg, rgba(13,13,13,1) 0%, rgba(0,0,0,1) 100%);
   }
 
   .bg-surface-gradient {
@@ -537,7 +537,7 @@
   }
 
   .dark .bg-surface-gradient {
-    background: linear-gradient(135deg, #1A1918 0%, #252423 100%);
+    background: linear-gradient(135deg, #000000 0%, #0D0D0D 100%);
   }
 
   .bg-success-gradient {
@@ -563,11 +563,11 @@
 
   .dark .bg-mesh-gradient {
     background:
-      radial-gradient(at 40% 20%, rgba(31, 138, 77, 0.08) 0px, transparent 50%),
-      radial-gradient(at 80% 0%, rgba(248, 204, 88, 0.05) 0px, transparent 50%),
-      radial-gradient(at 0% 50%, rgba(31, 138, 77, 0.05) 0px, transparent 50%),
-      radial-gradient(at 80% 50%, rgba(248, 204, 88, 0.05) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, rgba(228, 177, 85, 0.05) 0px, transparent 50%);
+      radial-gradient(at 40% 20%, rgba(31, 138, 77, 0.12) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(248, 204, 88, 0.08) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(31, 138, 77, 0.08) 0px, transparent 50%),
+      radial-gradient(at 80% 50%, rgba(248, 204, 88, 0.08) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(228, 177, 85, 0.08) 0px, transparent 50%);
   }
 }
 
@@ -608,7 +608,7 @@
   }
 
   .dark .shadow-glass {
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -826,7 +826,7 @@
   }
 
   .stat-card-gradient-3 {
-    background: linear-gradient(135deg, #1A1918 0%, #2A2928 100%);
+    background: linear-gradient(135deg, #000000 0%, #0D0D0D 100%);
   }
 
   .stat-card-gradient-4 {
@@ -955,6 +955,13 @@
 /* Premium input focus ring */
 .auth-input-focus:focus {
   animation: authInputFocus 0.4s ease-out;
+}
+
+/* Dark mode text color fix - ensure dark text is white in dark mode */
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700 {
+  color: white !important;
 }
 
 /* Ripple effect container */

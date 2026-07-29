@@ -151,7 +151,7 @@ function NotificationsContent() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918]">Notifications</h1>
+          <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white">Notifications</h1>
           {unreadCount > 0 && (
             <Badge className="bg-red-100 text-red-800 border-red-200 text-xs font-medium">
               {unreadCount} unread
@@ -201,7 +201,7 @@ function NotificationsContent() {
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50">
               <BellOff className="h-10 w-10 text-blue-300" />
             </div>
-            <p className="mt-4 text-lg font-semibold text-gray-900">No notifications</p>
+            <p className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">No notifications</p>
             <p className="mt-1 text-sm text-gray-500">
               {filterType !== "all" ? "No notifications of this type" : "You're all caught up!"}
             </p>
@@ -232,7 +232,7 @@ function NotificationsContent() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <h3 className={`text-sm ${!notification.read ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}>
+                            <h3 className={`text-sm ${!notification.read ? "font-semibold text-gray-900 dark:text-white" : "font-medium text-gray-700"}`}>
                               {notification.title}
                             </h3>
                             <Badge className={`${BADGE_COLORS[notification.type] || BADGE_COLORS.info} border text-[10px] font-medium`}>

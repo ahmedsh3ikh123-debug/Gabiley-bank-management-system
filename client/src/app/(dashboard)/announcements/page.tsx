@@ -193,7 +193,7 @@ export default function AnnouncementsPage() {
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918]">Announcements</h1>
+              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white">Announcements</h1>
               <p className="mt-1 text-gray-500">
                 {isAdmin ? "Manage system announcements" : "View latest announcements"}
               </p>
@@ -234,7 +234,7 @@ export default function AnnouncementsPage() {
                 <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50">
                   <Megaphone className="h-10 w-10 text-blue-300" />
                 </div>
-                <p className="mt-4 text-lg font-semibold text-gray-900">No announcements</p>
+                <p className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">No announcements</p>
                 <p className="mt-1 text-sm text-gray-500">
                   {isAdmin ? "Create your first announcement" : "No announcements yet"}
                 </p>
@@ -256,7 +256,7 @@ export default function AnnouncementsPage() {
                           </div>
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-lg font-bold text-gray-900">{a.title}</h3>
+                              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{a.title}</h3>
                               <Badge className={`${priorityConfig.color} border text-xs font-medium`}>
                                 {priorityConfig.label}
                               </Badge>
@@ -337,7 +337,7 @@ export default function AnnouncementsPage() {
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Announcement title"
-                  className="border-gray-200 bg-gray-50 focus:bg-white h-11"
+                  className="border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
                 />
               </div>
               <div className="space-y-2">
@@ -347,7 +347,7 @@ export default function AnnouncementsPage() {
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
                   placeholder="Write your announcement message here..."
                   rows={5}
-                  className="border-gray-200 bg-gray-50 focus:bg-white resize-none"
+                  className="border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 resize-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -357,7 +357,7 @@ export default function AnnouncementsPage() {
                     value={form.priority}
                     onValueChange={(v) => setForm({ ...form, priority: v })}
                   >
-                    <SelectTrigger className="border-gray-200 bg-gray-50 h-11">
+                    <SelectTrigger className="border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 h-11">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -374,7 +374,7 @@ export default function AnnouncementsPage() {
                     value={form.target_role}
                     onValueChange={(v) => setForm({ ...form, target_role: v })}
                   >
-                    <SelectTrigger className="border-gray-200 bg-gray-50 h-11">
+                    <SelectTrigger className="border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 h-11">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

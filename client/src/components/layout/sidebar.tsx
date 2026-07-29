@@ -13,9 +13,9 @@ import {
   CreditCard,
   ArrowLeftRight,
   Banknote,
+  Settings,
   BarChart3,
   Shield,
-  Settings,
   Bell,
   Megaphone,
   LogOut,
@@ -163,7 +163,7 @@ export function Sidebar() {
         className="fixed top-4 left-4 z-50 flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-lg lg:hidden transition-all duration-300"
         style={{ background: `linear-gradient(135deg, ${theme.sidebarAccent}, ${theme.sidebarAccent}cc)` }}
       >
-        {mobileOpen ? <X className="h-5 w-5 text-[#1A1918]" /> : <Menu className="h-5 w-5 text-[#1A1918]" />}
+        {mobileOpen ? <X className="h-5 w-5 text-[#1A1918] dark:text-white" /> : <Menu className="h-5 w-5 text-[#1A1918] dark:text-white" />}
       </button>
 
       {/* Sidebar */}
@@ -274,7 +274,7 @@ export function Sidebar() {
                           <>
                             <span className="flex-1 truncate">{t(item.label)}</span>
                             {isNotifications && unreadCount > 0 && (
-                              <span className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-[#1A1918]" style={{ backgroundColor: theme.sidebarAccent }}>
+                              <span className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-[#1A1918] dark:text-white" style={{ backgroundColor: theme.sidebarAccent }}>
                                 {unreadCount > 99 ? "99+" : unreadCount}
                               </span>
                             )}
@@ -300,7 +300,7 @@ export function Sidebar() {
         <div className={cn("relative p-3 transition-all duration-300", collapsed && "px-2 py-3")}>
           {user && !collapsed ? (
             <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 border border-white/10 transition-all duration-300" style={{ background: `linear-gradient(135deg, ${theme.sidebarAccent}10, transparent)` }}>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-[#1A1918] overflow-hidden shadow-lg" style={{ background: `linear-gradient(135deg, ${theme.sidebarAccent}, ${theme.sidebarAccent}cc)` }}>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-[#1A1918] dark:text-white overflow-hidden shadow-lg" style={{ background: `linear-gradient(135deg, ${theme.sidebarAccent}, ${theme.sidebarAccent}cc)` }}>
                 {user.profile_picture ? (
                   <img
                     src={user.profile_picture}
@@ -329,7 +329,7 @@ export function Sidebar() {
             </div>
           ) : user && collapsed ? (
             <div className="flex justify-center">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-[#1A1918] overflow-hidden shadow-lg" style={{ background: `linear-gradient(135deg, ${theme.sidebarAccent}, ${theme.sidebarAccent}cc)` }}>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-[#1A1918] dark:text-white overflow-hidden shadow-lg" style={{ background: `linear-gradient(135deg, ${theme.sidebarAccent}, ${theme.sidebarAccent}cc)` }}>
                 {user.profile_picture ? (
                   <img
                     src={user.profile_picture}
