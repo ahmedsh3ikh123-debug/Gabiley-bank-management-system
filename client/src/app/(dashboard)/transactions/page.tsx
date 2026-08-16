@@ -51,6 +51,14 @@ import {
 } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import {
+  saveTransactionOffline,
+  getAllTransactionsOffline,
+  addToPendingSync,
+  getPendingSyncCount,
+} from "@/lib/offline-db";
+import { syncData } from "@/lib/sync-engine";
 import {
   ArrowLeftRight,
   TrendingUp,
@@ -61,6 +69,8 @@ import {
   Search,
   CreditCard,
   UserCheck,
+  WifiOff,
+  RefreshCw,
 } from "lucide-react";
 
 interface User {
@@ -112,7 +122,7 @@ interface TransactionReceipt {
 export default function TransactionsPage() {
   const { user } = useAuth();
   const { success, error: showError } = useToast();
-  const isAdmin = (user?.role === "super_admin" || user?.role === "branch_manager");
+  const isAdmin = (user?.role === "super_admin" || user?.role === "branch_manager" || user?.role === "manager");
   const isEmployee = (user?.role !== "customer");
   const isCustomer = user?.role === "customer";
 
@@ -146,10 +156,14 @@ export default function TransactionsPage() {
   const [pendingDeposits, setPendingDeposits] = useState<Transaction[]>([]);
   const [pendingLoading, setPendingLoading] = useState(false);
 
+  const { isOnline, setSyncing, setPendingItems } = useOnlineStatus();
+  const [pendingCount, setPendingCount] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+
   const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await API.get("/admin/users", {
+      const response = await API.get("/employee/users", {
         params: { role: "customer", search: searchQuery },
       });
       setCustomers(response.data?.users || response.data || []);
@@ -164,7 +178,7 @@ export default function TransactionsPage() {
     async (userId: string) => {
       try {
         setLoading(true);
-        const response = await API.get(`/admin/users/${userId}/details`);
+        const response = await API.get(`/employee/users/${userId}/details`);
         setCustomerAccounts(response.data?.accounts || []);
       } catch (err: any) {
         showError(err.response?.data?.message || "Failed to fetch accounts");
@@ -190,6 +204,25 @@ export default function TransactionsPage() {
   const fetchTransactionHistory = useCallback(async () => {
     try {
       setHistoryLoading(true);
+
+      if (!isOnline) {
+        const offlineTxns = await getAllTransactionsOffline();
+        let filtered = offlineTxns as Transaction[];
+        if (historyFilter !== "all") {
+          filtered = filtered.filter((t: any) => t.type === historyFilter);
+        }
+        if (historySearch) {
+          const lower = historySearch.toLowerCase();
+          filtered = filtered.filter(
+            (t: any) =>
+              t.transaction_id?.toLowerCase().includes(lower) ||
+              t.description?.toLowerCase().includes(lower)
+          );
+        }
+        setTransactionHistory(filtered);
+        return;
+      }
+
       const params: any = {};
       if (historyFilter !== "all") {
         params.type = historyFilter;
@@ -200,23 +233,68 @@ export default function TransactionsPage() {
       const response = await API.get("/transactions", { params });
       setTransactionHistory(response.data?.transactions || response.data || []);
     } catch (err: any) {
-      showError(err.response?.data?.message || "Failed to fetch transaction history");
+      const offlineTxns = await getAllTransactionsOffline();
+      setTransactionHistory(offlineTxns as Transaction[]);
     } finally {
       setHistoryLoading(false);
     }
-  }, [historyFilter, historySearch, success, showError]);
+  }, [isOnline, historyFilter, historySearch, success, showError]);
 
   const fetchPendingDeposits = useCallback(async () => {
     try {
       setPendingLoading(true);
+      if (!isOnline) {
+        const offlineTxns = await getAllTransactionsOffline();
+        const pending = offlineTxns.filter(
+          (t: any) => t.type === "deposit" && t.status === "pending"
+        );
+        setPendingDeposits(pending as Transaction[]);
+        return;
+      }
       const response = await API.get("/transactions", { params: { type: "deposit", status: "pending" } });
       setPendingDeposits(response.data?.transactions || response.data || []);
     } catch (err: any) {
-      showError(err.response?.data?.message || "Failed to fetch pending deposits");
+      const offlineTxns = await getAllTransactionsOffline();
+      const pending = offlineTxns.filter(
+        (t: any) => t.type === "deposit" && t.status === "pending"
+      );
+      setPendingDeposits(pending as Transaction[]);
     } finally {
       setPendingLoading(false);
     }
-  }, [success, showError]);
+  }, [isOnline, success, showError]);
+
+  const updatePendingCount = useCallback(async () => {
+    const count = await getPendingSyncCount();
+    setPendingCount(count);
+    setPendingItems(count);
+  }, [setPendingItems]);
+
+  useEffect(() => {
+    updatePendingCount();
+  }, [updatePendingCount]);
+
+  useEffect(() => {
+    if (isOnline && pendingCount > 0) {
+      (async () => {
+        if (isSyncing) return;
+        try {
+          setIsSyncing(true);
+          setSyncing(true);
+          await syncData();
+          fetchTransactionHistory();
+          fetchPendingDeposits();
+          await updatePendingCount();
+          success("Offline transactions synced successfully");
+        } catch (err) {
+          showError("Failed to sync offline transactions");
+        } finally {
+          setIsSyncing(false);
+          setSyncing(false);
+        }
+      })();
+    }
+  }, [isOnline, pendingCount]);
 
   const handleApproveDeposit = async (transactionId: string) => {
     try {
@@ -337,6 +415,57 @@ export default function TransactionsPage() {
 
     try {
       setLoading(true);
+
+      if (!isOnline) {
+        const clientId = `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const offlineTxn = {
+          id: Date.now(),
+          transaction_id: clientId,
+          to_account_number: accountNumber,
+          type: "deposit" as const,
+          amount,
+          fee: 0,
+          description: transactionDescription || "Deposit",
+          status: "pending" as const,
+          sync_status: "pending" as const,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          processed_by: user?.full_name,
+        } as any;
+
+        await saveTransactionOffline(offlineTxn);
+        await addToPendingSync("create", "transaction", clientId, {
+          type: "deposit",
+          account_number: accountNumber,
+          amount,
+          description: transactionDescription || "Deposit",
+          pin: customerPin,
+          client_id: clientId,
+        });
+        await updatePendingCount();
+
+        const receipt: TransactionReceipt = {
+          id: clientId,
+          type: "Deposit",
+          amount,
+          fee: 0,
+          date: new Date().toISOString(),
+          account_number: accountNumber,
+          balance_after: 0,
+          processed_by: user?.full_name,
+          description: transactionDescription || "Deposit",
+        };
+
+        setReceiptData(receipt);
+        setShowReceipt(true);
+        success(`Deposit saved offline. Will sync when online.`);
+        resetFlow();
+        fetchTransactionHistory();
+        fetchPendingDeposits();
+        if (isCustomer) fetchMyAccounts();
+        return;
+      }
+
       const response = await API.post("/transactions/deposit", {
         account_number: accountNumber,
         amount,
@@ -386,6 +515,56 @@ export default function TransactionsPage() {
 
     try {
       setLoading(true);
+
+      if (!isOnline) {
+        const clientId = `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const offlineTxn = {
+          id: Date.now(),
+          transaction_id: clientId,
+          from_account_number: accountNumber,
+          type: "withdrawal" as const,
+          amount,
+          fee: 0,
+          description: transactionDescription || "Withdrawal",
+          status: "completed" as const,
+          sync_status: "pending" as const,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          processed_by: user?.full_name,
+        } as any;
+
+        await saveTransactionOffline(offlineTxn);
+        await addToPendingSync("create", "transaction", clientId, {
+          type: "withdrawal",
+          account_number: accountNumber,
+          amount,
+          description: transactionDescription || "Withdrawal",
+          pin: customerPin,
+          client_id: clientId,
+        });
+        await updatePendingCount();
+
+        const receipt: TransactionReceipt = {
+          id: clientId,
+          type: "Withdrawal",
+          amount,
+          fee: 0,
+          date: new Date().toISOString(),
+          account_number: accountNumber,
+          balance_after: 0,
+          processed_by: user?.full_name,
+          description: transactionDescription || "Withdrawal",
+        };
+
+        setReceiptData(receipt);
+        setShowReceipt(true);
+        success(`Withdrawal saved offline. Will sync when online.`);
+        resetFlow();
+        fetchTransactionHistory();
+        if (isCustomer) fetchMyAccounts();
+        return;
+      }
+
       const response = await API.post("/transactions/withdraw", {
         account_number: accountNumber,
         amount,
@@ -439,6 +618,58 @@ export default function TransactionsPage() {
 
     try {
       setLoading(true);
+
+      if (!isOnline) {
+        const clientId = `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const offlineTxn = {
+          id: Date.now(),
+          transaction_id: clientId,
+          from_account_number: fromAccountNumber,
+          to_account_number: transferToAccount,
+          type: "transfer" as const,
+          amount,
+          fee: 0,
+          description: transactionDescription || "Transfer",
+          status: "completed" as const,
+          sync_status: "pending" as const,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          processed_by: user?.full_name,
+        } as any;
+
+        await saveTransactionOffline(offlineTxn);
+        await addToPendingSync("create", "transaction", clientId, {
+          type: "transfer",
+          from_account_number: fromAccountNumber,
+          to_account_number: transferToAccount,
+          amount,
+          description: transactionDescription || "Transfer",
+          pin: customerPin,
+          client_id: clientId,
+        });
+        await updatePendingCount();
+
+        const receipt: TransactionReceipt = {
+          id: clientId,
+          type: "Transfer",
+          amount,
+          fee: 0,
+          date: new Date().toISOString(),
+          account_number: fromAccountNumber,
+          balance_after: 0,
+          processed_by: user?.full_name,
+          description: transactionDescription || "Transfer",
+        };
+
+        setReceiptData(receipt);
+        setShowReceipt(true);
+        success(`Transfer saved offline. Will sync when online.`);
+        resetFlow();
+        fetchTransactionHistory();
+        if (isCustomer) fetchMyAccounts();
+        return;
+      }
+
       const response = await API.post("/transactions/transfer", {
         from_account_number: fromAccountNumber,
         to_account_number: transferToAccount,
@@ -1281,11 +1512,30 @@ export default function TransactionsPage() {
                   : "Manage your account transactions"}
               </p>
             </div>
-            {(isAdmin || isEmployee) && step > 1 && (
-              <Button variant="outline" onClick={resetFlow}>
-                Start New Transaction
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              {!isOnline && (
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                  <WifiOff className="mr-1 h-3 w-3" />
+                  Offline Mode
+                </Badge>
+              )}
+              {isSyncing && (
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  <RefreshCw className="mr-1 h-3 w-3 animate-spin" />
+                  Syncing...
+                </Badge>
+              )}
+              {!isOnline && pendingCount > 0 && (
+                <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                  {pendingCount} pending
+                </Badge>
+              )}
+              {(isAdmin || isEmployee) && step > 1 && (
+                <Button variant="outline" onClick={resetFlow}>
+                  Start New Transaction
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">

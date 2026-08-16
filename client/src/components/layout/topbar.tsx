@@ -26,6 +26,7 @@ import {
   Settings,
   Search,
   Menu,
+  Mail,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -37,13 +38,18 @@ export function Topbar() {
   const { theme: themeMode, setTheme } = useTheme();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [messageUnreadCount, setMessageUnreadCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [languageModalOpen, setLanguageModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchUnreadCount();
-      const interval = setInterval(fetchUnreadCount, 30000);
+      fetchMessageUnreadCount();
+      const interval = setInterval(() => {
+        fetchUnreadCount();
+        fetchMessageUnreadCount();
+      }, 30000);
       return () => clearInterval(interval);
     }
   }, [user]);
@@ -57,6 +63,21 @@ export function Topbar() {
       if (res.ok) {
         const data = await res.json();
         setUnreadCount(data.count || 0);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const fetchMessageUnreadCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/messages/unread-count", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessageUnreadCount(data.count || 0);
       }
     } catch {
       // ignore
@@ -162,6 +183,24 @@ export function Topbar() {
           )}
         </Button>
 
+        {/* Messages */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "relative h-9 w-9 rounded-lg transition-colors",
+            "text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+          )}
+          onClick={() => router.push("/messages")}
+        >
+          <Mail className="h-4 w-4" />
+          {messageUnreadCount > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-[#1F8A4D] px-1 text-[10px] font-bold text-white">
+              {messageUnreadCount > 99 ? "99+" : messageUnreadCount}
+            </span>
+          )}
+        </Button>
+
         {/* Divider */}
         <div className="mx-1 hidden h-6 w-px bg-gray-200 dark:bg-gray-700 sm:block" />
 
@@ -219,16 +258,16 @@ export function Topbar() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push("/profile")} className="cursor-pointer">
                 <User className="mr-2 h-4 w-4" />
-                Profile
+                {t("profile")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
-                Settings
+                {t("settings")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
-                Logout
+                {t("logout")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

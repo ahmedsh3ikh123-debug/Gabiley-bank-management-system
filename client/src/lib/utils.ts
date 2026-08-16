@@ -103,6 +103,7 @@ export function getPriorityColor(priority: string): string {
 export const ADMIN_ROLES = [
   "super_admin",
   "branch_manager",
+  "manager",
 ] as const;
 
 export const EMPLOYEE_ROLES = [

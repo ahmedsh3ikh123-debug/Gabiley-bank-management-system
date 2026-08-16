@@ -1,6 +1,7 @@
 export type UserRole =
   | "super_admin"
   | "branch_manager"
+  | "manager"
   | "teller"
   | "customer_service"
   | "accountant"
@@ -17,11 +18,13 @@ export interface User {
   gender: string;
   mother_name?: string;
   dob?: string;
+  national_id?: string;
   role: UserRole;
   status: "active" | "blocked" | "frozen" | "pending";
   hasPin: boolean;
   branch?: string;
   profile_picture?: string;
+  id_card_image?: string;
   last_login?: string;
   created_at: string;
   updated_at: string;
@@ -77,6 +80,8 @@ export interface Employee {
   profile_picture?: string;
   status: "active" | "inactive";
   created_at: string;
+  user_email?: string;
+  user_username?: string;
 }
 
 export interface Loan {
@@ -87,9 +92,13 @@ export interface Loan {
   purpose: string;
   loan_type: string;
   monthly_income: number;
-  status: "pending" | "approved" | "rejected" | "paid";
+  status: "pending" | "approved" | "rejected" | "paid" | "disbursed";
   reviewed_by?: number;
   review_notes: string;
+  account_number?: string;
+  disbursed_at?: string;
+  total_paid?: number;
+  interest_rate?: number;
   created_at: string;
   updated_at: string;
 }
@@ -210,4 +219,52 @@ export interface Analytics {
     users: { month: string; count: number }[];
     accounts: { month: string; count: number }[];
   };
+}
+
+export interface Message {
+  id: number;
+  sender_id: number;
+  recipient_id: number;
+  subject: string;
+  message: string;
+  message_type: 'general' | 'credentials' | 'security';
+  read: boolean;
+  created_at: string;
+  sender_name?: string;
+  recipient_name?: string;
+}
+
+export interface Task {
+  id: number;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  category: 'general' | 'loan' | 'account' | 'customer' | 'compliance' | 'maintenance';
+  assigned_to?: number;
+  assigned_by?: number;
+  due_date?: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+  assignee_name?: string;
+  assigner_name?: string;
+  comments?: TaskComment[];
+}
+
+export interface TaskComment {
+  id: number;
+  task_id: number;
+  user_id: number;
+  comment: string;
+  created_at: string;
+  user_name?: string;
+}
+
+export interface TaskStats {
+  total: number;
+  pending: number;
+  in_progress: number;
+  completed: number;
+  overdue: number;
 }

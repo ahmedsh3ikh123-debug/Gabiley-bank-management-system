@@ -11,7 +11,7 @@ export function useUserManagement() {
   const { success, error: showError } = useToast();
   const [loading, setLoading] = useState(false);
 
-  const isAdmin = user?.role === "super_admin" || user?.role === "branch_manager";
+  const isAdmin = user?.role === "super_admin" || user?.role === "branch_manager" || user?.role === "manager";
   const isEmployee = ["teller", "customer_service", "accountant", "ict_staff"].includes(user?.role || "");
 
   const createUser = useCallback(async (data: any) => {
@@ -83,7 +83,8 @@ export function useUserManagement() {
   const resetPassword = useCallback(async (id: number, password: string) => {
     setLoading(true);
     try {
-      await api.put(`/admin/users/${id}/reset-password`, { password });
+      const endpoint = user?.role === "ict_staff" ? `/ict/users/${id}/reset-password` : `/admin/users/${id}/reset-password`;
+      await api.put(endpoint, { password });
       success("Password reset successfully");
     } catch (err: any) {
       showError(err.response?.data?.error || "Failed to reset password");
@@ -91,12 +92,13 @@ export function useUserManagement() {
     } finally {
       setLoading(false);
     }
-  }, [success, showError]);
+  }, [success, showError, user?.role]);
 
   const resetPin = useCallback(async (id: number, pin: string) => {
     setLoading(true);
     try {
-      await api.put(`/admin/users/${id}/reset-pin`, { pin });
+      const endpoint = user?.role === "ict_staff" ? `/ict/users/${id}/reset-pin` : `/admin/users/${id}/reset-pin`;
+      await api.put(endpoint, { pin });
       success("PIN reset successfully");
     } catch (err: any) {
       showError(err.response?.data?.error || "Failed to reset PIN");
@@ -104,7 +106,7 @@ export function useUserManagement() {
     } finally {
       setLoading(false);
     }
-  }, [success, showError]);
+  }, [success, showError, user?.role]);
 
   const changeRole = useCallback(async (id: number, role: string) => {
     setLoading(true);
@@ -124,7 +126,8 @@ export function useUserManagement() {
   const canDeleteUser = isAdmin;
   const canBlockUser = isAdmin;
   const canChangeRole = isAdmin;
-  const canResetPin = isAdmin;
+  const canResetPin = isAdmin || user?.role === "ict_staff";
+  const canResetPassword = isAdmin || user?.role === "ict_staff";
 
   return {
     loading,
@@ -143,5 +146,6 @@ export function useUserManagement() {
     canBlockUser,
     canChangeRole,
     canResetPin,
+    canResetPassword,
   };
 }

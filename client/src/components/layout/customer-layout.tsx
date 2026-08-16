@@ -16,6 +16,7 @@ import {
   User,
   Settings,
   LogOut,
+  Mail,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -27,6 +28,7 @@ const customerNavItems = [
   { label: "Transactions", href: "/transactions", icon: <ArrowLeftRight className="h-5 w-5" /> },
   { label: "Transfer", href: "/transfer", icon: <Send className="h-5 w-5" /> },
   { label: "Loans", href: "/loans", icon: <Banknote className="h-5 w-5" /> },
+  { label: "Messages", href: "/messages", icon: <Mail className="h-5 w-5" /> },
   { label: "Notifications", href: "/notifications", icon: <Bell className="h-5 w-5" /> },
   { label: "Profile", href: "/profile", icon: <User className="h-5 w-5" /> },
 ];

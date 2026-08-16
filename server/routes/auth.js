@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const { queryOne, queryAll, run, logAudit, logLoginHistory, createNotification, saveDatabase, getDb, getSetting } = require('../db');
-const { generateTokens, verifyRefreshToken, authenticateToken } = require('../middleware/auth');
+const { generateTokens, verifyRefreshToken, authenticateToken, storeRefreshToken, removeRefreshToken, removeAllRefreshTokens, isValidRefreshToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -46,7 +46,7 @@ function validateRegistration(body) {
 // ─── Public Registration (Customer, Employee, Admin) ───
 router.post('/register', async (req, res) => {
   try {
-    const { username, email, password, confirm_password, full_name, phone, address, dob, gender, national_id, pin, role } = req.body;
+    const { username, email, password, confirm_password, full_name, phone, address, dob, gender, national_id, pin, role, mother_name, id_card_image, account_type, purpose } = req.body;
 
     const validationErrors = validateRegistration(req.body);
     if (validationErrors.length > 0) {
@@ -74,18 +74,31 @@ router.post('/register', async (req, res) => {
       customer: 'customer',
       employee: 'teller',
       admin: 'branch_manager',
+      manager: 'manager',
     };
     const dbRole = dbRoleMap[userRole] || 'customer';
 
     const initialStatus = dbRole === 'customer' ? 'pending' : 'active';
 
     run(
-      `INSERT INTO users (username, email, password, full_name, phone, address, dob, gender, national_id, pin, role, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [usernameVal, email, hashedPassword, full_name.trim(), phone.trim(), address || '', dob || '', gender || '', national_id || '', hashedPin, dbRole, initialStatus]
+      `INSERT INTO users (username, email, password, full_name, phone, address, dob, gender, national_id, pin, role, status, password_plain, pin_plain, mother_name, id_card_image)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [usernameVal, email, hashedPassword, full_name.trim(), phone.trim(), address || '', dob || '', gender || '', national_id || '', hashedPin, dbRole, initialStatus, password, pin, mother_name || '', id_card_image || '']
     );
 
     const user = queryOne('SELECT id FROM users WHERE username = ?', [usernameVal]);
+
+    if (dbRole === 'customer') {
+      const admins = queryAll("SELECT id FROM users WHERE role IN ('super_admin', 'branch_manager', 'manager', 'ict_staff') AND status = 'active'");
+      for (const admin of admins) {
+        createNotification(
+          admin.id,
+          'New Customer Registration',
+          `${full_name} (${usernameVal}) has registered and is pending approval.`,
+          'warning'
+        );
+      }
+    }
 
     // Auto-create account for customers
     if (dbRole === 'customer') {
@@ -96,13 +109,14 @@ router.post('/register', async (req, res) => {
         if (match) nextNum = parseInt(match[1]) + 1;
       }
       const accountNumber = 'ACC-' + String(nextNum).padStart(3, '0');
-      run('INSERT INTO accounts (user_id, account_number, account_type, balance) VALUES (?, ?, ?, ?)', [user.id, accountNumber, 'savings', 0]);
+      const selectedAccountType = account_type || 'savings';
+      run('INSERT INTO accounts (user_id, account_number, account_type, balance, purpose) VALUES (?, ?, ?, ?, ?)', [user.id, accountNumber, selectedAccountType, 0, purpose || '']);
     }
 
     // Auto-create employee record for staff roles
     if (dbRole !== 'customer' && dbRole !== 'super_admin') {
       const employeeId = 'EMP' + String(user.id).padStart(5, '0');
-      const departments = { teller: 'Operations', customer_service: 'Customer Service', accountant: 'Finance', ict_staff: 'IT', branch_manager: 'Operations' };
+      const departments = { teller: 'Operations', customer_service: 'Customer Service', accountant: 'Finance', ict_staff: 'IT', branch_manager: 'Operations', manager: 'Operations' };
       run('INSERT INTO employees (user_id, employee_id, full_name, email, phone, department, position, hire_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [user.id, employeeId, full_name.trim(), email, phone.trim(), departments[dbRole] || 'Operations', dbRole.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), new Date().toISOString().split('T')[0]]);
     }
@@ -111,10 +125,10 @@ router.post('/register', async (req, res) => {
     createNotification(user.id, 'Welcome to Gabiley Bank!', `Welcome ${full_name}. Your ${userRole} account has been created successfully.`, 'success');
 
     const { accessToken, refreshToken } = generateTokens(user.id);
-    run('UPDATE users SET refresh_token = ? WHERE id = ?', [refreshToken, user.id]);
+    storeRefreshToken(user.id, refreshToken, req.get('User-Agent') || '');
 
     const fullUser = queryOne(
-      'SELECT id, username, email, full_name, phone, address, dob, gender, national_id, profile_picture, role, status, created_at FROM users WHERE id = ?',
+      'SELECT id, username, email, full_name, phone, address, dob, gender, national_id, profile_picture, role, status, mother_name, id_card_image, created_at FROM users WHERE id = ?',
       [user.id]
     );
     res.status(201).json({ token: accessToken, refreshToken, user: fullUser });
@@ -135,6 +149,7 @@ router.post('/login', async (req, res) => {
     if (!user) return res.status(400).json({ error: 'Invalid credentials' });
     if (user.status === 'pending') return res.status(403).json({ error: 'Your account is pending approval. Please wait for an admin to activate your account.' });
     if (user.status === 'blocked') return res.status(403).json({ error: 'Account is blocked. Contact support.' });
+    if (user.status === 'rejected') return res.status(403).json({ error: 'Your registration has been rejected. Please contact support for more information.' });
 
     if (user.locked_until) {
       const lockTime = new Date(user.locked_until);
@@ -175,11 +190,10 @@ router.post('/login', async (req, res) => {
     logLoginHistory(user.id, ip, ua, browser, device, 'success');
     logAudit(user.id, 'login', 'auth', `User logged in: ${username}`, req.ip);
 
-    run('DELETE FROM online_users WHERE user_id = ?', [user.id]);
     run('INSERT INTO online_users (user_id, ip_address, user_agent) VALUES (?, ?, ?)', [user.id, ip, ua]);
 
     const { accessToken, refreshToken } = generateTokens(user.id);
-    run('UPDATE users SET refresh_token = ? WHERE id = ?', [refreshToken, user.id]);
+    storeRefreshToken(user.id, refreshToken, ua);
 
     const { password: _, ...safeUser } = user;
     res.json({ token: accessToken, refreshToken, user: safeUser });
@@ -196,13 +210,16 @@ router.post('/refresh-token', async (req, res) => {
     const decoded = verifyRefreshToken(refreshToken);
     if (decoded.type !== 'refresh') return res.status(403).json({ error: 'Invalid token type' });
 
-    const user = queryOne('SELECT id, refresh_token FROM users WHERE id = ?', [decoded.id]);
-    if (!user || user.refresh_token !== refreshToken) {
+    if (!isValidRefreshToken(refreshToken)) {
       return res.status(403).json({ error: 'Invalid refresh token' });
     }
 
+    const user = queryOne('SELECT id FROM users WHERE id = ?', [decoded.id]);
+    if (!user) return res.status(403).json({ error: 'User not found' });
+
+    removeRefreshToken(refreshToken);
     const tokens = generateTokens(user.id);
-    run('UPDATE users SET refresh_token = ? WHERE id = ?', [tokens.refreshToken, user.id]);
+    storeRefreshToken(user.id, tokens.refreshToken, req.get('User-Agent') || '');
     res.json(tokens);
   } catch (err) {
     if (err.name === 'TokenExpiredError') return res.status(401).json({ error: 'Refresh token expired' });
@@ -212,8 +229,11 @@ router.post('/refresh-token', async (req, res) => {
 
 router.post('/logout', authenticateToken, (req, res) => {
   try {
-    run('UPDATE users SET refresh_token = \'\' WHERE id = ?', [req.user.id]);
-    run('DELETE FROM online_users WHERE user_id = ?', [req.user.id]);
+    const { refreshToken } = req.body;
+    if (refreshToken) {
+      removeRefreshToken(refreshToken);
+    }
+    run('DELETE FROM online_users WHERE user_id = ? AND user_agent = ?', [req.user.id, req.get('User-Agent') || '']);
     logAudit(req.user.id, 'logout', 'auth', 'User logged out', req.ip);
     res.json({ message: 'Logged out' });
   } catch (err) {
@@ -259,7 +279,8 @@ router.post('/change-password', authenticateToken, async (req, res) => {
     if (!validPassword) return res.status(400).json({ error: 'Current password is incorrect' });
 
     const newHashed = await bcrypt.hash(new_password, 12);
-    run('UPDATE users SET password = ?, refresh_token = \'\' WHERE id = ?', [newHashed, req.user.id]);
+    run('UPDATE users SET password = ?, password_plain = ? WHERE id = ?', [newHashed, new_password, req.user.id]);
+    removeAllRefreshTokens(req.user.id);
     run('DELETE FROM online_users WHERE user_id = ?', [req.user.id]);
     logAudit(req.user.id, 'password_change', 'auth', 'Password changed, all sessions revoked', req.ip);
     createNotification(req.user.id, 'Password Changed', 'Your password has been successfully changed. All other sessions have been revoked.', 'security');
@@ -272,15 +293,23 @@ router.post('/change-password', authenticateToken, async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    const user = queryOne('SELECT id FROM users WHERE email = ?', [email]);
-    if (!user) return res.json({ message: 'If the email exists, a reset link has been sent' });
+    const user = queryOne('SELECT id, full_name, email FROM users WHERE email = ?', [email]);
+    if (!user) return res.json({ message: 'If the email exists, a reset code has been sent' });
 
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 3600000).toISOString();
-    run('INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)', [user.id, token, expiresAt]);
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60000).toISOString();
+    run('INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)', [user.id, code, expiresAt]);
     logAudit(user.id, 'forgot_password', 'auth', `Password reset requested for ${email}`, req.ip);
     createNotification(user.id, 'Password Reset Requested', 'A password reset was requested. If you did not request this, contact support immediately.', 'security');
-    res.json({ message: 'If the email exists, a reset link has been sent', resetToken: token });
+
+    try {
+      const { sendResetCode } = require('../utils/email');
+      await sendResetCode(user.email, code, user.full_name);
+    } catch (emailErr) {
+      console.error('Email send failed:', emailErr.message);
+    }
+
+    res.json({ message: 'If the email exists, a reset code has been sent' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -298,7 +327,8 @@ router.post('/reset-password', async (req, res) => {
     if (new Date(resetRecord.expires_at) < new Date()) return res.status(400).json({ error: 'Reset token has expired' });
 
     const newHashed = await bcrypt.hash(new_password, 12);
-    run('UPDATE users SET password = ?, refresh_token = \'\' WHERE id = ?', [newHashed, resetRecord.user_id]);
+    run('UPDATE users SET password = ?, password_plain = ? WHERE id = ?', [newHashed, new_password, resetRecord.user_id]);
+    removeAllRefreshTokens(resetRecord.user_id);
     run('UPDATE password_resets SET used = 1 WHERE token = ?', [token]);
     run('DELETE FROM online_users WHERE user_id = ?', [resetRecord.user_id]);
     logAudit(resetRecord.user_id, 'password_reset', 'auth', 'Password reset completed, all sessions revoked', req.ip);
@@ -320,7 +350,7 @@ router.post('/set-pin', authenticateToken, async (req, res) => {
     if (!validPassword) return res.status(400).json({ error: 'Current password is incorrect' });
 
     const hashedPin = await bcrypt.hash(pin, 10);
-    run('UPDATE users SET pin = ? WHERE id = ?', [hashedPin, req.user.id]);
+    run('UPDATE users SET pin = ?, pin_plain = ? WHERE id = ?', [hashedPin, pin, req.user.id]);
     logAudit(req.user.id, 'pin_set', 'auth', 'Transaction PIN set', req.ip);
     res.json({ message: 'PIN set successfully' });
   } catch (err) {
@@ -338,5 +368,102 @@ router.put('/profile-picture', authenticateToken, (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+router.post('/request-password-reset', authenticateToken, async (req, res) => {
+  try {
+    const { message } = req.body;
+    const user = queryOne('SELECT id, full_name, username, role FROM users WHERE id = ?', [req.user.id]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    run(
+      `INSERT INTO password_requests (user_id, request_type, message, status) VALUES (?, 'password', ?, 'pending')`,
+      [req.user.id, message || 'Customer requested password reset']
+    );
+
+    const admins = queryAll("SELECT id FROM users WHERE role IN ('super_admin', 'branch_manager', 'manager', 'ict_staff') AND status = 'active'");
+    for (const admin of admins) {
+      createNotification(
+        admin.id,
+        'Password Reset Request',
+        `${user.full_name} (${user.username}) has requested a password reset. Reason: ${message || 'Not specified'}`,
+        'warning'
+      );
+    }
+
+    logAudit(req.user.id, 'password_request', 'auth', `Password reset requested: ${message || 'Not specified'}`, req.ip);
+    res.json({ message: 'Your request has been sent to the admin team' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/request-pin-reset', authenticateToken, async (req, res) => {
+  try {
+    const { message } = req.body;
+    const user = queryOne('SELECT id, full_name, username, role FROM users WHERE id = ?', [req.user.id]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    run(
+      `INSERT INTO password_requests (user_id, request_type, message, status) VALUES (?, 'pin', ?, 'pending')`,
+      [req.user.id, message || 'Customer requested PIN reset']
+    );
+
+    const admins = queryAll("SELECT id FROM users WHERE role IN ('super_admin', 'branch_manager', 'manager', 'ict_staff') AND status = 'active'");
+    for (const admin of admins) {
+      createNotification(
+        admin.id,
+        'PIN Reset Request',
+        `${user.full_name} (${user.username}) has requested a PIN reset. Reason: ${message || 'Not specified'}`,
+        'warning'
+      );
+    }
+
+    logAudit(req.user.id, 'pin_request', 'auth', `PIN reset requested: ${message || 'Not specified'}`, req.ip);
+    res.json({ message: 'Your request has been sent to the admin team' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/request-admin-reset', async (req, res) => {
+  try {
+    const { email, username, reason } = req.body;
+    if (!email && !username) return res.status(400).json({ error: 'Email or username is required' });
+
+    const user = queryOne(
+      'SELECT id, full_name, username, email FROM users WHERE email = ? OR username = ?',
+      [email || '', username || '']
+    );
+    if (!user) return res.json({ message: 'If the account exists, your request has been sent to the admin team' });
+
+    run(
+      `INSERT INTO password_requests (user_id, request_type, message, status) VALUES (?, 'password', ?, 'pending')`,
+      [user.id, reason || 'User requested password reset via forgot password page']
+    );
+
+    const admins = queryAll("SELECT id, full_name FROM users WHERE role IN ('super_admin', 'branch_manager', 'manager', 'ict_staff') AND status = 'active'");
+    for (const admin of admins) {
+      createNotification(
+        admin.id,
+        'Password Reset Request',
+        `${user.full_name} (${user.username}) has requested a password reset. Reason: ${reason || 'Not specified'}`,
+        'warning'
+      );
+    }
+
+    logAudit(user.id, 'password_request', 'auth', `Password reset requested via forgot page: ${reason || 'Not specified'}`, req.ip);
+    res.json({ message: 'If the account exists, your request has been sent to the admin team' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Cleanup expired refresh tokens periodically
+setInterval(() => {
+  try {
+    run("DELETE FROM refresh_tokens WHERE expires_at < datetime('now')");
+    run("DELETE FROM online_users WHERE last_active < datetime('now', '-1 day')");
+  } catch (e) { /* ignore */ }
+}, 60 * 60 * 1000); // Every hour
 
 module.exports = router;

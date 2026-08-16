@@ -202,6 +202,8 @@ export default function UsersPage() {
   const [userDetails, setUserDetails] = useState<UserDetail | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsTab, setDetailsTab] = useState("overview");
+  const [userCredentials, setUserCredentials] = useState<any>(null);
+  const [credentialsLoading, setCredentialsLoading] = useState(false);
   const [resetPassword, setResetPassword] = useState("");
   const [resetPasswordConfirm, setResetPasswordConfirm] = useState("");
 
@@ -212,18 +214,23 @@ export default function UsersPage() {
       if (searchQuery) params.search = searchQuery;
       if (roleFilter !== "all") params.role = roleFilter;
       if (statusFilter !== "all") params.status = statusFilter;
-      const res = await api.get("/admin/users", { params });
+      const endpoint = ["teller", "customer_service", "accountant", "ict_staff"].includes(user?.role || "") ? "/employee/users" : "/admin/users";
+      const res = await api.get(endpoint, { params });
       setUsers(res.data);
     } catch {
       toast.error("Failed to fetch users");
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, roleFilter, statusFilter, toast]);
+  }, [searchQuery, roleFilter, statusFilter, toast, user]);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, activeTab]);
 
   useEffect(() => {
     const unsub = registerRefresh("users", fetchUsers);
@@ -235,13 +242,28 @@ export default function UsersPage() {
     setShowDetailsDialog(true);
     setDetailsLoading(true);
     setDetailsTab("overview");
+    setUserCredentials(null);
     try {
-      const res = await api.get(`/admin/users/${u.id}/details`);
+      const endpoint = ["teller", "customer_service", "accountant", "ict_staff"].includes(user?.role || "") ? `/employee/users/${u.id}/details` : `/admin/users/${u.id}/details`;
+      const res = await api.get(endpoint);
       setUserDetails(res.data);
     } catch {
       toast.error("Failed to fetch user details");
     } finally {
       setDetailsLoading(false);
+    }
+  };
+
+  const fetchUserCredentials = async (userId: number) => {
+    setCredentialsLoading(true);
+    try {
+      const endpoint = ["teller", "customer_service", "ict_staff"].includes(user?.role || "") ? `/employee/users/${userId}/credentials` : `/admin/users/${userId}/credentials`;
+      const res = await api.get(endpoint);
+      setUserCredentials(res.data);
+    } catch {
+      toast.error("Failed to fetch credentials");
+    } finally {
+      setCredentialsLoading(false);
     }
   };
 
@@ -279,6 +301,21 @@ export default function UsersPage() {
     try {
       setSubmitting(true);
       await api.put(`/admin/users/${selectedUser.id}`, form);
+
+      if (profileFile) {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64 = reader.result as string;
+          await api.put(`/admin/users/${selectedUser.id}/profile-picture`, { profile_picture: base64 });
+          toast.success("Profile picture updated");
+          fetchUsers();
+          notifyChange("users");
+          notifyChange("employees");
+          notifyChange("customers");
+        };
+        reader.readAsDataURL(profileFile);
+      }
+
       toast.success("User updated successfully");
       setShowEditDialog(false);
       setSelectedUser(null);
@@ -302,7 +339,8 @@ export default function UsersPage() {
     }
     try {
       setSubmitting(true);
-      await api.put(`/admin/users/${selectedUser.id}/reset-password`, {
+      const endpoint = user?.role === "ict_staff" ? `/ict/users/${selectedUser.id}/reset-password` : `/admin/users/${selectedUser.id}/reset-password`;
+      await api.put(endpoint, {
         password: resetPassword,
       });
       toast.success("Password reset successfully");
@@ -383,7 +421,7 @@ export default function UsersPage() {
   const filteredUsers = users.filter((u) => {
     if (activeTab === "all") return true;
     if (activeTab === "admin")
-      return u.role === "super_admin" || u.role === "branch_manager";
+      return u.role === "super_admin" || u.role === "branch_manager" || u.role === "manager";
     if (activeTab === "employee")
       return [
         "teller",
@@ -418,7 +456,7 @@ export default function UsersPage() {
   };
 
   const getRoleBadge = (role: string) => {
-    if (role === "super_admin" || role === "branch_manager")
+    if (role === "super_admin" || role === "branch_manager" || role === "manager")
       return "bg-red-100 text-red-800 border-red-200";
     if (
       ["teller", "customer_service", "accountant", "ict_staff"].includes(role)
@@ -428,7 +466,7 @@ export default function UsersPage() {
   };
 
   const getRoleIcon = (role: string) => {
-    if (role === "super_admin" || role === "branch_manager")
+    if (role === "super_admin" || role === "branch_manager" || role === "manager")
       return <Crown className="h-3 w-3" />;
     if (
       ["teller", "customer_service", "accountant", "ict_staff"].includes(role)
@@ -438,7 +476,7 @@ export default function UsersPage() {
   };
 
   const adminCount = users.filter(
-    (u) => u.role === "super_admin" || u.role === "branch_manager"
+    (u) => u.role === "super_admin" || u.role === "branch_manager" || u.role === "manager"
   ).length;
   const employeeCount = users.filter(
     (u) =>
@@ -451,7 +489,7 @@ export default function UsersPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredRoles={["super_admin", "branch_manager"]}>
+      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff"]}>
         <DashboardLayout>
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -462,7 +500,7 @@ export default function UsersPage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={["super_admin", "branch_manager"]}>
+    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff"]}>
       <DashboardLayout>
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -476,21 +514,25 @@ export default function UsersPage() {
               </p>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Button
-                variant="outline"
-                onClick={handleExport}
-                className="gap-2 flex-1 sm:flex-none"
-              >
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
-              <Button
-                onClick={() => setShowCreateModal(true)}
-                className="gap-2 flex-1 sm:flex-none"
-              >
-                <Plus className="h-4 w-4" />
-                Add User
-              </Button>
+              {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "ict_staff" && user?.role !== "teller" && (
+                <Button
+                  variant="outline"
+                  onClick={handleExport}
+                  className="gap-2 flex-1 sm:flex-none"
+                >
+                  <Download className="h-4 w-4" />
+                  Export
+                </Button>
+              )}
+              {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "ict_staff" && user?.role !== "teller" && (
+                <Button
+                  onClick={() => setShowCreateModal(true)}
+                  className="gap-2 flex-1 sm:flex-none"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add User
+                </Button>
+              )}
             </div>
           </div>
 
@@ -509,7 +551,7 @@ export default function UsersPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-emerald-600">
-                  3
+                  {employeeCount}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Staff accounts
@@ -792,13 +834,17 @@ export default function UsersPage() {
                                         <Eye className="h-4 w-4" />
                                         View Details
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() => openEditDialog(u)}
-                                        className="gap-2"
-                                      >
-                                        <Edit className="h-4 w-4" />
-                                        Edit User
-                                      </DropdownMenuItem>
+                                      {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "teller" && user?.role !== "ict_staff" && (
+                                        <DropdownMenuItem
+                                          onClick={() => openEditDialog(u)}
+                                          className="gap-2"
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                          Edit User
+                                        </DropdownMenuItem>
+                                      )}
+                                    {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "teller" && user?.role !== "ict_staff" && (
+                                      <>
                                     <DropdownMenuSeparator />
                                     {u.status === "active" ? (
                                       <DropdownMenuItem
@@ -827,14 +873,34 @@ export default function UsersPage() {
                                       <KeyRound className="h-4 w-4" />
                                       Reset Password
                                     </DropdownMenuItem>
+                                    {u.role !== "super_admin" && (
+                                      <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          onClick={() => openDeleteDialog(u)}
+                                          className="gap-2 text-destructive"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                          Delete User
+                                        </DropdownMenuItem>
+                                      </>
+                                    )}
+                                      </>
+                                    )}
+                                    {user?.role === "ict_staff" && (
+                                      <>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
-                                      onClick={() => openDeleteDialog(u)}
-                                      className="gap-2 text-destructive"
+                                      onClick={() =>
+                                        openResetPasswordDialog(u)
+                                      }
+                                      className="gap-2"
                                     >
-                                      <Trash2 className="h-4 w-4" />
-                                      Delete User
+                                      <KeyRound className="h-4 w-4" />
+                                      Reset Password
                                     </DropdownMenuItem>
+                                      </>
+                                    )}
                                    </DropdownMenuContent>
                                   </DropdownMenu>
                                 </div>
@@ -940,6 +1006,7 @@ export default function UsersPage() {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleEdit} className="space-y-4">
+              {["super_admin", "branch_manager", "manager", "ict_staff"].includes(user?.role || "") && (
               <div className="flex justify-center">
                 <ProfileUpload
                   value={profilePreview}
@@ -947,6 +1014,7 @@ export default function UsersPage() {
                   size="lg"
                 />
               </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Full Name *</Label>
                 <Input
@@ -1223,7 +1291,7 @@ export default function UsersPage() {
                 </div>
 
                 <Tabs value={detailsTab} onValueChange={setDetailsTab}>
-                  <TabsList className="grid w-full grid-cols-4 h-10">
+                  <TabsList className="grid w-full grid-cols-5 h-10">
                     <TabsTrigger
                       value="overview"
                       className="text-xs gap-1"
@@ -1244,6 +1312,13 @@ export default function UsersPage() {
                     >
                       <Activity className="h-3 w-3" />
                       Transactions
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="credentials"
+                      className="text-xs gap-1"
+                    >
+                      <KeyRound className="h-3 w-3" />
+                      Credentials
                     </TabsTrigger>
                     <TabsTrigger
                       value="settings"
@@ -1505,45 +1580,107 @@ export default function UsersPage() {
                     )}
                   </TabsContent>
 
+                  <TabsContent value="credentials" className="space-y-6 mt-4">
+                    <div className="rounded-lg border p-4">
+                      <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <KeyRound className="h-4 w-4 text-muted-foreground" />
+                        Login Credentials
+                      </h4>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        View this user's username, password, and PIN
+                      </p>
+                      {credentialsLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                      ) : userCredentials ? (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground uppercase tracking-wide">Username</p>
+                              <p className="text-sm font-medium font-mono bg-muted p-2 rounded">{userCredentials.username}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground uppercase tracking-wide">Full Name</p>
+                              <p className="text-sm font-medium bg-muted p-2 rounded">{userCredentials.full_name}</p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground uppercase tracking-wide">Password</p>
+                              <p className="text-sm font-medium font-mono bg-muted p-2 rounded">{userCredentials.password}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground uppercase tracking-wide">PIN</p>
+                              <p className="text-sm font-medium font-mono bg-muted p-2 rounded">{userCredentials.pin}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button variant="outline" onClick={() => selectedUser && fetchUserCredentials(selectedUser.id)}>
+                          <KeyRound className="mr-2 h-4 w-4" />
+                          Load Credentials
+                        </Button>
+                      )}
+                    </div>
+                  </TabsContent>
+
                   <TabsContent
                     value="settings"
                     className="space-y-4 mt-4"
                   >
-                    <div className="grid grid-cols-2 gap-3">
+                    {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "teller" && user?.role !== "ict_staff" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowDetailsDialog(false);
+                            if (selectedUser) openEditDialog(selectedUser);
+                          }}
+                          className="gap-2"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Edit User
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowDetailsDialog(false);
+                            if (selectedUser) openResetPasswordDialog(selectedUser);
+                          }}
+                          className="gap-2"
+                        >
+                          <KeyRound className="h-4 w-4" />
+                          Reset Password
+                        </Button>
+                      </div>
+                    )}
+                    {user?.role === "ict_staff" && (
                       <Button
                         variant="outline"
                         onClick={() => {
                           setShowDetailsDialog(false);
-                          openEditDialog(selectedUser!);
+                          if (selectedUser) openResetPasswordDialog(selectedUser);
                         }}
-                        className="gap-2"
-                      >
-                        <Edit className="h-4 w-4" />
-                        Edit User
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setShowDetailsDialog(false);
-                          openResetPasswordDialog(selectedUser!);
-                        }}
-                        className="gap-2"
+                        className="w-full gap-2"
                       >
                         <KeyRound className="h-4 w-4" />
                         Reset Password
                       </Button>
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setShowDetailsDialog(false);
-                        openDeleteDialog(selectedUser!);
-                      }}
-                      className="w-full gap-2 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete User
-                    </Button>
+                    )}
+                    {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "teller" && user?.role !== "ict_staff" && selectedUser?.role !== "super_admin" && (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowDetailsDialog(false);
+                          if (selectedUser) openDeleteDialog(selectedUser);
+                        }}
+                        className="w-full gap-2 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete User
+                      </Button>
+                    )}
                   </TabsContent>
                 </Tabs>
               </div>

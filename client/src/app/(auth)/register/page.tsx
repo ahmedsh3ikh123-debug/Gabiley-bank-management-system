@@ -13,6 +13,7 @@ import { ProfileUpload } from "@/components/ui/profile-upload";
 import {
   Eye, EyeOff, Loader2, User, Mail, Lock, ArrowRight,
   UserPlus, CreditCard, CheckCircle2, XCircle, Shield, Phone,
+  Image, FileText,
 } from "lucide-react";
 
 export default function RegisterPage() {
@@ -20,9 +21,12 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     full_name: "", username: "", email: "", password: "", confirmPassword: "",
     pin: "", confirmPin: "", role: "customer", phone: "", mother_name: "",
+    account_type: "savings", purpose: "",
   });
   const [profileFile, setProfileFile] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState("");
+  const [idCardFile, setIdCardFile] = useState<File | null>(null);
+  const [idCardPreview, setIdCardPreview] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,6 +45,20 @@ export default function RegisterPage() {
   const strengthColors = ["", "text-red-400", "text-orange-400", "text-yellow-400", "text-blue-400", "text-emerald-400"];
   const strengthBarColors = ["", "bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-blue-500", "bg-emerald-500"];
 
+  const handleIdCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showError("Image must be less than 5MB");
+        return;
+      }
+      setIdCardFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setIdCardPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.full_name || form.full_name.trim().length < 3) { showError("Full name must be at least 3 characters"); return; }
@@ -53,6 +71,7 @@ export default function RegisterPage() {
     if (form.password !== form.confirmPassword) { showError("Passwords do not match"); return; }
     if (!form.pin || !/^\d{4,6}$/.test(form.pin)) { showError("PIN must be 4-6 digits"); return; }
     if (form.pin !== form.confirmPin) { showError("PINs do not match"); return; }
+    if (!idCardFile) { showError("Please upload your ID card image"); return; }
 
     setLoading(true);
     try {
@@ -66,6 +85,9 @@ export default function RegisterPage() {
         pin: form.pin,
         role: form.role,
         mother_name: form.mother_name,
+        id_card_image: idCardPreview,
+        account_type: form.account_type,
+        purpose: form.purpose,
       });
       success("Account created! Your account is pending approval. Please wait for an admin to activate it.");
       router.push("/login");
@@ -262,7 +284,7 @@ export default function RegisterPage() {
 
         {/* Mother's Name */}
         <div className="space-y-2 animate-slide-up" style={{ animationDelay: "0.3s" }}>
-          <Label htmlFor="mother_name" className="text-[13px] font-semibold text-white/70">Mother's Full Name</Label>
+          <Label htmlFor="mother_name" className="text-[13px] font-semibold text-white/70">Mother&apos;s Full Name</Label>
           <div className="relative group">
             <div className="absolute left-0 top-0 flex h-full w-12 items-center justify-center text-white/30 group-focus-within:text-[#F8CC58]/70 transition-colors duration-300">
               <User className="h-[18px] w-[18px]" />
@@ -271,6 +293,69 @@ export default function RegisterPage() {
               id="mother_name" placeholder="Mother's full name" value={form.mother_name}
               onChange={(e) => updateForm("mother_name", e.target.value)}
               className="h-[52px] pl-12 rounded-[14px] border-white/10 bg-white/[0.04] text-white text-[15px] placeholder:text-white/25 focus:border-[#F8CC58]/50 focus:ring-[#F8CC58]/10 focus:ring-4 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.06]"
+            />
+          </div>
+        </div>
+
+        {/* Account Type */}
+        <div className="space-y-2 animate-slide-up" style={{ animationDelay: "0.32s" }}>
+          <Label htmlFor="account_type" className="text-[13px] font-semibold text-white/70">Account Type</Label>
+          <div className="relative group">
+            <div className="absolute left-0 top-0 flex h-full w-12 items-center justify-center text-white/30 group-focus-within:text-[#F8CC58]/70 transition-colors duration-300">
+              <FileText className="h-[18px] w-[18px]" />
+            </div>
+            <select
+              id="account_type"
+              value={form.account_type}
+              onChange={(e) => updateForm("account_type", e.target.value)}
+              className="h-[52px] w-full pl-12 rounded-[14px] border-white/10 bg-white/[0.04] text-white text-[15px] focus:border-[#F8CC58]/50 focus:ring-[#F8CC58]/10 focus:ring-4 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.06] appearance-none cursor-pointer"
+            >
+              <option value="savings" className="bg-black text-white">Savings Account</option>
+              <option value="current" className="bg-black text-white">Current Account</option>
+              <option value="fixed_deposit" className="bg-black text-white">Fixed Deposit</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Purpose */}
+        <div className="space-y-2 animate-slide-up" style={{ animationDelay: "0.33s" }}>
+          <Label htmlFor="purpose" className="text-[13px] font-semibold text-white/70">Purpose</Label>
+          <div className="relative group">
+            <div className="absolute left-0 top-0 flex h-full w-12 items-center justify-center text-white/30 group-focus-within:text-[#F8CC58]/70 transition-colors duration-300">
+              <FileText className="h-[18px] w-[18px]" />
+            </div>
+            <Input
+              id="purpose" placeholder="Purpose of this account" value={form.purpose}
+              onChange={(e) => updateForm("purpose", e.target.value)}
+              className="h-[52px] pl-12 rounded-[14px] border-white/10 bg-white/[0.04] text-white text-[15px] placeholder:text-white/25 focus:border-[#F8CC58]/50 focus:ring-[#F8CC58]/10 focus:ring-4 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.06]"
+            />
+          </div>
+        </div>
+
+        {/* ID Card Image */}
+        <div className="space-y-2 animate-slide-up" style={{ animationDelay: "0.34s" }}>
+          <Label htmlFor="id_card" className="text-[13px] font-semibold text-white/70">ID Card Image</Label>
+          <div className="relative group">
+            <label
+              htmlFor="id_card"
+              className="flex h-[100px] cursor-pointer flex-col items-center justify-center gap-2 rounded-[14px] border-2 border-dashed border-white/10 bg-white/[0.04] hover:border-[#F8CC58]/50 hover:bg-white/[0.06] transition-all duration-300"
+            >
+              {idCardPreview ? (
+                <img src={idCardPreview} alt="ID Card" className="h-full w-full object-contain rounded-[14px] p-2" />
+              ) : (
+                <>
+                  <Image className="h-8 w-8 text-white/30" />
+                  <span className="text-[12px] text-white/40">Click to upload ID card</span>
+                  <span className="text-[10px] text-white/25">Max 5MB</span>
+                </>
+              )}
+            </label>
+            <input
+              id="id_card"
+              type="file"
+              accept="image/*"
+              onChange={handleIdCardChange}
+              className="hidden"
             />
           </div>
         </div>

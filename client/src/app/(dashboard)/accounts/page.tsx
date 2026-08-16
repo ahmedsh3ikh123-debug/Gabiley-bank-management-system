@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/layout/protected-route";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +28,7 @@ import { useToast } from "@/contexts/toast-context";
 import { useLanguage } from "@/contexts/language-context";
 import api from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
+
 import {
   CreditCard,
   Plus,
@@ -43,6 +45,7 @@ import {
   CheckCircle,
   TrendingUp,
   User,
+  Banknote,
 } from "lucide-react";
 import type { Account } from "@/types";
 
@@ -60,7 +63,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 export default function AccountsPage() {
-  const { user, isAdmin } = useAuth();
+  const router = useRouter();
+  const { user, isAdmin, isStaff } = useAuth();
   const { success, error } = useToast();
   const { t } = useLanguage();
 
@@ -69,8 +73,10 @@ export default function AccountsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [customerFilter, setCustomerFilter] = useState<string>("all");
 
   const [formData, setFormData] = useState({
     mother_name: "",
@@ -79,7 +85,7 @@ export default function AccountsPage() {
   const fetchAccounts = useCallback(async () => {
     try {
       setLoading(true);
-      const endpoint = isAdmin ? "/accounts/all" : "/accounts";
+      const endpoint = isStaff ? "/accounts/all" : "/accounts";
       const res = await api.get(endpoint);
       setAccounts(res.data.data || res.data);
     } catch {
@@ -87,7 +93,7 @@ export default function AccountsPage() {
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, error]);
+  }, [isStaff, error]);
 
   useEffect(() => {
     fetchAccounts();
@@ -138,12 +144,14 @@ export default function AccountsPage() {
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
   const activeAccounts = accounts.filter((a) => a.status === "active").length;
+  const hasAccount = accounts.length > 0;
 
   const filteredAccounts = accounts.filter(
     (acc) =>
       (acc.account_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
         acc.account_type.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (typeFilter === "all" || acc.account_type === typeFilter)
+      (typeFilter === "all" || acc.account_type === typeFilter) &&
+      (customerFilter === "all" || (customerFilter === "customer" && acc.account_type === "customer") || (customerFilter === "non_customer" && acc.account_type !== "customer"))
   );
 
   const accountStats = [
@@ -164,18 +172,20 @@ export default function AccountsPage() {
                 {t("accounts")}
               </h1>
               <p className="mt-1 text-gray-500">
-                {isAdmin ? t("management") : t("accounts")}
+                {isStaff ? t("management") : t("accounts")}
               </p>
             </div>
-            {!isAdmin && (
-              <Button
-                onClick={() => setShowCreateDialog(true)}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200 hover:from-blue-700 hover:to-blue-800"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                {t("create_new")}
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {!isStaff && !hasAccount && (
+                <Button
+                  onClick={() => setShowCreateDialog(true)}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200 hover:from-blue-700 hover:to-blue-800"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t("create_new")}
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Stats Cards */}
@@ -206,23 +216,41 @@ export default function AccountsPage() {
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input
                     placeholder={t("search_placeholder")}
-                    className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800"
+                    className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm focus:bg-white dark:focus:bg-gray-800 focus:border-[#1F8A4D] focus:ring-2 focus:ring-[#1F8A4D]/20 focus:outline-none pl-10"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px] border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
+                  <SelectTrigger className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm focus:bg-white dark:focus:bg-gray-800 focus:border-[#1F8A4D] focus:ring-2 focus:ring-[#1F8A4D]/20 focus:outline-none sm:w-[180px]">
                     <SelectValue placeholder={t("account_type")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t("all")}</SelectItem>
-                    <SelectItem value="savings">{t("accounts")}</SelectItem>
-                    <SelectItem value="current">{t("accounts")}</SelectItem>
-                    <SelectItem value="fixed_deposit">{t("accounts")}</SelectItem>
-                    <SelectItem value="customer">{t("customers")}</SelectItem>
+                    <SelectItem value="savings">Savings</SelectItem>
+                    <SelectItem value="current">Current</SelectItem>
+                    <SelectItem value="fixed_deposit">Fixed Deposit</SelectItem>
+                    <SelectItem value="customer">Customer</SelectItem>
                   </SelectContent>
                 </Select>
+                <Select value={customerFilter} onValueChange={setCustomerFilter}>
+                  <SelectTrigger className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm focus:bg-white dark:focus:bg-gray-800 focus:border-[#1F8A4D] focus:ring-2 focus:ring-[#1F8A4D]/20 focus:outline-none sm:w-[200px]">
+                    <SelectValue placeholder="-- Select customer account --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("all")}</SelectItem>
+                    <SelectItem value="customer">Customer Accounts</SelectItem>
+                    <SelectItem value="non_customer">Non-Customer Accounts</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { setCustomerFilter("all"); setTypeFilter("all"); }}
+                  className="flex h-12 w-full items-center rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm focus:bg-white dark:focus:bg-gray-800 focus:border-[#1F8A4D] focus:ring-2 focus:ring-[#1F8A4D]/20 focus:outline-none sm:w-auto"
+                >
+                  {t("view_all")}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -261,11 +289,11 @@ export default function AccountsPage() {
                 <p className="mt-1 text-sm text-gray-500">
                   {searchTerm || typeFilter !== "all"
                     ? t("no_results")
-                    : isAdmin
+                    : isStaff
                       ? t("no_data")
                       : t("create_new")}
                 </p>
-                {!isAdmin && !searchTerm && typeFilter === "all" && (
+                {!isStaff && !hasAccount && !searchTerm && typeFilter === "all" && (
                   <Button
                     onClick={() => setShowCreateDialog(true)}
                     className="mt-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white"
@@ -331,6 +359,17 @@ export default function AccountsPage() {
                           <Eye className="mr-1.5 h-3.5 w-3.5" />
                           {t("view")}
                         </Button>
+                        {!isStaff && account.status === "active" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex-1 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                            onClick={() => router.push(`/loans/apply?account_number=${account.account_number}`)}
+                          >
+                            <Banknote className="mr-1.5 h-3.5 w-3.5" />
+                            Request Loan
+                          </Button>
+                        )}
                         {isAdmin && (
                           <>
                             {account.status === "active" ? (
@@ -342,7 +381,7 @@ export default function AccountsPage() {
                                 onClick={() => handleBlockAccount(account.id)}
                               >
                                 <Lock className="mr-1.5 h-3.5 w-3.5" />
-                                {t("close")}
+                                Block
                               </Button>
                             ) : account.status === "blocked" ? (
                               <Button
@@ -353,7 +392,7 @@ export default function AccountsPage() {
                                 onClick={() => handleUnblockAccount(account.id)}
                               >
                                 <Unlock className="mr-1.5 h-3.5 w-3.5" />
-                                {t("open")}
+                                Unblock
                               </Button>
                             ) : null}
                           </>
@@ -450,21 +489,21 @@ export default function AccountsPage() {
 
                 {/* Details Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">{t("account_number")}</p>
-                    <p className="mt-1 font-mono font-semibold text-gray-900 dark:text-white">{selectedAccount.account_number}</p>
+                  <div className="rounded-lg bg-green-50 p-3 border border-green-100">
+                    <p className="text-xs font-medium text-green-600">{t("account_number")}</p>
+                    <p className="mt-1 font-mono font-semibold text-green-900 dark:text-green-100">{selectedAccount.account_number}</p>
                   </div>
-                  <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">{t("interest_rate")}</p>
-                    <p className="mt-1 font-semibold text-gray-900 dark:text-white">{selectedAccount.interest_rate}% p.a.</p>
+                  <div className="rounded-lg bg-blue-50 p-3 border border-blue-100">
+                    <p className="text-xs font-medium text-blue-600">{t("interest_rate")}</p>
+                    <p className="mt-1 font-semibold text-blue-900 dark:text-blue-100">{selectedAccount.interest_rate}% p.a.</p>
                   </div>
-                  <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">{t("created")}</p>
-                    <p className="mt-1 font-semibold text-gray-900 dark:text-white">{formatDate(selectedAccount.created_at)}</p>
+                  <div className="rounded-lg bg-purple-50 p-3 border border-purple-100">
+                    <p className="text-xs font-medium text-purple-600">{t("created")}</p>
+                    <p className="mt-1 font-semibold text-purple-900 dark:text-purple-100">{formatDate(selectedAccount.created_at)}</p>
                   </div>
-                  <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">{t("account_number")}</p>
-                    <p className="mt-1 font-mono text-xs text-gray-600">{selectedAccount.id}</p>
+                  <div className="rounded-lg bg-amber-50 p-3 border border-amber-100">
+                    <p className="text-xs font-medium text-amber-600">{t("account_number")}</p>
+                    <p className="mt-1 font-mono text-xs text-amber-900 dark:text-amber-100">{selectedAccount.id}</p>
                   </div>
                 </div>
               </div>
@@ -476,6 +515,8 @@ export default function AccountsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+
       </DashboardLayout>
     </ProtectedRoute>
   );

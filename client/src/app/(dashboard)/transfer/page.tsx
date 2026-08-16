@@ -68,6 +68,8 @@ export default function TransferPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  const TRANSFER_FEE_RATE = 0.015;
+
   const [fromAccount, setFromAccount] = useState<string | undefined>(undefined);
   const [toAccountNumber, setToAccountNumber] = useState("");
   const [amount, setAmount] = useState("");
@@ -94,10 +96,12 @@ export default function TransferPage() {
 
   const fetchAccounts = async () => {
     try {
-      const res = await api.get("/accounts");
+      const isStaff = user?.role !== "customer";
+      const url = isStaff ? "/accounts/all" : "/accounts";
+      const res = await api.get(url);
       setAccounts(Array.isArray(res.data) ? res.data : res.data?.accounts || []);
     } catch (err) {
-      console.error("Failed to fetch accounts:", err);
+      error("Failed to load accounts");
     } finally {
       setLoading(false);
     }
@@ -108,7 +112,7 @@ export default function TransferPage() {
       const res = await api.get("/accounts/all");
       setAllAccounts(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error("Failed to fetch all accounts:", err);
+      // Silently fail - not critical
     }
   };
 
@@ -117,7 +121,7 @@ export default function TransferPage() {
       const res = await api.get("/transactions?type=transfer");
       setRecentTransfers(Array.isArray(res.data) ? res.data.slice(0, 10) : []);
     } catch (err) {
-      console.error("Failed to fetch transfers:", err);
+      // Silently fail - not critical
     }
   };
 
@@ -133,7 +137,7 @@ export default function TransferPage() {
 
   const selectedAccount = allAccounts.find((a) => a.account_number === fromAccount);
   const transferAmount = parseFloat(amount) || 0;
-  const fee = transferAmount * 0.01;
+  const fee = transferAmount * TRANSFER_FEE_RATE;
   const totalDeduction = transferAmount + fee;
   const remainingBalance = (selectedAccount?.balance || 0) - totalDeduction;
 
@@ -445,7 +449,7 @@ export default function TransferPage() {
                           <span className="font-medium text-red-600">-{formatCurrency(transferAmount)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Transfer Fee (1%)</span>
+                          <span className="text-gray-500">Transfer Fee (1.5%)</span>
                           <span className="font-medium text-amber-600">-{formatCurrency(fee)}</span>
                         </div>
                         <Separator />

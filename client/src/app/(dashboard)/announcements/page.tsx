@@ -160,7 +160,7 @@ export default function AnnouncementsPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute>
+      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager"]}>
         <DashboardLayout>
           <div className="space-y-6">
             <div className="h-8 w-48 rounded bg-gray-200 animate-pulse" />
@@ -187,7 +187,7 @@ export default function AnnouncementsPage() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager"]}>
       <DashboardLayout>
         <div className="space-y-6">
           {/* Header */}

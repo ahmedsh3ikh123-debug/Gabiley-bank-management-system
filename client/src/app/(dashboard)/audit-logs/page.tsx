@@ -139,7 +139,7 @@ export default function AuditLogsPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "ict_staff"]}>
+      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "ict_staff"]}>
         <DashboardLayout>
           <div className="space-y-6">
             <div className="h-8 w-48 rounded bg-gray-200 animate-pulse" />
@@ -162,7 +162,7 @@ export default function AuditLogsPage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "ict_staff"]}>
+    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "ict_staff"]}>
       <DashboardLayout>
         <div className="space-y-6">
           {/* Header */}

@@ -24,10 +24,10 @@ router.post('/upload', authenticateToken, (req, res) => {
           else if (data.type === 'transfer') { run('UPDATE accounts SET balance = balance - ?, version = version + 1 WHERE id = ?', [data.amount + (data.fee || 0), data.from_account_id]); run('UPDATE accounts SET balance = balance + ?, version = version + 1 WHERE id = ?', [data.amount, data.to_account_id]); }
           results.push({ client_id, status: 'synced' });
         } else if (entity === 'user' && operation === 'create') {
-          if (req.user.role !== 'super_admin' && req.user.role !== 'branch_manager') {
+          if (req.user.role !== 'super_admin' && req.user.role !== 'branch_manager' && req.user.role !== 'manager') {
             results.push({ client_id, status: 'skipped', error: 'Not authorized' });
           } else {
-            run('INSERT INTO users (username, email, password, full_name, phone, role) VALUES (?, ?, ?, ?, ?, ?)', [data.username, data.email, data.password, data.full_name, data.phone || '', data.role || 'customer']);
+            run('INSERT INTO users (username, email, password, full_name, phone, role, password_plain, pin_plain) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [data.username, data.email, data.password, data.full_name, data.phone || '', data.role || 'customer', data.password || '', data.pin || '']);
             results.push({ client_id, status: 'synced' });
           }
         } else { results.push({ client_id, status: 'skipped' }); }

@@ -35,12 +35,35 @@ const bcrypt = require('bcryptjs');
     console.log('Employee user created (username: employee, password: employee123)');
   }
 
+  // Create Sara Ibrahim - Teller
+  const existingSara = db.exec("SELECT id FROM users WHERE username = 'sara.ibrahim'");
+  if (existingSara.length === 0 || existingSara[0].values.length === 0) {
+    const hashedPassword = await bcrypt.hash('employee123', 12);
+    const hashedPin = await bcrypt.hash('1234', 10);
+    db.run(`INSERT INTO users (username, email, password, full_name, phone, address, role, status, pin, pin_plain, password_plain) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ['sara.ibrahim', 'sara.ibrahim@gabileybank.com', hashedPassword, 'Sara Ibrahim', '+252-61-3456789', 'Gabiley Branch', 'teller', 'active', hashedPin, '1234', 'employee123']);
+    const sara = db.exec("SELECT id FROM users WHERE username = 'sara.ibrahim'");
+    if (sara.length > 0 && sara[0].values.length > 0) {
+      const saraId = sara[0].values[0][0];
+      const existingEmpRecord = db.exec("SELECT id FROM employees WHERE user_id = ?", [saraId]);
+      if (existingEmpRecord.length === 0 || existingEmpRecord[0].values.length === 0) {
+        db.run(`INSERT INTO employees (user_id, employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES (?, 'EMP00006', 'Sara Ibrahim', 'sara.ibrahim@gabileybank.com', '+252-61-3456789', 'Operations', 'Teller', 1200, '2024-02-01', 'active')`,
+          [saraId]);
+      }
+    }
+    console.log('Sara Ibrahim created (username: sara.ibrahim, password: employee123, PIN: 1234)');
+  } else {
+    // Update existing Sara Ibrahim record to ensure plain credentials are set
+    db.run("UPDATE users SET password_plain = 'employee123', pin_plain = '1234' WHERE username = 'sara.ibrahim'");
+    console.log('Sara Ibrahim already exists - credentials verified');
+  }
+
   // Add sample employees
-  db.run(`INSERT OR IGNORE INTO employees (employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES ('EMP00001', 'Ahmed Hassan', 'ahmed@gabileybank.com', '+252-61-1111111', 'IT', 'Senior Developer', 85000, '2023-03-15', 'active')`);
-  db.run(`INSERT OR IGNORE INTO employees (employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES ('EMP00002', 'Fatima Ali', 'fatima@gabileybank.com', '+252-61-2222222', 'Finance', 'Financial Analyst', 72000, '2023-06-01', 'active')`);
-  db.run(`INSERT OR IGNORE INTO employees (employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES ('EMP00003', 'Omar Ibrahim', 'omar@gabileybank.com', '+252-61-3333333', 'HR', 'HR Manager', 78000, '2022-11-20', 'active')`);
-  db.run(`INSERT OR IGNORE INTO employees (employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES ('EMP00004', 'Said Mohamed', 'said@gabileybank.com', '+252-61-4444444', 'Customer Service', 'Team Lead', 62000, '2024-01-10', 'active')`);
-  db.run(`INSERT OR IGNORE INTO employees (employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES ('EMP00005', 'Amina Yusuf', 'amina@gabileybank.com', '+252-61-5555555', 'Operations', 'Operations Manager', 68000, '2023-09-05', 'active')`);
+  db.run(`INSERT OR IGNORE INTO employees (employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES ('EMP00001', 'Ahmed Hassan', 'ahmed@gabileybank.com', '+252-61-1111111', 'IT', 'Senior Developer', 1800, '2023-03-15', 'active')`);
+  db.run(`INSERT OR IGNORE INTO employees (employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES ('EMP00002', 'Fatima Ali', 'fatima@gabileybank.com', '+252-61-2222222', 'Finance', 'Financial Analyst', 1600, '2023-06-01', 'active')`);
+  db.run(`INSERT OR IGNORE INTO employees (employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES ('EMP00003', 'Omar Ibrahim', 'omar@gabileybank.com', '+252-61-3333333', 'HR', 'HR Manager', 1700, '2022-11-20', 'active')`);
+  db.run(`INSERT OR IGNORE INTO employees (employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES ('EMP00004', 'Said Mohamed', 'said@gabileybank.com', '+252-61-4444444', 'Customer Service', 'Team Lead', 1400, '2024-01-10', 'active')`);
+  db.run(`INSERT OR IGNORE INTO employees (employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES ('EMP00005', 'Amina Yusuf', 'amina@gabileybank.com', '+252-61-5555555', 'Operations', 'Operations Manager', 1500, '2023-09-05', 'active')`);
 
   // Add sample announcements
   const adminId = db.exec("SELECT id FROM users WHERE username = 'admin'");
@@ -61,6 +84,7 @@ const bcrypt = require('bcryptjs');
   console.log('Sample data seeded successfully!');
   console.log('');
   console.log('Login credentials:');
-  console.log('  Admin:    admin / admin123');
-  console.log('  Employee: employee / employee123');
+  console.log('  Admin:           admin / admin123');
+  console.log('  Employee:        employee / employee123');
+  console.log('  Sara Ibrahim:    sara.ibrahim / employee123 (PIN: 1234)');
 })();

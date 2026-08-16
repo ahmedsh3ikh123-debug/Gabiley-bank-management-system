@@ -2,15 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import ProtectedRoute from "@/components/layout/protected-route";
+import { ProtectedRoute } from "@/components/layout/protected-route";
 import DashboardLayout from "@/components/layout/dashboard-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -38,69 +37,63 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Calculator,
-  TrendingUp,
   FileText,
-  AlertCircle,
-  DollarSign,
-  Calendar,
-  Percent,
-  ArrowRight,
-  Info,
-  Plus,
+  CreditCard,
   User,
   Wifi,
   WifiOff,
   RefreshCw,
+  Mail,
+  Search,
+  X,
 } from "lucide-react";
 import type { Loan } from "@/types";
+
+interface LoanWithUser extends Loan {
+  full_name?: string;
+  email?: string;
+  phone?: string;
+  account_balance?: number;
+}
+
+interface AccountData {
+  account_id: number;
+  account_number: string;
+  balance: number;
+  account_type: string;
+  user_id: number;
+  full_name: string;
+  email: string;
+  phone: string;
+}
 
 const LOAN_STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: <Clock className="h-3.5 w-3.5" /> },
   approved: { label: "Approved", color: "bg-green-100 text-green-800 border-green-200", icon: <CheckCircle className="h-3.5 w-3.5" /> },
   rejected: { label: "Rejected", color: "bg-red-100 text-red-800 border-red-200", icon: <XCircle className="h-3.5 w-3.5" /> },
+  disbursed: { label: "Disbursed", color: "bg-emerald-100 text-emerald-800 border-emerald-200", icon: <CheckCircle className="h-3.5 w-3.5" /> },
   paid: { label: "Paid", color: "bg-blue-100 text-blue-800 border-blue-200", icon: <CheckCircle className="h-3.5 w-3.5" /> },
   syncing: { label: "Syncing", color: "bg-purple-100 text-purple-800 border-purple-200", icon: <RefreshCw className="h-3.5 w-3.5" /> },
 };
 
-function calculateLoanDetails(amount: number, termMonths: number) {
-  const annualRate = 0.12;
-  const monthlyRate = annualRate / 12;
-  const monthlyPayment = (amount * monthlyRate * Math.pow(1 + monthlyRate, termMonths)) /
-    (Math.pow(1 + monthlyRate, termMonths) - 1);
-  const totalPayment = monthlyPayment * termMonths;
-  const totalInterest = totalPayment - amount;
-
-  return {
-    monthlyPayment: isNaN(monthlyPayment) ? 0 : monthlyPayment,
-    totalPayment: isNaN(totalPayment) ? 0 : totalPayment,
-    totalInterest: isNaN(totalInterest) ? 0 : totalInterest,
-    annualRate,
-  };
-}
-
 export default function LoansPage() {
   const router = useRouter();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isStaff, isCustomer } = useAuth();
   const { success, error } = useToast();
   const { isOnline, setSyncing, setPendingItems } = useOnlineStatus();
   const { t } = useLanguage();
 
-  const [loans, setLoans] = useState<Loan[]>([]);
+  const [loans, setLoans] = useState<LoanWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState("loans");
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
-  const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
+  const [selectedLoan, setSelectedLoan] = useState<LoanWithUser | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
-
-  const [calculatorData, setCalculatorData] = useState({
-    amount: "",
-    term_months: "",
-  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const updatePendingCount = useCallback(async () => {
     const count = await getPendingSyncCount();
@@ -116,7 +109,7 @@ export default function LoansPage() {
         setLoans(offlineLoans);
         return;
       }
-      const endpoint = isAdmin ? "/admin/loans" : "/loans";
+      const endpoint = isStaff ? "/employee/loans" : "/loans";
       const res = await api.get(endpoint);
       const serverLoans = res.data.data || res.data;
       setLoans(serverLoans);
@@ -124,13 +117,12 @@ export default function LoansPage() {
         await saveLoanOffline(loan);
       }
     } catch (err: any) {
-      console.error("Failed to fetch loans:", err);
       const offlineLoans = await getLoansOffline(user?.id);
       setLoans(offlineLoans);
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, isOnline, user?.id]);
+  }, [isStaff, isOnline, user?.id]);
 
   useEffect(() => {
     fetchLoans();
@@ -149,7 +141,7 @@ export default function LoansPage() {
           await updatePendingCount();
           success("Offline data synced successfully");
         } catch (err) {
-          console.error("Sync failed:", err);
+          error("Failed to sync offline data");
         } finally {
           setIsSyncing(false);
           setSyncing(false);
@@ -176,12 +168,13 @@ export default function LoansPage() {
         return;
       }
 
-      await api.put(`/admin/loans/${loanId}/${action}`, reviewData);
+      const endpoint = isStaff ? `/employee/loans/${loanId}/${action}` : `/admin/loans/${loanId}/${action}`;
+      await api.put(endpoint, reviewData);
       success(`Loan ${status} successfully`);
       setShowReviewDialog(false);
       setSelectedLoan(null);
       setReviewNotes("");
-      fetchLoans();
+      await fetchLoans();
     } catch (err: any) {
       error(err.response?.data?.error || `Failed to ${status} loan`);
     } finally {
@@ -189,47 +182,56 @@ export default function LoansPage() {
     }
   };
 
-  const openReviewDialog = (loan: Loan) => {
+  const openReviewDialog = (loan: LoanWithUser) => {
     setSelectedLoan(loan);
     setReviewNotes("");
     setShowReviewDialog(true);
   };
 
-  const openDetailDialog = (loan: Loan) => {
+  const openDetailDialog = (loan: LoanWithUser) => {
     setSelectedLoan(loan);
     setShowDetailDialog(true);
   };
+
+  const filteredLoans = loans.filter((loan) => {
+    if (!(loan as any).account_number) return false;
+    if (statusFilter !== "all" && loan.status !== statusFilter) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const name = (loan.full_name || "").toLowerCase();
+      const purpose = (loan.purpose || "").toLowerCase();
+      const acctNum = ((loan as any).account_number || "").toLowerCase();
+      if (!name.includes(q) && !purpose.includes(q) && !acctNum.includes(q) && !String(loan.amount).includes(q)) return false;
+    }
+    return true;
+  });
 
   const loanStats = {
     total: loans.length,
     pending: loans.filter((l) => l.status === "pending").length,
     approved: loans.filter((l) => l.status === "approved").length,
+    disbursed: loans.filter((l) => l.status === "disbursed").length,
     rejected: loans.filter((l) => l.status === "rejected").length,
     totalAmount: loans.reduce((sum, l) => sum + l.amount, 0),
   };
 
   const loanStatsCards = [
-    { label: t("total_accounts"), value: loanStats.total, icon: <FileText className="h-5 w-5" />, color: "from-blue-500 to-indigo-600" },
-    { label: t("pending"), value: loanStats.pending, icon: <Clock className="h-5 w-5" />, color: "from-amber-500 to-orange-600" },
-    { label: t("approved"), value: loanStats.approved, icon: <CheckCircle className="h-5 w-5" />, color: "from-emerald-500 to-green-600" },
-    { label: t("total_balance"), value: formatCurrency(loanStats.totalAmount), icon: <DollarSign className="h-5 w-5" />, color: "from-violet-500 to-purple-600" },
+    { label: "Total Loans", value: loanStats.total, icon: <FileText className="h-5 w-5" />, color: "from-blue-500 to-indigo-600" },
+    { label: "Pending", value: loanStats.pending, icon: <Clock className="h-5 w-5" />, color: "from-amber-500 to-orange-600" },
+    { label: "Disbursed", value: loanStats.disbursed, icon: <CheckCircle className="h-5 w-5" />, color: "from-emerald-500 to-green-600" },
+    { label: "Rejected", value: loanStats.rejected, icon: <XCircle className="h-5 w-5" />, color: "from-red-500 to-rose-600" },
   ];
-
-  const calculatorDetails = calculateLoanDetails(
-    parseFloat(calculatorData.amount) || 0,
-    parseInt(calculatorData.term_months) || 1
-  );
 
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="space-y-6">
+        <div className="space-y-6 dark:bg-black">
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white">{t("loans")}</h1>
+              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-[#1A1918] dark:text-white">Loans</h1>
               <p className="mt-1 text-gray-500">
-                {isAdmin ? t("management") : t("loans")}
+                {isStaff ? "Manage and review customer loan applications" : "View your loan applications"}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -251,13 +253,13 @@ export default function LoansPage() {
                   Online
                 </Badge>
               )}
-              {!isAdmin && (
+              {(isCustomer || ["super_admin", "branch_manager", "customer_service"].includes(user?.role || "")) && (
                 <Button
-                  onClick={() => router.push("/loans/apply")}
                   className="bg-gradient-to-r from-[#1F8A4D] to-[#176B3D] text-white shadow-lg shadow-[#1F8A4D]/20 hover:from-[#1F8A4D]/90 hover:to-[#176B3D]/90"
+                  onClick={() => router.push("/loans/apply")}
                 >
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t("apply_loan")}
+                  <Banknote className="mr-1.5 h-4 w-4" />
+                  Apply Loan
                 </Button>
               )}
             </div>
@@ -283,27 +285,52 @@ export default function LoansPage() {
             ))}
           </div>
 
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-white border border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-700">
-              <TabsTrigger value="loans" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                <FileText className="h-4 w-4" />
-                {t("loans")}
-              </TabsTrigger>
-              {!isAdmin && (
-                <TabsTrigger value="calculator" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                  <Calculator className="h-4 w-4" />
-                  {t("loans")}
-                </TabsTrigger>
+          <div className="space-y-4">
+              {/* Search and Filter */}
+              {loans.length > 0 && (
+                <Card className="shadow-md">
+                  <CardContent className="pt-6">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          placeholder="Search by name, purpose, account, or amount..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-9 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
+                        />
+                        {searchQuery && (
+                          <button
+                            onClick={() => setSearchQuery("")}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {["all", "pending", "approved", "rejected"].map((status) => (
+                          <Button
+                            key={status}
+                            variant={statusFilter === status ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setStatusFilter(status)}
+                            className={statusFilter === status ? "bg-blue-600 text-white" : ""}
+                          >
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
-            </TabsList>
 
-            <TabsContent value="loans" className="space-y-4">
               {loading ? (
                 <div className="grid gap-4">
                   {[...Array(3)].map((_, i) => (
                     <Card key={i} className="shadow-md">
-                      <CardContent className="p-6">
+                      <CardContent className="p-6 dark:bg-black">
                         <div className="animate-pulse space-y-4">
                           <div className="flex items-center gap-3">
                             <div className="h-12 w-12 rounded-xl bg-gray-200" />
@@ -322,41 +349,53 @@ export default function LoansPage() {
                     </Card>
                   ))}
                 </div>
-              ) : loans.length === 0 ? (
+              ) : filteredLoans.length === 0 ? (
                 <Card className="shadow-md">
                   <CardContent className="flex flex-col items-center justify-center py-16">
                     <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50">
                       <Banknote className="h-10 w-10 text-blue-400" />
                     </div>
-                    <p className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">{t("no_data")}</p>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {isAdmin ? t("no_data") : t("apply_loan")}
+                    <p className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+                      {searchQuery || statusFilter !== "all" ? "No loans match your search" : "No loan applications yet"}
                     </p>
-                    {!isAdmin && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      {isStaff ? "Create a loan application for a customer" : "Apply for your first loan"}
+                    </p>
+                    {!searchQuery && statusFilter === "all" && (isCustomer || ["super_admin", "branch_manager", "customer_service"].includes(user?.role || "")) && (
                       <Button
+                        className="mt-4 bg-gradient-to-r from-[#1F8A4D] to-[#176B3D] text-white shadow-lg shadow-[#1F8A4D]/20 hover:from-[#1F8A4D]/90 hover:to-[#176B3D]/90"
                         onClick={() => router.push("/loans/apply")}
-                        className="mt-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white"
                       >
-                        <Plus className="mr-2 h-4 w-4" />
-                        {t("apply_loan")}
+                        <Banknote className="mr-1.5 h-4 w-4" />
+                        Apply Loan
                       </Button>
                     )}
                   </CardContent>
                 </Card>
               ) : (
                 <div className="grid gap-4">
-                  {loans.map((loan) => {
+                  {filteredLoans.map((loan) => {
                     const statusConfig = LOAN_STATUS_CONFIG[loan.status] || LOAN_STATUS_CONFIG.pending;
                     return (
-                      <Card key={loan.id} className="group shadow-md hover:shadow-lg transition-all duration-300">
-                        <CardContent className="p-6">
+                      <Card key={loan.id} className={`group shadow-md hover:shadow-lg transition-all duration-300 ${
+                        loan.status === "rejected" ? "border-l-4 border-l-red-400 bg-red-50/30" :
+                        loan.status === "approved" || loan.status === "disbursed" ? "border-l-4 border-l-green-400 bg-green-50/30" :
+                        loan.status === "pending" ? "border-l-4 border-l-amber-400 bg-amber-50/30" :
+                        ""
+                      }`}>
+                        <CardContent className="p-6 dark:bg-black">
                           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-4">
-                              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md">
+                              <div className={`flex h-14 w-14 items-center justify-center rounded-xl text-white shadow-md ${
+                                loan.status === "rejected" ? "bg-gradient-to-br from-red-400 to-rose-600" :
+                                loan.status === "approved" || loan.status === "disbursed" ? "bg-gradient-to-br from-green-400 to-emerald-600" :
+                                loan.status === "pending" ? "bg-gradient-to-br from-amber-400 to-orange-600" :
+                                "bg-gradient-to-br from-blue-500 to-indigo-600"
+                              }`}>
                                 <Banknote className="h-6 w-6" />
                               </div>
                               <div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                   <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                                     {formatCurrency(loan.amount)}
                                   </h3>
@@ -371,9 +410,23 @@ export default function LoansPage() {
                                     </Badge>
                                   )}
                                 </div>
-                                <p className="mt-0.5 text-sm text-gray-500">
-                                  Applied on {formatDate(loan.created_at)}
-                                </p>
+                                <div className="mt-0.5 flex items-center gap-2 text-sm text-gray-500">
+                                  {isStaff && loan.full_name && (
+                                    <>
+                                      <User className="h-3.5 w-3.5" />
+                                      <span className="font-medium">{loan.full_name}</span>
+                                      <span className="h-1 w-1 rounded-full bg-gray-300" />
+                                    </>
+                                  )}
+                                  {isStaff && loan.email && (
+                                    <>
+                                      <Mail className="h-3.5 w-3.5" />
+                                      <span>{loan.email}</span>
+                                      <span className="h-1 w-1 rounded-full bg-gray-300" />
+                                    </>
+                                  )}
+                                  <span>Applied {formatDate(loan.created_at)}</span>
+                                </div>
                               </div>
                             </div>
                             <div className="flex gap-2">
@@ -384,16 +437,26 @@ export default function LoansPage() {
                                 onClick={() => openDetailDialog(loan)}
                               >
                                 <FileText className="mr-1.5 h-3.5 w-3.5" />
-                                {t("view")}
+                                View
                               </Button>
-                              {isAdmin && loan.status === "pending" && (
+                              {["super_admin", "branch_manager", "customer_service"].includes(user?.role || "") && loan.status === "pending" && (
                                 <Button
                                   size="sm"
                                   className="bg-gradient-to-r from-blue-600 to-blue-700 text-white"
                                   onClick={() => openReviewDialog(loan)}
                                 >
                                   <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
-                                  {t("view")}
+                                  Review
+                                </Button>
+                              )}
+                              {["super_admin", "branch_manager", "customer_service"].includes(user?.role || "") && loan.status === "rejected" && (
+                                <Button
+                                  size="sm"
+                                  className="bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-amber-200"
+                                  onClick={() => openReviewDialog(loan)}
+                                >
+                                  <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                                  Re-Review
                                 </Button>
                               )}
                             </div>
@@ -401,26 +464,51 @@ export default function LoansPage() {
 
                           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                             <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t("amount")}</p>
-                              <p className="mt-0.5 font-semibold text-gray-900 dark:text-white">{formatCurrency(loan.amount)}</p>
+                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Amount</p>
+                              <p className="mt-0.5 font-semibold text-black dark:text-white">{formatCurrency(loan.amount)}</p>
                             </div>
                             <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t("date")}</p>
-                              <p className="mt-0.5 font-semibold text-gray-900 dark:text-white">{loan.term_months} months</p>
+                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Term</p>
+                              <p className="mt-0.5 font-semibold text-black dark:text-white">{loan.term_months} months</p>
                             </div>
                             <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t("description")}</p>
-                              <p className="mt-0.5 truncate font-semibold text-gray-900 dark:text-white">{loan.purpose}</p>
+                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Purpose</p>
+                              <p className="mt-0.5 truncate font-semibold text-black dark:text-white">{loan.purpose || "N/A"}</p>
                             </div>
-                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t("total_balance")}</p>
-                              <p className="mt-0.5 font-semibold text-gray-900 dark:text-white">{formatCurrency(loan.monthly_income)}</p>
-                            </div>
+                            {(loan as any).account_number && (
+                              <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Account</p>
+                                <p className="mt-0.5 truncate font-semibold text-black dark:text-white">{(loan as any).account_number}</p>
+                              </div>
+                            )}
                           </div>
 
-                          {loan.review_notes && (
+                          {loan.status === "disbursed" && (loan as any).disbursed_at && (
+                            <div className="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 p-3">
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                <p className="text-sm font-medium text-emerald-800">
+                                  Disbursed to {(loan as any).account_number || "account"} on {formatDate((loan as any).disbursed_at)}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {loan.status === "rejected" && loan.review_notes && (
+                            <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3">
+                              <p className="text-xs font-medium text-red-700">Rejection Reason</p>
+                              <p className="mt-1 text-sm text-red-600">{loan.review_notes}</p>
+                            </div>
+                          )}
+                          {loan.status === "approved" && loan.review_notes && (
+                            <div className="mt-4 rounded-lg bg-green-50 border border-green-200 p-3">
+                              <p className="text-xs font-medium text-green-700">Approval Notes</p>
+                              <p className="mt-1 text-sm text-green-600">{loan.review_notes}</p>
+                            </div>
+                          )}
+                          {loan.status !== "rejected" && loan.status !== "approved" && loan.review_notes && (
                             <div className="mt-4 rounded-lg bg-blue-50 border border-blue-100 p-3">
-                              <p className="text-xs font-medium text-blue-800">{t("info")}</p>
+                              <p className="text-xs font-medium text-blue-800">Review Notes</p>
                               <p className="mt-1 text-sm text-blue-700">{loan.review_notes}</p>
                             </div>
                           )}
@@ -430,107 +518,7 @@ export default function LoansPage() {
                   })}
                 </div>
               )}
-            </TabsContent>
-
-            {/* Calculator Tab */}
-            {!isAdmin && (
-              <TabsContent value="calculator" className="space-y-4">
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <Card className="shadow-md">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Calculator className="h-5 w-5 text-blue-600" />
-                        {t("loans")}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">{t("amount")}</Label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="0.00"
-                            className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-12"
-                            value={calculatorData.amount}
-                            onChange={(e) => setCalculatorData({ ...calculatorData, amount: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">{t("date")}</Label>
-                        <div className="relative">
-                          <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                          <Input
-                            type="number"
-                            min="1"
-                            max="360"
-                            placeholder="e.g. 12"
-                            className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-12"
-                            value={calculatorData.term_months}
-                            onChange={(e) => setCalculatorData({ ...calculatorData, term_months: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                      <div className="rounded-lg bg-blue-50 p-3 flex items-start gap-2">
-                        <Info className="mt-0.5 h-4 w-4 text-blue-600 flex-shrink-0" />
-                        <p className="text-xs text-blue-700">
-                          Annual interest rate: 12%. This is an estimate. Actual rates may vary based on your credit profile.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="shadow-md">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <TrendingUp className="h-5 w-5 text-green-600" />
-                        {t("reports")}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-white">
-                        <p className="text-sm font-medium text-blue-100">{t("total_balance")}</p>
-                        <p className="mt-1 text-3xl font-bold">{formatCurrency(calculatorDetails.monthlyPayment)}</p>
-                      </div>
-
-                        <div className="mt-4 grid grid-cols-2 gap-3">
-                          <div className="rounded-lg bg-gray-50 p-4">
-                            <p className="text-xs font-medium text-gray-500">{t("total_balance")}</p>
-                            <p className="mt-1 text-lg font-bold text-amber-600">{formatCurrency(calculatorDetails.totalInterest)}</p>
-                          </div>
-                          <div className="rounded-lg bg-gray-50 p-4">
-                            <p className="text-xs font-medium text-gray-500">{t("total_balance")}</p>
-                            <p className="mt-1 text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(calculatorDetails.totalPayment)}</p>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 rounded-lg bg-green-50 p-4">
-                          <div className="flex items-center gap-3">
-                            <Percent className="h-8 w-8 text-green-600" />
-                            <div>
-                              <p className="text-sm font-medium text-green-900">{t("interest_rate")}</p>
-                              <p className="text-2xl font-bold text-green-700">{(calculatorDetails.annualRate * 100).toFixed(1)}%</p>
-                            </div>
-                          </div>
-                        </div>
-
-                      <Button
-                        className="mt-4 w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white"
-                        onClick={() => router.push(`/loans/apply?amount=${calculatorData.amount}&term=${calculatorData.term_months}`)}
-                        disabled={!calculatorData.amount || !calculatorData.term_months}
-                      >
-                        {t("apply_loan")}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-            )}
-          </Tabs>
+          </div>
         </div>
 
         {/* Review Dialog */}
@@ -538,38 +526,76 @@ export default function LoansPage() {
           <DialogContent className="sm:max-w-lg border-0 shadow-2xl">
             <DialogHeader>
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white">
-                  <CheckCircle className="h-5 w-5" />
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-white ${
+                  selectedLoan?.status === "rejected"
+                    ? "bg-gradient-to-br from-amber-500 to-orange-600"
+                    : "bg-gradient-to-br from-blue-500 to-indigo-600"
+                }`}>
+                  {selectedLoan?.status === "rejected" ? <RefreshCw className="h-5 w-5" /> : <CheckCircle className="h-5 w-5" />}
                 </div>
                 <div>
-                  <DialogTitle className="text-lg">{t("loans")}</DialogTitle>
-                  <p className="text-sm text-gray-500">{t("view")}</p>
+                  <DialogTitle className="text-lg">
+                    {selectedLoan?.status === "rejected" ? "Re-Review Loan Application" : "Review Loan Application"}
+                  </DialogTitle>
+                  <p className="text-sm text-gray-500">
+                    {selectedLoan?.status === "rejected"
+                      ? "This loan was previously rejected. Approve or reject again."
+                      : "Approve or reject this loan request"}
+                  </p>
                 </div>
               </div>
             </DialogHeader>
             {selectedLoan && (
               <div className="space-y-4">
-                <div className="rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 p-5 text-white">
-                  <p className="text-sm font-medium text-blue-100">{t("amount")}</p>
+                {selectedLoan.status === "rejected" && selectedLoan.review_notes && (
+                  <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+                    <p className="text-xs font-medium text-red-700">Previous Rejection Reason</p>
+                    <p className="mt-1 text-sm text-red-600">{selectedLoan.review_notes}</p>
+                  </div>
+                )}
+                <div className={`rounded-xl p-5 text-white ${
+                  selectedLoan.status === "rejected"
+                    ? "bg-gradient-to-br from-amber-500 to-orange-600"
+                    : "bg-gradient-to-br from-blue-600 to-indigo-700"
+                }`}>
+                  <p className="text-sm font-medium text-white/80">Loan Amount</p>
                   <p className="mt-1 text-2xl font-bold">{formatCurrency(selectedLoan.amount)}</p>
-                  <div className="mt-3 flex items-center gap-3 text-sm text-blue-100">
+                  <div className="mt-3 flex items-center gap-3 text-sm text-white/80">
                     <span>{selectedLoan.term_months} months</span>
-                    <span className="h-1 w-1 rounded-full bg-blue-300" />
-                    <span>{selectedLoan.purpose}</span>
+                    <span className="h-1 w-1 rounded-full bg-white/50" />
+                    <span>{selectedLoan.purpose || "No purpose specified"}</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
+                  {selectedLoan.full_name && (
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-xs font-medium text-gray-500">Applicant</p>
+                      <p className="mt-0.5 font-semibold text-black">{selectedLoan.full_name}</p>
+                    </div>
+                  )}
+                  {selectedLoan.email && (
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-xs font-medium text-gray-500">Email</p>
+                      <p className="mt-0.5 font-semibold text-black">{selectedLoan.email}</p>
+                    </div>
+                  )}
+                  {selectedLoan.phone && (
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-xs font-medium text-gray-500">Phone</p>
+                      <p className="mt-0.5 font-semibold text-black">{selectedLoan.phone}</p>
+                    </div>
+                  )}
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">{t("total_balance")}</p>
-                    <p className="mt-0.5 font-semibold">{formatCurrency(selectedLoan.monthly_income)}</p>
+                    <p className="text-xs font-medium text-gray-500">Monthly Income</p>
+                    <p className="mt-0.5 font-semibold text-black">{formatCurrency(selectedLoan.monthly_income || 0)}</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">{t("date")}</p>
-                    <p className="mt-0.5 font-semibold">{formatDate(selectedLoan.created_at)}</p>
+                    <p className="text-xs font-medium text-gray-500">Applied Date</p>
+                    <p className="mt-0.5 font-semibold text-black">{formatDate(selectedLoan.created_at)}</p>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">{t("info")}</Label>
+                  <Label className="text-sm font-medium text-gray-700">Review Notes</Label>
                   <Textarea
                     placeholder="Add notes about this decision..."
                     className="border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 min-h-[80px] resize-none"
@@ -581,7 +607,7 @@ export default function LoansPage() {
             )}
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setShowReviewDialog(false)} className="border-gray-200 hover:bg-gray-50">
-                {t("cancel")}
+                Cancel
               </Button>
               <Button
                 variant="destructive"
@@ -591,7 +617,7 @@ export default function LoansPage() {
               >
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <XCircle className="mr-1.5 h-4 w-4" />
-                {t("rejected")}
+                Reject
               </Button>
               <Button
                 disabled={submitting}
@@ -600,7 +626,7 @@ export default function LoansPage() {
               >
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <CheckCircle className="mr-1.5 h-4 w-4" />
-                {t("approved")}
+                Approve
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -611,45 +637,97 @@ export default function LoansPage() {
           <DialogContent className="sm:max-w-lg border-0 shadow-2xl">
             <DialogHeader>
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-white ${
+                  selectedLoan?.status === "rejected" ? "bg-gradient-to-br from-red-400 to-rose-600" :
+                  selectedLoan?.status === "approved" || selectedLoan?.status === "disbursed" ? "bg-gradient-to-br from-green-400 to-emerald-600" :
+                  "bg-gradient-to-br from-blue-500 to-indigo-600"
+                }`}>
                   <FileText className="h-5 w-5" />
                 </div>
                 <div>
-                  <DialogTitle className="text-lg">{t("loans")}</DialogTitle>
-                  <p className="text-sm text-gray-500">{t("description")}</p>
+                  <DialogTitle className="text-lg">Loan Details</DialogTitle>
+                  <p className="text-sm text-gray-500">Full information about this loan application</p>
                 </div>
               </div>
             </DialogHeader>
             {selectedLoan && (
               <div className="space-y-4">
-                <div className="rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-white">
-                  <p className="text-sm font-medium text-blue-100">{t("amount")}</p>
+                <div className={`rounded-xl p-6 text-white ${
+                  selectedLoan.status === "rejected" ? "bg-gradient-to-br from-red-400 to-rose-600" :
+                  selectedLoan.status === "approved" || selectedLoan.status === "disbursed" ? "bg-gradient-to-br from-green-400 to-emerald-600" :
+                  "bg-gradient-to-br from-blue-600 to-indigo-700"
+                }`}>
+                  <p className="text-sm font-medium text-white/80">Loan Amount</p>
                   <p className="mt-1 text-3xl font-bold">{formatCurrency(selectedLoan.amount)}</p>
                   <Badge className={`mt-3 ${LOAN_STATUS_CONFIG[selectedLoan.status]?.color || ""} border-0`}>
                     {LOAN_STATUS_CONFIG[selectedLoan.status]?.label || selectedLoan.status}
                   </Badge>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
+                  {selectedLoan.full_name && (
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-xs font-medium text-gray-500">Applicant</p>
+                      <p className="mt-0.5 font-semibold text-black">{selectedLoan.full_name}</p>
+                    </div>
+                  )}
+                  {selectedLoan.email && (
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-xs font-medium text-gray-500">Email</p>
+                      <p className="mt-0.5 font-semibold text-black">{selectedLoan.email}</p>
+                    </div>
+                  )}
+                  {selectedLoan.phone && (
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-xs font-medium text-gray-500">Phone</p>
+                      <p className="mt-0.5 font-semibold text-black">{selectedLoan.phone}</p>
+                    </div>
+                  )}
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">{t("date")}</p>
-                    <p className="mt-0.5 font-semibold">{selectedLoan.term_months} months</p>
+                    <p className="text-xs font-medium text-gray-500">Term</p>
+                    <p className="mt-0.5 font-semibold text-black">{selectedLoan.term_months} months</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">{t("description")}</p>
-                    <p className="mt-0.5 font-semibold">{selectedLoan.purpose}</p>
+                    <p className="text-xs font-medium text-gray-500">Purpose</p>
+                    <p className="mt-0.5 font-semibold text-black">{selectedLoan.purpose || "N/A"}</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">{t("total_balance")}</p>
-                    <p className="mt-0.5 font-semibold">{formatCurrency(selectedLoan.monthly_income)}</p>
+                    <p className="text-xs font-medium text-gray-500">Monthly Income</p>
+                    <p className="mt-0.5 font-semibold text-black">{formatCurrency(selectedLoan.monthly_income || 0)}</p>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs font-medium text-gray-500">{t("date")}</p>
-                    <p className="mt-0.5 font-semibold">{formatDate(selectedLoan.created_at)}</p>
+                    <p className="text-xs font-medium text-gray-500">Applied Date</p>
+                    <p className="mt-0.5 font-semibold text-black">{formatDate(selectedLoan.created_at)}</p>
                   </div>
+                  {(selectedLoan as any).account_number && (
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-xs font-medium text-gray-500">Account Number</p>
+                      <p className="mt-0.5 font-semibold text-black">{(selectedLoan as any).account_number}</p>
+                    </div>
+                  )}
                 </div>
-                {selectedLoan.review_notes && (
+                {selectedLoan.status === "disbursed" && (selectedLoan as any).disbursed_at && (
+                  <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
+                    <p className="text-xs font-medium text-emerald-800">Disbursed</p>
+                    <p className="mt-1 text-sm font-semibold text-emerald-700">
+                      ${selectedLoan.amount.toLocaleString()} sent to {(selectedLoan as any).account_number || "account"} on {formatDate((selectedLoan as any).disbursed_at)}
+                    </p>
+                  </div>
+                )}
+                {selectedLoan.status === "rejected" && selectedLoan.review_notes && (
+                  <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+                    <p className="text-xs font-medium text-red-700">Rejection Reason</p>
+                    <p className="mt-1 text-sm text-red-600">{selectedLoan.review_notes}</p>
+                  </div>
+                )}
+                {selectedLoan.status === "approved" && selectedLoan.review_notes && (
+                  <div className="rounded-lg bg-green-50 border border-green-200 p-3">
+                    <p className="text-xs font-medium text-green-700">Approval Notes</p>
+                    <p className="mt-1 text-sm text-green-600">{selectedLoan.review_notes}</p>
+                  </div>
+                )}
+                {selectedLoan.status !== "rejected" && selectedLoan.status !== "approved" && selectedLoan.review_notes && (
                   <div className="rounded-lg bg-blue-50 border border-blue-100 p-3">
-                    <p className="text-xs font-medium text-blue-800">{t("info")}</p>
+                    <p className="text-xs font-medium text-blue-800">Review Notes</p>
                     <p className="mt-1 text-sm text-blue-700">{selectedLoan.review_notes}</p>
                   </div>
                 )}
@@ -657,7 +735,7 @@ export default function LoansPage() {
             )}
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowDetailDialog(false)} className="border-gray-200">
-                {t("close")}
+                Close
               </Button>
             </DialogFooter>
           </DialogContent>

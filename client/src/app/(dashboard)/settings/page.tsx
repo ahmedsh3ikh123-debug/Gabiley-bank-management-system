@@ -504,7 +504,7 @@ function SettingsContent() {
 
 export default function SettingsPage() {
   return (
-    <ProtectedRoute requiredRoles={["super_admin", "branch_manager"]}>
+    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager"]}>
       <DashboardLayout>
         <SettingsContent />
       </DashboardLayout>

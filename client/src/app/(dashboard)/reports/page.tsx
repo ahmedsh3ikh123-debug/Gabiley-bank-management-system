@@ -187,7 +187,7 @@ export default function ReportsPage() {
   };
 
   return (
-    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "accountant"]}>
+    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "accountant"]}>
       <DashboardLayout>
         <div className="space-y-6">
           {/* Header */}

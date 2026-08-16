@@ -78,8 +78,6 @@ import {
   Smartphone,
   AlertTriangle,
   MoreVertical,
-  ChevronLeft,
-  ChevronRight,
   Activity,
   TrendingUp,
   TrendingDown,
@@ -96,6 +94,8 @@ import {
   AlertCircle,
   CheckCircle,
   X,
+  UserCog,
+  Image,
 } from "lucide-react";
 
 interface CustomerDetail {
@@ -104,6 +104,7 @@ interface CustomerDetail {
     mother_name?: string;
     gender?: string;
     branch?: string;
+    id_card_image?: string;
     details?: {
       account_number?: string;
       account_type?: string;
@@ -116,6 +117,7 @@ interface CustomerDetail {
     balance: number;
     status: string;
     currency: string;
+    purpose?: string;
     created_at: string;
   }[];
   transactions: {
@@ -166,6 +168,8 @@ interface CustomerForm {
   gender: string;
   mother_name: string;
   account_type: string;
+  purpose: string;
+  id_card_image?: string;
 }
 
 const ACCOUNT_TYPES = [
@@ -195,9 +199,8 @@ const initialForm: CustomerForm = {
   gender: "",
   mother_name: "",
   account_type: "savings",
+  purpose: "",
 };
-
-const ITEMS_PER_PAGE = 10;
 
 export default function CustomersPage() {
   const { user } = useAuth();
@@ -208,7 +211,6 @@ export default function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -216,10 +218,13 @@ export default function CustomersPage() {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
   const [showResetPinDialog, setShowResetPinDialog] = useState(false);
+  const [showChangeUsernameDialog, setShowChangeUsernameDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [form, setForm] = useState<CustomerForm>(initialForm);
   const [profileFile, setProfileFile] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState("");
+  const [idCardFile, setIdCardFile] = useState<File | null>(null);
+  const [idCardPreview, setIdCardPreview] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<User | null>(null);
   const [customerDetails, setCustomerDetails] = useState<CustomerDetail | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -229,11 +234,23 @@ export default function CustomersPage() {
   const [resetPasswordConfirm, setResetPasswordConfirm] = useState("");
   const [resetPin, setResetPin] = useState("");
   const [resetPinConfirm, setResetPinConfirm] = useState("");
+  const [newUsername, setNewUsername] = useState("");
+  const [customerCredentials, setCustomerCredentials] = useState<any>(null);
+  const [credentialsLoading, setCredentialsLoading] = useState(false);
+
+  const [showSendMessageDialog, setShowSendMessageDialog] = useState(false);
+  const [messageSubject, setMessageSubject] = useState("");
+  const [messageContent, setMessageContent] = useState("");
+  const [messageType, setMessageType] = useState<"general" | "credentials" | "security">("general");
+  const [showSetCredentialsDialog, setShowSetCredentialsDialog] = useState(false);
+  const [setCredentialsCustomer, setSetCredentialsCustomer] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [settingCredentials, setSettingCredentials] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
-      setCurrentPage(1);
     }, 400);
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -244,14 +261,15 @@ export default function CustomersPage() {
       const params: Record<string, string> = { role: "customer" };
       if (debouncedSearch) params.search = debouncedSearch;
       if (statusFilter !== "all") params.status = statusFilter;
-      const res = await api.get("/admin/users", { params });
+      const endpoint = ["teller", "customer_service", "ict_staff"].includes(user?.role || "") ? "/employee/users" : "/admin/users";
+      const res = await api.get(endpoint, { params });
       setCustomers(res.data);
     } catch {
       toast.error("Failed to fetch customers");
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, statusFilter, toast]);
+  }, [debouncedSearch, statusFilter, toast, user]);
 
   useEffect(() => {
     fetchCustomers();
@@ -267,13 +285,32 @@ export default function CustomersPage() {
     setShowDetailsDialog(true);
     setDetailsLoading(true);
     setDetailsTab("overview");
+    setCustomerCredentials(null);
     try {
-      const res = await api.get(`/admin/users/${customer.id}/details`);
+      const endpoint = ["teller", "customer_service", "ict_staff"].includes(user?.role || "") ? `/employee/users/${customer.id}/details` : `/admin/users/${customer.id}/details`;
+      const res = await api.get(endpoint);
       setCustomerDetails(res.data);
     } catch {
       toast.error("Failed to fetch customer details");
     } finally {
       setDetailsLoading(false);
+    }
+  };
+
+  const fetchCredentials = async (userId: number) => {
+    setCredentialsLoading(true);
+    try {
+      const endpoint = user?.role === "ict_staff"
+        ? `/ict/users/${userId}/credentials`
+        : user?.role === "super_admin"
+        ? `/admin/users/${userId}/credentials`
+        : `/employee/users/${userId}/credentials`;
+      const res = await api.get(endpoint);
+      setCustomerCredentials(res.data);
+    } catch {
+      toast.error("Failed to fetch credentials");
+    } finally {
+      setCredentialsLoading(false);
     }
   };
 
@@ -302,11 +339,42 @@ export default function CustomersPage() {
     try {
       setSubmitting(true);
       const { password, ...payload } = form;
+
+      if (idCardFile) {
+        const reader = new FileReader();
+        await new Promise<void>((resolve) => {
+          reader.onloadend = async () => {
+            const base64 = reader.result as string;
+            payload.id_card_image = base64;
+            resolve();
+          };
+          reader.readAsDataURL(idCardFile);
+        });
+      } else if (idCardPreview) {
+        payload.id_card_image = idCardPreview;
+      }
+
       await api.put(`/admin/users/${selectedCustomer.id}`, payload);
+
+      if (profileFile) {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64 = reader.result as string;
+          await api.put(`/admin/users/${selectedCustomer.id}/profile-picture`, { profile_picture: base64 });
+          toast.success("Profile picture updated");
+          fetchCustomers();
+          notifyChange("customers");
+          notifyChange("users");
+        };
+        reader.readAsDataURL(profileFile);
+      }
+
       toast.success("Customer updated successfully");
       setShowEditDialog(false);
       setSelectedCustomer(null);
       setForm(initialForm);
+      setIdCardPreview("");
+      setIdCardFile(null);
       fetchCustomers();
       notifyChange("customers");
       notifyChange("users");
@@ -353,6 +421,47 @@ export default function CustomersPage() {
     }
   };
 
+  const handleReject = async (customer: User) => {
+    try {
+      await api.put(`/admin/users/${customer.id}/reject`);
+      toast.success("Customer rejected");
+      fetchCustomers();
+      notifyChange("customers");
+      notifyChange("users");
+    } catch {
+      toast.error("Failed to reject customer");
+    }
+  };
+
+  const openSetCredentialsDialog = (customer: User) => {
+    setSetCredentialsCustomer(customer);
+    setNewPassword("");
+    setNewPin("");
+    setShowSetCredentialsDialog(true);
+  };
+
+  const handleSetCredentials = async () => {
+    if (!setCredentialsCustomer) return;
+    if (!newPassword.trim() && !newPin.trim()) {
+      toast.error("Password or PIN is required");
+      return;
+    }
+    setSettingCredentials(true);
+    try {
+      const endpoint = user?.role === "ict_staff"
+        ? `/ict/users/${setCredentialsCustomer.id}/credentials`
+        : `/admin/users/${setCredentialsCustomer.id}/credentials`;
+      await api.put(endpoint, { password: newPassword, pin: newPin });
+      toast.success("Credentials updated successfully");
+      setShowSetCredentialsDialog(false);
+      fetchCustomers();
+    } catch {
+      toast.error("Failed to update credentials");
+    } finally {
+      setSettingCredentials(false);
+    }
+  };
+
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCustomer) return;
@@ -362,9 +471,10 @@ export default function CustomersPage() {
     }
     try {
       setSubmitting(true);
-      await api.put(`/admin/users/${selectedCustomer.id}/reset-password`, {
-        password: resetPassword,
-      });
+      const endpoint = user?.role === "ict_staff"
+        ? `/ict/users/${selectedCustomer.id}/reset-password`
+        : `/admin/users/${selectedCustomer.id}/reset-password`;
+      await api.put(endpoint, { password: resetPassword });
       toast.success("Password reset successfully");
       setShowResetPasswordDialog(false);
       setSelectedCustomer(null);
@@ -386,9 +496,10 @@ export default function CustomersPage() {
     }
     try {
       setSubmitting(true);
-      await api.put(`/admin/users/${selectedCustomer.id}/reset-pin`, {
-        pin: resetPin,
-      });
+      const endpoint = user?.role === "ict_staff"
+        ? `/ict/users/${selectedCustomer.id}/reset-pin`
+        : `/admin/users/${selectedCustomer.id}/reset-pin`;
+      await api.put(endpoint, { pin: resetPin });
       toast.success("PIN reset successfully");
       setShowResetPinDialog(false);
       setSelectedCustomer(null);
@@ -396,6 +507,30 @@ export default function CustomersPage() {
       setResetPinConfirm("");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to reset PIN");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleChangeUsername = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCustomer) return;
+    if (!newUsername || newUsername.trim().length < 3) {
+      toast.error("Username must be at least 3 characters");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      await api.put(`/ict/users/${selectedCustomer.id}/change-username`, {
+        username: newUsername.trim(),
+      });
+      toast.success("Username changed successfully");
+      setShowChangeUsernameDialog(false);
+      setSelectedCustomer(null);
+      setNewUsername("");
+      fetchCustomers();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to change username");
     } finally {
       setSubmitting(false);
     }
@@ -451,10 +586,27 @@ export default function CustomersPage() {
       gender: customer.gender || "",
       mother_name: customer.mother_name || "",
       account_type: "savings",
+      purpose: "",
     });
     setProfilePreview(customer.profile_picture || "");
     setProfileFile(null);
+    setIdCardPreview(customer.id_card_image || "");
+    setIdCardFile(null);
     setShowEditDialog(true);
+  };
+
+  const handleIdCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image must be less than 5MB");
+        return;
+      }
+      setIdCardFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setIdCardPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
   };
 
   const openResetPasswordDialog = (customer: User) => {
@@ -471,24 +623,57 @@ export default function CustomersPage() {
     setShowResetPinDialog(true);
   };
 
+  const openChangeUsernameDialog = (customer: User) => {
+    setSelectedCustomer(customer);
+    setNewUsername(customer.username || "");
+    setShowChangeUsernameDialog(true);
+  };
+
   const openDeleteDialog = (customer: User) => {
     setSelectedCustomer(customer);
     setShowDeleteDialog(true);
   };
 
+  const openSendMessageDialog = (customer: User) => {
+    setSelectedCustomer(customer);
+    setMessageSubject("");
+    setMessageContent("");
+    setMessageType("general");
+    setShowSendMessageDialog(true);
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCustomer) return;
+    try {
+      setSubmitting(true);
+      await api.post("/ict/messages", {
+        recipient_id: selectedCustomer.id,
+        subject: messageSubject,
+        message: messageContent,
+        message_type: messageType,
+      });
+      toast.success("Message sent successfully");
+      setShowSendMessageDialog(false);
+      setSelectedCustomer(null);
+      setMessageSubject("");
+      setMessageContent("");
+      setMessageType("general");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to send message");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const activeCount = customers.filter((c) => c.status === "active").length;
+  const pendingCount = customers.filter((c) => c.status === "pending").length;
   const blockedCount = customers.filter((c) => c.status === "blocked").length;
   const suspendedCount = customers.filter((c) => c.status === "frozen").length;
 
   const filteredCustomers = useMemo(() => {
     return customers;
   }, [customers]);
-
-  const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
-  const paginatedCustomers = filteredCustomers.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
 
   const getAvatarColor = (name: string) => {
     const index = name.charCodeAt(0) % AVATAR_COLORS.length;
@@ -506,7 +691,7 @@ export default function CustomersPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "customer_service"]}>
+      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "teller", "customer_service", "ict_staff"]}>
         <DashboardLayout>
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -517,7 +702,7 @@ export default function CustomersPage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "customer_service"]}>
+    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "teller", "customer_service", "ict_staff"]}>
       <DashboardLayout>
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -531,18 +716,22 @@ export default function CustomersPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={handleExport} className="gap-2">
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
-              <Button onClick={() => { setForm(initialForm); setProfilePreview(""); setProfileFile(null); setShowCreateDialog(true); }} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Customer
-              </Button>
+              {user?.role !== "ict_staff" && (
+                <Button variant="outline" onClick={handleExport} className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Export
+                </Button>
+              )}
+              {user?.role !== "ict_staff" && (
+                <Button onClick={() => { setForm(initialForm); setProfilePreview(""); setProfileFile(null); setShowCreateDialog(true); }} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Customer
+                </Button>
+              )}
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-5">
             <Card className="relative overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total Customers</CardTitle>
@@ -568,6 +757,19 @@ export default function CustomersPage() {
                 <p className="text-xs text-muted-foreground mt-1">Active accounts</p>
               </CardContent>
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500" />
+            </Card>
+            <Card className="relative overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
+                <div className="h-10 w-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-yellow-500" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-yellow-600">{pendingCount}</div>
+                <p className="text-xs text-muted-foreground mt-1">Awaiting approval</p>
+              </CardContent>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-500" />
             </Card>
             <Card className="relative overflow-hidden">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -648,7 +850,7 @@ export default function CustomersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedCustomers.length === 0 ? (
+                  {filteredCustomers.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-16">
                         <div className="flex flex-col items-center">
@@ -665,7 +867,7 @@ export default function CustomersPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    paginatedCustomers.map((customer) => (
+                    filteredCustomers.map((customer) => (
                       <TableRow key={customer.id} className="group">
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -729,6 +931,16 @@ export default function CustomersPage() {
                               <Eye className="h-3.5 w-3.5" />
                               View
                             </Button>
+                            {customer.status === "pending" && user?.role !== "teller" && (
+                              <Button
+                                size="sm"
+                                className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                onClick={() => handleActivate(customer)}
+                              >
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                Approve
+                              </Button>
+                            )}
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -740,41 +952,92 @@ export default function CustomersPage() {
                                   <Eye className="h-4 w-4" />
                                   View Details
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => openEditDialog(customer)} className="gap-2">
-                                  <Edit className="h-4 w-4" />
-                                  Edit Customer
-                                </DropdownMenuItem>
+                                {user?.role !== "teller" && user?.role !== "ict_staff" && (
+                                  <DropdownMenuItem onClick={() => openEditDialog(customer)} className="gap-2">
+                                    <Edit className="h-4 w-4" />
+                                    Edit Customer
+                                  </DropdownMenuItem>
+                                )}
                               <DropdownMenuSeparator />
-                              {customer.status === "pending" ? (
-                                <DropdownMenuItem onClick={() => handleActivate(customer)} className="gap-2 text-emerald-600">
-                                  <CheckCircle className="h-4 w-4" />
-                                  Approve Customer
-                                </DropdownMenuItem>
-                              ) : customer.status === "active" ? (
-                                <DropdownMenuItem onClick={() => handleBlock(customer)} className="gap-2 text-amber-600">
-                                  <Ban className="h-4 w-4" />
-                                  Block Customer
-                                </DropdownMenuItem>
-                              ) : (
-                                <DropdownMenuItem onClick={() => handleUnblock(customer)} className="gap-2 text-emerald-600">
-                                  <CheckCircle className="h-4 w-4" />
-                                  Unblock Customer
-                                </DropdownMenuItem>
+                              {user?.role !== "teller" && (
+                                <>
+                                  {customer.status === "pending" ? (
+                                    <>
+                                      <DropdownMenuItem onClick={() => handleActivate(customer)} className="gap-2 text-emerald-600">
+                                        <CheckCircle className="h-4 w-4" />
+                                        Approve Customer
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleReject(customer)} className="gap-2 text-destructive">
+                                        <XCircle className="h-4 w-4" />
+                                        Reject Customer
+                                      </DropdownMenuItem>
+                                    </>
+                                  ) : customer.status === "active" ? (
+                                    <DropdownMenuItem onClick={() => handleBlock(customer)} className="gap-2 text-amber-600">
+                                      <Ban className="h-4 w-4" />
+                                      Block Customer
+                                    </DropdownMenuItem>
+                                  ) : (
+                                    <DropdownMenuItem onClick={() => handleUnblock(customer)} className="gap-2 text-emerald-600">
+                                      <CheckCircle className="h-4 w-4" />
+                                      Unblock Customer
+                                    </DropdownMenuItem>
+                                  )}
+                                </>
                               )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => openResetPasswordDialog(customer)} className="gap-2">
-                                <KeyRound className="h-4 w-4" />
-                                Reset Password
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openResetPinDialog(customer)} className="gap-2">
-                                <Lock className="h-4 w-4" />
-                                Reset PIN
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => openDeleteDialog(customer)} className="gap-2 text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                                Delete Customer
-                              </DropdownMenuItem>
+                              {user?.role === "ict_staff" && (
+                                <>
+                                  {customer.status === "active" ? (
+                                    <DropdownMenuItem onClick={() => handleBlock(customer)} className="gap-2 text-amber-600">
+                                      <Ban className="h-4 w-4" />
+                                      Block Customer
+                                    </DropdownMenuItem>
+                                  ) : customer.status === "blocked" ? (
+                                    <DropdownMenuItem onClick={() => handleUnblock(customer)} className="gap-2 text-emerald-600">
+                                      <CheckCircle className="h-4 w-4" />
+                                      Unblock Customer
+                                    </DropdownMenuItem>
+                                  ) : null}
+                                  <DropdownMenuItem onClick={() => openSendMessageDialog(customer)} className="gap-2">
+                                    <Mail className="h-4 w-4" />
+                                    Send Message
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {user?.role !== "teller" && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => openResetPasswordDialog(customer)} className="gap-2">
+                                    <KeyRound className="h-4 w-4" />
+                                    Reset Password
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => openResetPinDialog(customer)} className="gap-2">
+                                    <Lock className="h-4 w-4" />
+                                    Reset PIN
+                                  </DropdownMenuItem>
+                                  {user?.role === "ict_staff" && (
+                                    <DropdownMenuItem onClick={() => openChangeUsernameDialog(customer)} className="gap-2">
+                                      <UserCog className="h-4 w-4" />
+                                      Change Username
+                                    </DropdownMenuItem>
+                                  )}
+                                  {user?.role === "ict_staff" && (
+                                    <DropdownMenuItem onClick={() => { openDetailsDialog(customer); setTimeout(() => setDetailsTab("credentials"), 100); }} className="gap-2">
+                                      <KeyRound className="h-4 w-4" />
+                                      View Credentials
+                                    </DropdownMenuItem>
+                                  )}
+                                  {user?.role !== "ict_staff" && (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem onClick={() => openDeleteDialog(customer)} className="gap-2 text-destructive">
+                                        <Trash2 className="h-4 w-4" />
+                                        Delete Customer
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                           </div>
@@ -785,56 +1048,6 @@ export default function CustomersPage() {
                 </TableBody>
               </Table>
 
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
-                    {Math.min(currentPage * ITEMS_PER_PAGE, filteredCustomers.length)} of{" "}
-                    {filteredCustomers.length} customers
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let page: number;
-                      if (totalPages <= 5) {
-                        page = i + 1;
-                      } else if (currentPage <= 3) {
-                        page = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        page = totalPages - 4 + i;
-                      } else {
-                        page = currentPage - 2 + i;
-                      }
-                      return (
-                        <Button
-                          key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setCurrentPage(page)}
-                          className="h-8 w-8 p-0"
-                        >
-                          {page}
-                        </Button>
-                      );
-                    })}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -959,6 +1172,41 @@ export default function CustomersPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-purpose">Purpose</Label>
+                <Input
+                  id="create-purpose"
+                  placeholder="Purpose of this account"
+                  value={form.purpose}
+                  onChange={(e) => setForm({ ...form, purpose: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-id-card">ID Card Image</Label>
+                <div className="relative group">
+                  <label
+                    htmlFor="create-id-card"
+                    className="flex h-[100px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 hover:border-primary/50 hover:bg-muted/80 transition-all duration-200"
+                  >
+                    {idCardPreview ? (
+                      <img src={idCardPreview} alt="ID Card" className="h-full w-full object-contain rounded-lg p-2" />
+                    ) : (
+                      <>
+                        <Image className="h-8 w-8 text-muted-foreground/50" />
+                        <span className="text-xs text-muted-foreground">Click to upload ID card</span>
+                        <span className="text-[10px] text-muted-foreground/60">Max 5MB</span>
+                      </>
+                    )}
+                  </label>
+                  <input
+                    id="create-id-card"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleIdCardChange}
+                    className="hidden"
+                  />
+                </div>
+              </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
                   Cancel
@@ -986,6 +1234,7 @@ export default function CustomersPage() {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleEdit} className="space-y-4">
+              {["super_admin", "branch_manager", "manager", "ict_staff"].includes(user?.role || "") && (
               <div className="flex justify-center">
                 <ProfileUpload
                   value={profilePreview}
@@ -993,6 +1242,7 @@ export default function CustomersPage() {
                   size="lg"
                 />
               </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Full Name *</Label>
                 <Input
@@ -1060,6 +1310,61 @@ export default function CustomersPage() {
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                   rows={2}
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-account-type">Account Type</Label>
+                  <Select
+                    value={form.account_type}
+                    onValueChange={(value) => setForm({ ...form, account_type: value })}
+                  >
+                    <SelectTrigger id="edit-account-type">
+                      <SelectValue placeholder="Select account type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ACCOUNT_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-purpose">Purpose</Label>
+                  <Input
+                    id="edit-purpose"
+                    placeholder="Purpose of this account"
+                    value={form.purpose}
+                    onChange={(e) => setForm({ ...form, purpose: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-id-card">ID Card Image</Label>
+                <div className="relative group">
+                  <label
+                    htmlFor="edit-id-card"
+                    className="flex h-[100px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50 hover:border-primary/50 hover:bg-muted/80 transition-all duration-200"
+                  >
+                    {idCardPreview ? (
+                      <img src={idCardPreview} alt="ID Card" className="h-full w-full object-contain rounded-lg p-2" />
+                    ) : (
+                      <>
+                        <Image className="h-8 w-8 text-muted-foreground/50" />
+                        <span className="text-xs text-muted-foreground">Click to upload ID card</span>
+                        <span className="text-[10px] text-muted-foreground/60">Max 5MB</span>
+                      </>
+                    )}
+                  </label>
+                  <input
+                    id="edit-id-card"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleIdCardChange}
+                    className="hidden"
+                  />
+                </div>
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
@@ -1193,6 +1498,62 @@ export default function CustomersPage() {
           </DialogContent>
         </Dialog>
 
+        <Dialog open={showChangeUsernameDialog} onOpenChange={setShowChangeUsernameDialog}>
+          <DialogContent className="sm:max-w-[420px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <UserCog className="h-4 w-4 text-primary" />
+                </div>
+                Change Username
+              </DialogTitle>
+              <DialogDescription>
+                Change the username for {selectedCustomer?.full_name}. They will need to use the new username to log in.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleChangeUsername} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="current-username">Current Username</Label>
+                <Input
+                  id="current-username"
+                  value={selectedCustomer?.username || ""}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-username">New Username</Label>
+                <Input
+                  id="new-username"
+                  placeholder="Enter new username"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  required
+                  minLength={3}
+                />
+              </div>
+              {newUsername && newUsername.length < 3 && (
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  Username must be at least 3 characters
+                </p>
+              )}
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowChangeUsernameDialog(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submitting || !newUsername || newUsername.length < 3 || newUsername === selectedCustomer?.username}
+                >
+                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Change Username
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
         <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <DialogContent className="sm:max-w-[420px]">
             <DialogHeader>
@@ -1217,6 +1578,77 @@ export default function CustomersPage() {
                 Delete Permanently
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showSendMessageDialog} onOpenChange={setShowSendMessageDialog}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Mail className="h-4 w-4 text-primary" />
+                </div>
+                Send Message to {selectedCustomer?.full_name}
+              </DialogTitle>
+              <DialogDescription>
+                Send a message to this customer. The message will appear in their inbox.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSendMessage} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="message-type">Message Type</Label>
+                <Select value={messageType} onValueChange={(v: any) => setMessageType(v)}>
+                  <SelectTrigger id="message-type">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="credentials">Credentials</SelectItem>
+                    <SelectItem value="security">Security</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="message-subject">Subject *</Label>
+                <Input
+                  id="message-subject"
+                  placeholder="Enter message subject"
+                  value={messageSubject}
+                  onChange={(e) => setMessageSubject(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="message-content">Message *</Label>
+                <Textarea
+                  id="message-content"
+                  placeholder="Enter your message here..."
+                  value={messageContent}
+                  onChange={(e) => setMessageContent(e.target.value)}
+                  required
+                  rows={5}
+                />
+              </div>
+              {messageType === "credentials" && customerCredentials && (
+                <div className="p-3 rounded-lg bg-muted border">
+                  <p className="text-xs text-muted-foreground mb-2">Customer credentials will be included:</p>
+                  <div className="space-y-1 text-sm font-mono">
+                    <p><span className="text-muted-foreground">Username:</span> {customerCredentials.username}</p>
+                    <p><span className="text-muted-foreground">Password:</span> {customerCredentials.password}</p>
+                    <p><span className="text-muted-foreground">PIN:</span> {customerCredentials.pin}</p>
+                  </div>
+                </div>
+              )}
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowSendMessageDialog(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={submitting || !messageSubject || !messageContent}>
+                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Send Message
+                </Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
 
@@ -1271,7 +1703,7 @@ export default function CustomersPage() {
                 </div>
 
                 <Tabs value={detailsTab} onValueChange={setDetailsTab}>
-                  <TabsList className="grid w-full grid-cols-6 h-10">
+                  <TabsList className="grid w-full grid-cols-7 h-10">
                     <TabsTrigger value="overview" className="text-xs gap-1">
                       <UserIcon className="h-3 w-3" />
                       Overview
@@ -1292,6 +1724,12 @@ export default function CustomersPage() {
                       <History className="h-3 w-3" />
                       Timeline
                     </TabsTrigger>
+                    {(user?.role === "super_admin" || user?.role === "ict_staff") && (
+                    <TabsTrigger value="credentials" className="text-xs gap-1">
+                      <KeyRound className="h-3 w-3" />
+                      Credentials
+                    </TabsTrigger>
+                    )}
                     <TabsTrigger value="settings" className="text-xs gap-1">
                       <Settings className="h-3 w-3" />
                       Settings
@@ -1356,8 +1794,36 @@ export default function CustomersPage() {
                             {customerDetails.user.last_login ? formatDateTime(customerDetails.user.last_login) : "Never"}
                           </p>
                         </div>
+                        {customerDetails.accounts.length > 0 && customerDetails.accounts[0].purpose && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wide">Account Purpose</p>
+                            <p className="text-sm font-medium flex items-center gap-1.5">
+                              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                              {customerDetails.accounts[0].purpose}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
+
+                    {customerDetails.user.id_card_image && (
+                      <div className="border-t pt-4">
+                        <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                          <Image className="h-4 w-4 text-muted-foreground" />
+                          ID Card Image
+                        </h4>
+                        <div className="rounded-lg border overflow-hidden">
+                          <img
+                            src={customerDetails.user.id_card_image}
+                            alt="ID Card"
+                            className="w-full max-h-[300px] object-contain bg-muted"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {customerDetails.accounts.length > 0 && (
                       <div className="border-t pt-4">
@@ -1557,6 +2023,61 @@ export default function CustomersPage() {
                     )}
                   </TabsContent>
 
+                  <TabsContent value="credentials" className="space-y-6 mt-4">
+                    <div className="rounded-lg border p-4">
+                      <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <KeyRound className="h-4 w-4 text-muted-foreground" />
+                        Login Credentials
+                      </h4>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        View this customer's username, password, and PIN
+                      </p>
+                      {credentialsLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                      ) : customerCredentials ? (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground uppercase tracking-wide">Username</p>
+                              <p className="text-sm font-medium font-mono bg-muted p-2 rounded">{customerCredentials.username}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground uppercase tracking-wide">Full Name</p>
+                              <p className="text-sm font-medium bg-muted p-2 rounded">{customerCredentials.full_name}</p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground uppercase tracking-wide">Password</p>
+                              <p className="text-sm font-medium font-mono bg-muted p-2 rounded">{customerCredentials.password}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground uppercase tracking-wide">PIN</p>
+                              <p className="text-sm font-medium font-mono bg-muted p-2 rounded">{customerCredentials.pin}</p>
+                            </div>
+                          </div>
+                          {(!customerCredentials.password || !customerCredentials.password.trim() || !customerCredentials.pin || !customerCredentials.pin.trim()) && (
+                            <Button
+                              variant="outline"
+                              className="w-full gap-2"
+                              onClick={() => { setShowDetailsDialog(false); if (selectedCustomer) openSetCredentialsDialog(selectedCustomer); }}
+                            >
+                              <KeyRound className="h-4 w-4" />
+                              Set Credentials
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <Button variant="outline" onClick={() => customerDetails && fetchCredentials(customerDetails.user.id)}>
+                          <KeyRound className="mr-2 h-4 w-4" />
+                          Load Credentials
+                        </Button>
+                      )}
+                    </div>
+                  </TabsContent>
+
                   <TabsContent value="settings" className="space-y-6 mt-4">
                     <div className="rounded-lg border p-4">
                       <h4 className="text-sm font-semibold mb-1">Failed Login Attempts</h4>
@@ -1600,6 +2121,21 @@ export default function CustomersPage() {
                         Reset PIN
                       </Button>
                     </div>
+                    {user?.role === "ict_staff" && (
+                      <div className="grid grid-cols-1 gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowDetailsDialog(false);
+                            openChangeUsernameDialog(customerDetails.user);
+                          }}
+                          className="gap-2"
+                        >
+                          <UserCog className="h-4 w-4" />
+                          Change Username
+                        </Button>
+                      </div>
+                    )}
 
                     {customerDetails.login_history && customerDetails.login_history.length > 0 && (
                       <div>
@@ -1648,6 +2184,51 @@ export default function CustomersPage() {
                 </Tabs>
               </div>
             ) : null}
+          </DialogContent>
+        </Dialog>
+
+        {/* Set Credentials Dialog */}
+        <Dialog open={showSetCredentialsDialog} onOpenChange={setShowSetCredentialsDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5" />
+                Set Credentials
+              </DialogTitle>
+              <DialogDescription>
+                Set new password and PIN for {setCredentialsCustomer?.full_name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="setNewPassword">Password</Label>
+                <Input
+                  id="setNewPassword"
+                  type="text"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="setNewPin">PIN</Label>
+                <Input
+                  id="setNewPin"
+                  type="text"
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value)}
+                  placeholder="Enter new PIN (4-6 digits)"
+                  maxLength={6}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={() => setShowSetCredentialsDialog(false)}>Cancel</Button>
+              <Button onClick={handleSetCredentials} disabled={settingCredentials}>
+                {settingCredentials && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Save Credentials
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </DashboardLayout>

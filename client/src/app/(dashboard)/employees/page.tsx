@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
 import { ProtectedRoute } from "@/components/layout/protected-route";
@@ -40,6 +41,7 @@ import { Separator } from "@/components/ui/separator";
 import api from "@/lib/api";
 import { useDataRefresh } from "@/contexts/data-refresh-context";
 import { formatDate, formatCurrency, getStatusColor, DEPARTMENTS } from "@/lib/utils";
+import { ProfileUpload } from "@/components/ui/profile-upload";
 import type { Employee } from "@/types";
 import {
   UserCog,
@@ -78,14 +80,14 @@ import {
   Zap,
 } from "lucide-react";
 
-const MAX_EMPLOYEES = 3;
+const MAX_EMPLOYEES = 10;
 
 const POSITIONS = [
   { value: "Teller", label: "Teller", department: "Operations" },
   { value: "Customer Service Officer", label: "Customer Service Officer", department: "Customer Service" },
   { value: "Accountant", label: "Accountant", department: "Finance" },
   { value: "Loan Officer", label: "Loan Officer", department: "Loans" },
-  { value: "ICT Officer", label: "ICT Officer", department: "IT" },
+  { value: "ICT Officer", label: "ICT Officer", department: "ICT" },
 ] as const;
 
 const POSITION_DEPARTMENT_MAP: Record<string, string> = {
@@ -93,7 +95,7 @@ const POSITION_DEPARTMENT_MAP: Record<string, string> = {
   "Customer Service Officer": "Customer Service",
   Accountant: "Finance",
   "Loan Officer": "Loans",
-  "ICT Officer": "IT",
+  "ICT Officer": "ICT",
 };
 
 const DEPARTMENT_COLORS: Record<string, string> = {
@@ -102,6 +104,7 @@ const DEPARTMENT_COLORS: Record<string, string> = {
   Finance: "from-amber-500 to-amber-600",
   Loans: "from-purple-500 to-purple-600",
   IT: "from-cyan-500 to-cyan-600",
+  ICT: "from-cyan-500 to-cyan-600",
   "Human Resources": "from-rose-500 to-rose-600",
   Marketing: "from-indigo-500 to-indigo-600",
   Compliance: "from-teal-500 to-teal-600",
@@ -114,6 +117,7 @@ const DEPARTMENT_AVATAR_COLORS: Record<string, string> = {
   Finance: "bg-amber-500",
   Loans: "bg-purple-500",
   IT: "bg-cyan-500",
+  ICT: "bg-cyan-500",
   "Human Resources": "bg-rose-500",
   Marketing: "bg-indigo-500",
   Compliance: "bg-teal-500",
@@ -142,6 +146,8 @@ interface EmployeeForm {
   hire_date: string;
   branch: string;
   password: string;
+  status: string;
+  profile_picture: string;
 }
 
 const initialForm: EmployeeForm = {
@@ -152,12 +158,15 @@ const initialForm: EmployeeForm = {
   department: "",
   salary: "",
   hire_date: "",
-  branch: "",
+  branch: "Gabiley HQ",
   password: "",
+  status: "active",
+  profile_picture: "",
 };
 
 export default function EmployeesPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const toast = useToast();
   const { registerRefresh, notifyChange } = useDataRefresh();
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -180,6 +189,8 @@ export default function EmployeesPage() {
   const [employeePerformance, setEmployeePerformance] = useState<EmployeePerformance | null>(null);
   const [performanceLoading, setPerformanceLoading] = useState(false);
   const [detailsTab, setDetailsTab] = useState("overview");
+  const [employeeCredentials, setEmployeeCredentials] = useState<any>(null);
+  const [credentialsLoading, setCredentialsLoading] = useState(false);
 
   const [resetPassword, setResetPassword] = useState("");
   const [resetPasswordConfirm, setResetPasswordConfirm] = useState("");
@@ -214,6 +225,7 @@ export default function EmployeesPage() {
     setShowDetailsDialog(true);
     setPerformanceLoading(true);
     setEmployeePerformance(null);
+    setEmployeeCredentials(null);
     setDetailsTab("overview");
     try {
       const res = await api.get(`/admin/employees/${employee.id}/performance`);
@@ -225,11 +237,23 @@ export default function EmployeesPage() {
     }
   };
 
+  const fetchEmployeeCredentials = async (userId: number) => {
+    setCredentialsLoading(true);
+    try {
+      const res = await api.get(`/admin/users/${userId}/credentials`);
+      setEmployeeCredentials(res.data);
+    } catch {
+      toast.error("Failed to fetch credentials");
+    } finally {
+      setCredentialsLoading(false);
+    }
+  };
+
   const openEditDialog = (employee: Employee) => {
     setSelectedEmployee(employee);
     setForm({
       full_name: employee.full_name,
-      email: employee.email,
+      email: employee.user_email || employee.email,
       phone: employee.phone || "",
       position: employee.position || "",
       department: employee.department || "",
@@ -237,6 +261,8 @@ export default function EmployeesPage() {
       hire_date: employee.hire_date ? employee.hire_date.split("T")[0] : "",
       branch: employee.branch || "",
       password: "",
+      status: employee.status || "active",
+      profile_picture: employee.profile_picture || "",
     });
     setShowEditDialog(true);
   };
@@ -314,7 +340,12 @@ export default function EmployeesPage() {
     try {
       setSubmitting(true);
       const { password, ...payload } = form;
-      const updatePayload = { ...payload, salary: payload.salary ? Number(payload.salary) : undefined };
+      const updatePayload = {
+        ...payload,
+        salary: payload.salary ? Number(payload.salary) : undefined,
+        profile_picture: form.profile_picture || undefined,
+        status: form.status || "active",
+      };
       await api.put(`/admin/employees/${selectedEmployee.id}`, updatePayload);
       toast.success("Employee updated successfully");
       setShowEditDialog(false);
@@ -398,7 +429,7 @@ export default function EmployeesPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredRoles={["super_admin", "branch_manager"]}>
+      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "ict_staff"]}>
         <DashboardLayout>
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -409,7 +440,7 @@ export default function EmployeesPage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={["super_admin", "branch_manager"]}>
+    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "ict_staff"]}>
       <DashboardLayout>
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -590,7 +621,7 @@ export default function EmployeesPage() {
                       <div className="flex items-center gap-3">
                         <Avatar className="h-14 w-14 border-2 border-background shadow-md">
                           <AvatarImage
-                            src={`https://api.dicebear.com/7.x/initials/svg?seed=${employee.full_name}&backgroundColor=0a66c2`}
+                            src={employee.profile_picture || `https://api.dicebear.com/7.x/initials/svg?seed=${employee.full_name}&backgroundColor=0a66c2`}
                             alt={employee.full_name}
                           />
                           <AvatarFallback className={`${getDeptAvatarColor(employee.department)} text-white text-lg font-bold`}>
@@ -601,7 +632,7 @@ export default function EmployeesPage() {
                           <h3 className="font-semibold text-base">{employee.full_name}</h3>
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <Mail className="h-3 w-3" />
-                            {employee.email}
+                            {employee.user_email || employee.email}
                           </p>
                         </div>
                       </div>
@@ -632,10 +663,10 @@ export default function EmployeesPage() {
                         variant="outline"
                         size="sm"
                         className="flex-1 gap-1.5"
-                        onClick={() => openDetailsDialog(employee)}
+                        onClick={() => router.push(`/employees/${employee.id}`)}
                       >
                         <Eye className="h-3.5 w-3.5" />
-                        View
+                        View Profile
                       </Button>
                       <Button
                         variant="outline"
@@ -654,14 +685,16 @@ export default function EmployeesPage() {
                       >
                         <KeyRound className="h-3.5 w-3.5" />
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openRoleDialog(employee)}
-                        className="gap-1.5"
-                      >
-                        <UserCog className="h-3.5 w-3.5" />
-                      </Button>
+                      {user?.role === "super_admin" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openRoleDialog(employee)}
+                          className="gap-1.5"
+                        >
+                          <UserCog className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -823,6 +856,24 @@ export default function EmployeesPage() {
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleEdit} className="space-y-4">
+                <div className="flex flex-col items-center gap-3 pb-2">
+                  <ProfileUpload
+                    value={form.profile_picture}
+                    onChange={(_file, preview) => {
+                      if (preview) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setForm({ ...form, profile_picture: reader.result as string });
+                        };
+                        reader.readAsDataURL(_file!);
+                      } else {
+                        setForm({ ...form, profile_picture: "" });
+                      }
+                    }}
+                    size="lg"
+                  />
+                  <p className="text-xs text-muted-foreground">Click to upload profile picture</p>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-name">Full Name *</Label>
                   <Input
@@ -907,14 +958,28 @@ export default function EmployeesPage() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-branch">Branch</Label>
-                  <Input
-                    id="edit-branch"
-                    placeholder="Enter branch name"
-                    value={form.branch}
-                    onChange={(e) => setForm({ ...form, branch: e.target.value })}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-branch">Branch</Label>
+                    <Input
+                      id="edit-branch"
+                      placeholder="Enter branch name"
+                      value={form.branch}
+                      onChange={(e) => setForm({ ...form, branch: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
@@ -944,7 +1009,7 @@ export default function EmployeesPage() {
                   <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/10">
                     <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
                       <AvatarImage
-                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${selectedEmployee.full_name}&backgroundColor=0a66c2`}
+                        src={selectedEmployee.profile_picture || `https://api.dicebear.com/7.x/initials/svg?seed=${selectedEmployee.full_name}&backgroundColor=0a66c2`}
                         alt={selectedEmployee.full_name}
                       />
                       <AvatarFallback className={`${getDeptAvatarColor(selectedEmployee.department)} text-white text-xl font-bold`}>
@@ -953,7 +1018,7 @@ export default function EmployeesPage() {
                     </Avatar>
                     <div className="flex-1">
                       <h3 className="text-xl font-bold">{selectedEmployee.full_name}</h3>
-                      <p className="text-sm text-muted-foreground">{selectedEmployee.email}</p>
+                      <p className="text-sm text-muted-foreground">{selectedEmployee.user_email || selectedEmployee.email}</p>
                       <div className="flex gap-2 mt-2">
                         <Badge className={getStatusColor(selectedEmployee.status)}>
                           {selectedEmployee.status}
@@ -971,7 +1036,7 @@ export default function EmployeesPage() {
                   </div>
 
                   <Tabs value={detailsTab} onValueChange={setDetailsTab}>
-                    <TabsList className="grid w-full grid-cols-3 h-10">
+                    <TabsList className={`grid w-full h-10 ${user?.role === "super_admin" ? "grid-cols-4" : "grid-cols-3"}`}>
                       <TabsTrigger value="overview" className="text-xs gap-1">
                         <User className="h-3 w-3" />
                         Overview
@@ -980,6 +1045,12 @@ export default function EmployeesPage() {
                         <BarChart3 className="h-3 w-3" />
                         Performance
                       </TabsTrigger>
+                      {user?.role === "super_admin" && (
+                        <TabsTrigger value="credentials" className="text-xs gap-1">
+                          <KeyRound className="h-3 w-3" />
+                          Credentials
+                        </TabsTrigger>
+                      )}
                       <TabsTrigger value="settings" className="text-xs gap-1">
                         <Settings className="h-3 w-3" />
                         Settings
@@ -1149,6 +1220,51 @@ export default function EmployeesPage() {
                       )}
                     </TabsContent>
 
+                    <TabsContent value="credentials" className="space-y-6 mt-4">
+                      <div className="rounded-lg border p-4">
+                        <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                          <KeyRound className="h-4 w-4 text-muted-foreground" />
+                          Login Credentials
+                        </h4>
+                        <p className="text-xs text-muted-foreground mb-4">
+                          View this employee's username, password, and PIN
+                        </p>
+                        {credentialsLoading ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                          </div>
+                        ) : employeeCredentials ? (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">Username</p>
+                                <p className="text-sm font-medium font-mono bg-muted p-2 rounded">{employeeCredentials.username}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">Full Name</p>
+                                <p className="text-sm font-medium bg-muted p-2 rounded">{employeeCredentials.full_name}</p>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">Password</p>
+                                <p className="text-sm font-medium font-mono bg-muted p-2 rounded">{employeeCredentials.password}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">PIN</p>
+                                <p className="text-sm font-medium font-mono bg-muted p-2 rounded">{employeeCredentials.pin}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button variant="outline" onClick={() => selectedEmployee?.user_id && fetchEmployeeCredentials(selectedEmployee.user_id)}>
+                            <KeyRound className="mr-2 h-4 w-4" />
+                            Load Credentials
+                          </Button>
+                        )}
+                      </div>
+                    </TabsContent>
+
                     <TabsContent value="settings" className="space-y-4 mt-4">
                       <div className="grid grid-cols-2 gap-3">
                         <Button
@@ -1162,29 +1278,31 @@ export default function EmployeesPage() {
                           <Edit className="h-4 w-4" />
                           Edit Employee
                         </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setShowDetailsDialog(false);
-                            openResetPasswordDialog(selectedEmployee);
-                          }}
-                          className="gap-2"
-                        >
-                          <KeyRound className="h-4 w-4" />
-                          Reset Password
-                        </Button>
-                      </div>
                       <Button
                         variant="outline"
                         onClick={() => {
                           setShowDetailsDialog(false);
-                          openRoleDialog(selectedEmployee);
+                          openResetPasswordDialog(selectedEmployee);
                         }}
-                        className="w-full gap-2"
+                        className="gap-2"
                       >
-                        <UserCog className="h-4 w-4" />
-                        Change Role
+                        <KeyRound className="h-4 w-4" />
+                        Reset Password
                       </Button>
+                      </div>
+                      {user?.role === "super_admin" && (
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowDetailsDialog(false);
+                            openRoleDialog(selectedEmployee);
+                          }}
+                          className="gap-2"
+                        >
+                          <UserCog className="h-4 w-4" />
+                          Change Role
+                        </Button>
+                      )}
                       <div className="rounded-lg border p-4">
                         <div className="flex items-center justify-between">
                           <div>

@@ -34,7 +34,7 @@ function authRateLimiter(req, res, next) {
   const key = ip + ':' + req.path;
   if (!authRateLimit[key]) authRateLimit[key] = [];
   authRateLimit[key] = authRateLimit[key].filter(t => now - t < 900000);
-  if (authRateLimit[key].length >= 10) return res.status(429).json({ error: 'Too many authentication attempts, please try again in 15 minutes' });
+  if (authRateLimit[key].length >= 100) return res.status(429).json({ error: 'Too many authentication attempts, please try again in 15 minutes' });
   authRateLimit[key].push(now);
   next();
 }
@@ -42,12 +42,18 @@ function authRateLimiter(req, res, next) {
 app.use('/api/auth', authRateLimiter, require('./routes/auth'));
 app.use('/api/accounts', require('./routes/accounts'));
 app.use('/api/transactions', require('./routes/transactions'));
-app.use('/api/admin', require('./routes/admin'));
+const { adminRouter, ictRouter } = require('./routes/admin');
+app.use('/api/admin', adminRouter);
+app.use('/api/ict', ictRouter);
 app.use('/api/employee', require('./routes/employee'));
 app.use('/api/loans', require('./routes/loans'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/messages', require('./routes/messages'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/sync', require('./routes/sync'));
+app.use('/api/tasks', require('./routes/tasks'));
+app.use('/api/profile', require('./routes/profile'));
+app.use('/api/chat', require('./routes/chat'));
 
 const { authenticateToken } = require('./middleware/auth');
 

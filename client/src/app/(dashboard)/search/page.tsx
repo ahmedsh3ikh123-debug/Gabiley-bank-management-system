@@ -61,7 +61,7 @@ interface Employee {
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "customer_service", "teller", "accountant", "ict_staff"]}>
+      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "customer_service", "teller", "accountant", "ict_staff"]}>
         <DashboardLayout>
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -90,7 +90,7 @@ function SearchContent() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
-  const isAdmin = user?.role === "super_admin" || user?.role === "branch_manager";
+  const isAdmin = user?.role === "super_admin" || user?.role === "branch_manager" || user?.role === "manager";
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -185,7 +185,7 @@ function SearchContent() {
   };
 
   return (
-    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "customer_service", "teller", "accountant", "ict_staff"]}>
+    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "customer_service", "teller", "accountant", "ict_staff"]}>
       <DashboardLayout>
         <div className="space-y-6">
           {/* Header */}

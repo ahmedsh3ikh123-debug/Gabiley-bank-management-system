@@ -40,11 +40,14 @@ interface RegisterData {
   pin: string;
   role?: string;
   mother_name?: string;
+  id_card_image?: string;
+  account_type?: string;
+  purpose?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const ADMIN_ROLES = ["super_admin", "branch_manager"];
+const ADMIN_ROLES = ["super_admin", "branch_manager", "manager"];
 const EMPLOYEE_ROLES = ["teller", "customer_service", "accountant", "ict_staff"];
 const STAFF_ROLES = [...ADMIN_ROLES, ...EMPLOYEE_ROLES];
 
@@ -56,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
+    const storedRefreshToken = localStorage.getItem("refreshToken");
     const storedUser = localStorage.getItem("user");
     if (storedToken && storedUser) {
       setToken(storedToken);
@@ -63,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(JSON.parse(storedUser));
       } catch {
         localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
         localStorage.removeItem("user");
       }
     }
@@ -72,8 +77,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (username: string, password: string) => {
       const res = await api.post("/auth/login", { username, password });
-      const { token: newToken, user: userData } = res.data;
+      const { token: newToken, refreshToken: newRefreshToken, user: userData } = res.data;
       localStorage.setItem("token", newToken);
+      localStorage.setItem("refreshToken", newRefreshToken);
       localStorage.setItem("user", JSON.stringify(userData));
       setToken(newToken);
       setUser(userData);
@@ -92,17 +98,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     setLoggingOut(true);
+    const refreshToken = localStorage.getItem("refreshToken");
     try {
-      await api.post("/auth/logout");
+      await api.post("/auth/logout", { refreshToken });
     } catch {
       // ignore - token may already be expired
     } finally {
       localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
       setToken(null);
       setUser(null);
       router.push("/login");
-      // Reset flag after a short delay to allow redirect
       setTimeout(() => setLoggingOut(false), 1000);
     }
   }, [router]);

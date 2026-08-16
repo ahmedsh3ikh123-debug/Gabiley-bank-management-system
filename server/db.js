@@ -57,11 +57,26 @@ async function initDatabase() {
       failed_login_attempts INTEGER DEFAULT 0,
       locked_until DATETIME DEFAULT NULL,
       last_login DATETIME DEFAULT NULL,
+      password_plain TEXT DEFAULT '',
+      pin_plain TEXT DEFAULT '',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
 
+  safeColumn('users', 'password_plain', "TEXT DEFAULT ''");
+  safeColumn('users', 'pin_plain', "TEXT DEFAULT ''");
+  safeColumn('users', 'mother_name', "TEXT DEFAULT ''");
+  safeColumn('users', 'id_card_image', "TEXT DEFAULT ''");
+
+  // Backfill password_plain and pin_plain for existing users
+  db.run(`UPDATE users SET password_plain = 'admin123', pin_plain = '1234' WHERE username = 'admin' AND (password_plain IS NULL OR password_plain = '')`);
+  db.run(`UPDATE users SET password_plain = 'employee123', pin_plain = '1234' WHERE username = 'employee' AND (password_plain IS NULL OR password_plain = '')`);
+  db.run(`UPDATE users SET password_plain = 'employee123', pin_plain = '1234' WHERE username = 'sara.ibrahim' AND (password_plain IS NULL OR password_plain = '')`);
+  db.run(`UPDATE users SET password_plain = 'customer123', pin_plain = '1234' WHERE username = 'customer' AND (password_plain IS NULL OR password_plain = '')`);
+  // Backfill for ALL users without password_plain
+  db.run(`UPDATE users SET password_plain = 'customer123', pin_plain = '1234' WHERE role = 'customer' AND (password_plain IS NULL OR password_plain = '')`);
+  db.run(`UPDATE users SET password_plain = 'employee123', pin_plain = '1234' WHERE role != 'customer' AND role != 'super_admin' AND (password_plain IS NULL OR password_plain = '')`);
   db.run(`
     CREATE TABLE IF NOT EXISTS accounts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,11 +89,14 @@ async function initDatabase() {
       status TEXT DEFAULT 'active',
       frozen INTEGER DEFAULT 0,
       version INTEGER DEFAULT 1,
+      purpose TEXT DEFAULT '',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
   `);
+
+  safeColumn('accounts', 'purpose', "TEXT DEFAULT ''");
 
   db.run(`
     CREATE TABLE IF NOT EXISTS transactions (
@@ -153,7 +171,7 @@ async function initDatabase() {
   db.run(`
     CREATE TABLE IF NOT EXISTS online_users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER UNIQUE NOT NULL,
+      user_id INTEGER NOT NULL,
       ip_address TEXT DEFAULT '',
       user_agent TEXT DEFAULT '',
       last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -247,6 +265,80 @@ async function initDatabase() {
     );
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS password_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      request_type TEXT NOT NULL DEFAULT 'password',
+      message TEXT DEFAULT '',
+      status TEXT DEFAULT 'pending',
+      resolved_by INTEGER,
+      resolution_notes TEXT DEFAULT '',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      resolved_at DATETIME,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (resolved_by) REFERENCES users(id)
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token TEXT NOT NULL,
+      user_agent TEXT DEFAULT '',
+      expires_at DATETIME NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sender_id INTEGER NOT NULL,
+      recipient_id INTEGER NOT NULL,
+      subject TEXT NOT NULL,
+      message TEXT NOT NULL,
+      message_type TEXT DEFAULT 'general',
+      read INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (sender_id) REFERENCES users(id),
+      FOREIGN KEY (recipient_id) REFERENCES users(id)
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      priority TEXT DEFAULT 'medium',
+      status TEXT DEFAULT 'pending',
+      category TEXT DEFAULT 'general',
+      assigned_to INTEGER,
+      assigned_by INTEGER,
+      due_date DATETIME DEFAULT NULL,
+      completed_at DATETIME DEFAULT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (assigned_to) REFERENCES users(id),
+      FOREIGN KEY (assigned_by) REFERENCES users(id)
+    );
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS task_comments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      task_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      comment TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (task_id) REFERENCES tasks(id),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+  `);
+
   // Add new columns to existing tables (safe migration)
   safeColumn('users', 'gender', "TEXT DEFAULT ''");
   safeColumn('users', 'national_id', "TEXT DEFAULT ''");
@@ -259,10 +351,31 @@ async function initDatabase() {
   safeColumn('transactions', 'processed_by', 'INTEGER');
   safeColumn('employees', 'profile_picture', "TEXT DEFAULT ''");
   safeColumn('loan_requests', 'loan_type', "TEXT DEFAULT 'personal'");
+  safeColumn('loan_requests', 'account_number', "TEXT DEFAULT ''");
+  safeColumn('loan_requests', 'disbursed_at', "DATETIME DEFAULT NULL");
+  safeColumn('loan_requests', 'total_paid', "REAL DEFAULT 0");
+  safeColumn('loan_requests', 'interest_rate', "REAL DEFAULT 12");
   safeColumn('audit_log', 'old_data', "TEXT DEFAULT ''");
   safeColumn('audit_log', 'new_data', "TEXT DEFAULT ''");
+
+  // Migrate online_users to allow multiple sessions per user
+  try {
+    const tableInfo = db.exec("SELECT sql FROM sqlite_master WHERE type='table' AND name='online_users'");
+    if (tableInfo.length > 0 && tableInfo[0].values[0][0].includes('UNIQUE')) {
+      db.run('CREATE TABLE IF NOT EXISTS online_users_new (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, ip_address TEXT DEFAULT \'\', user_agent TEXT DEFAULT \'\', last_active DATETIME DEFAULT CURRENT_TIMESTAMP, logged_in_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id))');
+      db.run('INSERT OR IGNORE INTO online_users_new SELECT * FROM online_users');
+      db.run('DROP TABLE online_users');
+      db.run('ALTER TABLE online_users_new RENAME TO online_users');
+    }
+  } catch (e) { /* table may not exist yet */ }
   safeColumn('audit_log', 'browser', "TEXT DEFAULT ''");
   safeColumn('audit_log', 'device', "TEXT DEFAULT ''");
+
+  db.run(`
+    UPDATE loan_requests SET account_number = (
+      SELECT a.account_number FROM accounts a WHERE a.user_id = loan_requests.user_id AND a.status = 'active' LIMIT 1
+    ) WHERE account_number = '' OR account_number IS NULL
+  `);
 
   const defaultSettings = [
     ['bank_name', 'Gabiley Bank', 'Bank display name'],
@@ -285,6 +398,13 @@ async function initDatabase() {
       db.run(`INSERT INTO system_settings (setting_key, setting_value, description) VALUES (?, ?, ?)`, [key, value, desc]);
     }
   }
+
+  // Sync employee emails with user emails
+  try {
+    db.run("UPDATE employees SET email = (SELECT email FROM users WHERE users.id = employees.user_id) WHERE user_id IS NOT NULL");
+    db.run("UPDATE employees SET full_name = (SELECT full_name FROM users WHERE users.id = employees.user_id) WHERE user_id IS NOT NULL AND full_name != (SELECT full_name FROM users WHERE users.id = employees.user_id)");
+    db.run("UPDATE employees SET phone = (SELECT phone FROM users WHERE users.id = employees.user_id) WHERE user_id IS NOT NULL AND (phone IS NULL OR phone = '')");
+  } catch (e) { console.error('Employee sync error:', e.message); }
 
   saveDatabase();
   console.log('Database initialized');

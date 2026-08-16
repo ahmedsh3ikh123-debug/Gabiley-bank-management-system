@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, []);
 
   return (
-    <div className="min-h-screen transition-all duration-500 relative bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen transition-all duration-500 relative bg-gray-50 dark:bg-black">
       {/* Global bank background image */}
       <div className="fixed inset-0 bg-[url('/bank-bg.svg')] bg-cover bg-center opacity-[0.03] pointer-events-none z-0" />
       <div className="fixed inset-0 bg-gradient-to-br from-transparent via-transparent to-black/10 pointer-events-none z-0" />
@@ -37,7 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         style={{ marginLeft: isMobile ? 0 : `${sidebarWidth}px` }}
       >
         <Topbar />
-        <main className="p-4 lg:p-6 transition-all duration-500 relative bg-gray-50 dark:bg-gray-900">
+        <main className="p-4 lg:p-6 transition-all duration-500 relative bg-gray-50 dark:bg-black">
           {/* Content background overlay */}
           <div className="absolute inset-0 bg-[url('/bg-pattern.svg')] bg-repeat opacity-30 pointer-events-none" />
           <div className="relative z-10">

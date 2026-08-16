@@ -6,31 +6,31 @@
   :root {
     /* Premium Banking Color Palette - Light Mode */
     --background: 0 0% 97%;
-    --foreground: 30 4% 10%;
+    --foreground: 0 0% 5%;
 
     /* Card Colors */
     --card: 0 0% 100%;
-    --card-foreground: 30 4% 10%;
+    --card-foreground: 0 0% 5%;
 
     /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 30 4% 10%;
+    --popover-foreground: 0 0% 5%;
 
-    /* Primary - Emerald Green */
-    --primary: 147 63% 39%;
-    --primary-foreground: 0 0% 97%;
+    /* Primary - Light Green */
+    --primary: 142 71% 50%;
+    --primary-foreground: 0 0% 100%;
 
     /* Secondary - Gold */
     --secondary: 43 90% 66%;
-    --secondary-foreground: 30 4% 10%;
+    --secondary-foreground: 0 0% 5%;
 
     /* Muted */
     --muted: 40 20% 95%;
-    --muted-foreground: 30 4% 46%;
+    --muted-foreground: 0 0% 35%;
 
     /* Accent */
     --accent: 43 90% 66%;
-    --accent-foreground: 30 4% 10%;
+    --accent-foreground: 0 0% 5%;
 
     /* Destructive/Error - Red */
     --destructive: 0 72% 51%;
@@ -39,36 +39,36 @@
     /* Border */
     --border: 40 20% 90%;
     --input: 40 20% 90%;
-    --ring: 147 63% 39%;
+    --ring: 142 71% 50%;
 
     /* Border Radius */
     --radius: 0.75rem;
 
-    /* Success - Emerald */
-    --success: 147 63% 39%;
+    /* Success - Light Green */
+    --success: 142 71% 50%;
     --success-foreground: 0 0% 97%;
 
     /* Warning - Gold */
     --warning: 43 90% 66%;
-    --warning-foreground: 30 4% 10%;
+    --warning-foreground: 0 0% 5%;
 
-    /* Sidebar - Dark Emerald */
-    --sidebar-background: 147 63% 35%;
-    --sidebar-foreground: 0 0% 97%;
-    --sidebar-primary: 0 0% 97%;
-    --sidebar-primary-foreground: 147 63% 39%;
-    --sidebar-accent: 147 50% 25%;
-    --sidebar-accent-foreground: 0 0% 97%;
-    --sidebar-border: 147 40% 30%;
-    --sidebar-ring: 147 63% 39%;
+    /* Sidebar - Light Green */
+    --sidebar-background: 142 71% 45%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 142 71% 50%;
+    --sidebar-accent: 142 60% 35%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 142 50% 40%;
+    --sidebar-ring: 142 71% 50%;
 
-    /* Banking Specific - Emerald & Gold */
-    --bank-emerald: #1F8A4D;
-    --bank-emerald-light: #2BA85E;
+    /* Banking Specific - Light Green & Gold */
+    --bank-emerald: #22c55e;
+    --bank-emerald-light: #4ade80;
     --bank-gold: #F8CC58;
     --bank-gold-dark: #E4B155;
     --bank-cream: #EBD6A3;
-    --bank-success: #1F8A4D;
+    --bank-success: #22c55e;
     --bank-error: #dc2626;
     --bank-gray: #64748b;
     --bank-gray-light: #94a3b8;
@@ -97,8 +97,8 @@
     --popover: 0 0% 5%;
     --popover-foreground: 0 0% 100%;
 
-    /* Primary - #1F8A4D Emerald */
-    --primary: 142 63% 33%;
+    /* Primary - Light Green */
+    --primary: 142 71% 45%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary - #F8CC58 Gold */
@@ -120,10 +120,10 @@
     /* Border */
     --border: 0 0% 15%;
     --input: 0 0% 15%;
-    --ring: 142 63% 33%;
+    --ring: 142 71% 45%;
 
-    /* Success - #1F8A4D */
-    --success: 142 63% 33%;
+    /* Success - Light Green */
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
     /* Warning - #F8CC58 */
@@ -134,19 +134,19 @@
     --sidebar-background: 0 0% 3%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 142 63% 33%;
+    --sidebar-primary-foreground: 142 71% 45%;
     --sidebar-accent: 0 0% 8%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 142 63% 33%;
+    --sidebar-ring: 142 71% 45%;
 
     /* Banking Specific - Dark Mode */
-    --bank-emerald: #1F8A4D;
-    --bank-emerald-light: #2BA85E;
+    --bank-emerald: #22c55e;
+    --bank-emerald-light: #4ade80;
     --bank-gold: #F8CC58;
     --bank-gold-dark: #E4B155;
     --bank-cream: #E4B155;
-    --bank-success: #1F8A4D;
+    --bank-success: #22c55e;
     --bank-error: #dc2626;
     --bank-gray: #94a3b8;
     --bank-gray-light: #cbd5e1;
@@ -277,13 +277,13 @@
   }
 
   .scrollbar-premium::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #1F8A4D, #176B3D);
+    background: linear-gradient(180deg, #22c55e, #16a34a);
     border-radius: 9999px;
     border: 2px solid #F7F7F7;
   }
 
   .scrollbar-premium::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #2BA85E, #1F8A4D);
+    background: linear-gradient(180deg, #4ade80, #22c55e);
   }
 
   .dark .scrollbar-premium {
@@ -348,10 +348,10 @@
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(31, 138, 77, 0.4);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
   }
   50% {
-    box-shadow: 0 0 0 10px rgba(31, 138, 77, 0);
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
   }
 }
 
@@ -406,10 +406,10 @@
 
 @keyframes borderGlow {
   0%, 100% {
-    border-color: rgba(31, 138, 77, 0.3);
+    border-color: rgba(34, 197, 94, 0.3);
   }
   50% {
-    border-color: rgba(31, 138, 77, 0.8);
+    border-color: rgba(34, 197, 94, 0.8);
   }
 }
 
@@ -509,11 +509,11 @@
    ======================== */
 @layer utilities {
   .bg-bank-gradient {
-    background: linear-gradient(135deg, #1F8A4D 0%, #176B3D 100%);
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   }
 
   .bg-bank-gradient-light {
-    background: linear-gradient(135deg, #2BA85E 0%, #1F8A4D 100%);
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
   }
 
   .bg-gold-gradient {
@@ -521,7 +521,7 @@
   }
 
   .bg-hero-gradient {
-    background: linear-gradient(135deg, #000000 0%, #1F8A4D 50%, #176B3D 100%);
+    background: linear-gradient(135deg, #000000 0%, #22c55e 50%, #16a34a 100%);
   }
 
   .bg-card-gradient {
@@ -541,7 +541,7 @@
   }
 
   .bg-success-gradient {
-    background: linear-gradient(135deg, #1F8A4D 0%, #176B3D 100%);
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   }
 
   .bg-error-gradient {
@@ -554,18 +554,18 @@
 
   .bg-mesh-gradient {
     background:
-      radial-gradient(at 40% 20%, rgba(31, 138, 77, 0.15) 0px, transparent 50%),
+      radial-gradient(at 40% 20%, rgba(34, 197, 94, 0.15) 0px, transparent 50%),
       radial-gradient(at 80% 0%, rgba(248, 204, 88, 0.1) 0px, transparent 50%),
-      radial-gradient(at 0% 50%, rgba(31, 138, 77, 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(34, 197, 94, 0.1) 0px, transparent 50%),
       radial-gradient(at 80% 50%, rgba(248, 204, 88, 0.1) 0px, transparent 50%),
       radial-gradient(at 0% 100%, rgba(228, 177, 85, 0.1) 0px, transparent 50%);
   }
 
   .dark .bg-mesh-gradient {
     background:
-      radial-gradient(at 40% 20%, rgba(31, 138, 77, 0.12) 0px, transparent 50%),
+      radial-gradient(at 40% 20%, rgba(34, 197, 94, 0.12) 0px, transparent 50%),
       radial-gradient(at 80% 0%, rgba(248, 204, 88, 0.08) 0px, transparent 50%),
-      radial-gradient(at 0% 50%, rgba(31, 138, 77, 0.08) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(34, 197, 94, 0.08) 0px, transparent 50%),
       radial-gradient(at 80% 50%, rgba(248, 204, 88, 0.08) 0px, transparent 50%),
       radial-gradient(at 0% 100%, rgba(228, 177, 85, 0.08) 0px, transparent 50%);
   }
@@ -604,7 +604,7 @@
   }
 
   .shadow-glass {
-    box-shadow: 0 8px 32px 0 rgba(31, 138, 77, 0.15);
+    box-shadow: 0 8px 32px 0 rgba(34, 197, 94, 0.15);
   }
 
   .dark .shadow-glass {
@@ -818,7 +818,7 @@
   }
 
   .stat-card-gradient-1 {
-    background: linear-gradient(135deg, #1F8A4D 0%, #176B3D 100%);
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   }
 
   .stat-card-gradient-2 {
@@ -884,8 +884,8 @@
 }
 
 @keyframes authGlowPulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(248, 204, 88, 0.1), 0 0 40px rgba(31, 138, 77, 0.05); }
-  50% { box-shadow: 0 0 30px rgba(248, 204, 88, 0.2), 0 0 60px rgba(31, 138, 77, 0.1); }
+  0%, 100% { box-shadow: 0 0 20px rgba(248, 204, 88, 0.1), 0 0 40px rgba(34, 197, 94, 0.05); }
+  50% { box-shadow: 0 0 30px rgba(248, 204, 88, 0.2), 0 0 60px rgba(34, 197, 94, 0.1); }
 }
 
 @keyframes authBorderGlow {
@@ -998,7 +998,7 @@
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(248, 204, 88, 0.15), rgba(31, 138, 77, 0.1), rgba(248, 204, 88, 0.15));
+  background: linear-gradient(135deg, rgba(248, 204, 88, 0.15), rgba(34, 197, 94, 0.1), rgba(248, 204, 88, 0.15));
   opacity: 0;
   transition: opacity 0.4s ease;
   z-index: -1;
@@ -1056,7 +1056,7 @@
   position: absolute;
   inset: -2px;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(248, 204, 88, 0.2), transparent, rgba(31, 138, 77, 0.2));
+  background: linear-gradient(135deg, rgba(248, 204, 88, 0.2), transparent, rgba(34, 197, 94, 0.2));
   opacity: 0;
   transition: opacity 0.3s;
   z-index: -1;

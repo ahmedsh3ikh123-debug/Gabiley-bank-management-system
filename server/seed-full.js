@@ -116,14 +116,14 @@ async function seed() {
   const adminHash = await bcrypt.hash('admin123', 12);
   const adminPin = await bcrypt.hash('1234', 10);
   run(
-    `INSERT INTO users (username, email, password, full_name, phone, address, dob, gender, national_id, profile_picture, role, status, pin, branch)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO users (username, email, password, full_name, phone, address, dob, gender, national_id, profile_picture, role, status, pin, branch, password_plain, pin_plain)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       'admin', 'admin@gabileybank.com', adminHash,
       'System Administrator', '+252-61-1234567',
       'Hargeisa, Woqooyi Galbeed', '1985-06-15', 'Male',
       'SN-1234567', avatarUrl('admin-gabiley'),
-      'super_admin', 'active', adminPin, 'Hargeisa HQ'
+      'super_admin', 'active', adminPin, 'Hargeisa HQ', 'admin123', '1234'
     ]
   );
 
@@ -132,12 +132,11 @@ async function seed() {
     { username: 'sara.ibrahim', name: 'Sara Ibrahim', dept: 'Operations', pos: 'Teller', salary: 1200 },
     { username: 'hassan.ali', name: 'Hassan Ali Mohamed', dept: 'Customer Service', pos: 'Customer Service Officer', salary: 1400 },
     { username: 'mina.warsame', name: 'Mina Warsame Abdi', dept: 'Finance', pos: 'Accountant', salary: 1600 },
-    { username: 'abdirahman.hussein', name: 'Abdirahman Hussein Farah', dept: 'Loans', pos: 'Loan Officer', salary: 1500 },
+    { username: 'abdirahman.hussein', name: 'Abdirahman Hussein Farah', dept: 'Operations', pos: 'Manager', salary: 1500 },
     { username: 'zainab.osman', name: 'Zainab Osman Ahmed', dept: 'ICT', pos: 'ICT Officer', salary: 1800 },
   ];
 
-  const employeeRoles = ['teller', 'customer_service', 'accountant', 'loan_officer', 'ict_staff'];
-  const dbRoles = ['teller', 'customer_service', 'accountant', 'loan_officer', 'ict_staff'];
+  const dbRoles = ['teller', 'customer_service', 'accountant', 'manager', 'ict_staff'];
 
   for (let i = 0; i < employeeData.length; i++) {
     const emp = employeeData[i];
@@ -145,14 +144,14 @@ async function seed() {
     const empPin = await bcrypt.hash('1234', 10);
 
     run(
-      `INSERT INTO users (username, email, password, full_name, phone, address, dob, gender, national_id, profile_picture, role, status, pin, branch)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (username, email, password, full_name, phone, address, dob, gender, national_id, profile_picture, role, status, pin, branch, password_plain, pin_plain)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         emp.username, `${emp.username}@gabileybank.com`, empHash,
         emp.name, randomPhone(),
         randomFrom(somaliAddresses), randomDOB(), i % 2 === 0 ? 'Female' : 'Male',
         randomNationalId(), avatarUrl(emp.username),
-        dbRoles[i], 'active', empPin, 'Hargeisa HQ'
+        dbRoles[i], 'active', empPin, 'Hargeisa HQ', 'employee123', '1234'
       ]
     );
 
@@ -166,7 +165,7 @@ async function seed() {
         `${emp.username}@gabileybank.com`, randomPhone(),
         emp.dept, emp.pos, emp.salary,
         `2024-${String(Math.floor(1 + Math.random() * 12)).padStart(2, '0')}-${String(Math.floor(1 + Math.random() * 28)).padStart(2, '0')}`,
-        'Hargeisa HQ', avatarUrl(emp.username), 'active'
+        'Gabiley HQ', avatarUrl(emp.username), 'active'
       ]
     );
 
@@ -195,14 +194,14 @@ async function seed() {
 
     const email = `${username}${i}@gabileybank.com`;
     run(
-      `INSERT INTO users (username, email, password, full_name, phone, address, dob, gender, national_id, profile_picture, role, status, pin, branch)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (username, email, password, full_name, phone, address, dob, gender, national_id, profile_picture, role, status, pin, branch, password_plain, pin_plain)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         username, email, custHash,
         fullName, randomPhone(),
         randomFrom(somaliAddresses), randomDOB(), gender,
         randomNationalId(), avatarUrl(username),
-        'customer', 'active', custPin, 'Hargeisa HQ'
+        'customer', 'active', custPin, 'Hargeisa HQ', 'customer123', '1234'
       ]
     );
 
@@ -224,10 +223,8 @@ async function seed() {
       [user.id, accountNumber, accountType, balance, accountType === 'fixed_deposit' ? 5.0 : 2.5, 'USD', 'active']
     );
 
-    if (i < somaliNames.length) {
-      const account = queryOne('SELECT id FROM accounts WHERE account_number = ?', [accountNumber]);
-      console.log(`  Customer ${i + 1}: ${fullName} (${accountNumber}) - $${balance.toFixed(2)}`);
-    }
+    const account = queryOne('SELECT id FROM accounts WHERE account_number = ?', [accountNumber]);
+    console.log(`  Customer ${i + 1}: ${fullName} (${accountNumber}) - $${balance.toFixed(2)}`);
   }
 
   console.log('Seeding transactions...');
@@ -302,14 +299,18 @@ async function seed() {
     const purpose = randomFrom(loanPurposes);
     const monthlyIncome = Math.round(500 + Math.random() * 5000);
 
+    const custAccount = queryOne('SELECT account_number FROM accounts WHERE user_id = ? AND status = ? LIMIT 1', [custId, 'active']);
+    const accountNumber = custAccount ? custAccount.account_number : '';
+
     run(
-      `INSERT INTO loan_requests (user_id, amount, term_months, purpose, loan_type, monthly_income, status, reviewed_by, review_notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO loan_requests (user_id, amount, term_months, purpose, loan_type, monthly_income, status, reviewed_by, review_notes, account_number)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         custId, amount, term, purpose, loanType, monthlyIncome, status,
         status !== 'pending' ? 1 : null,
         status === 'approved' ? 'Loan meets all criteria' :
-        status === 'rejected' ? 'Insufficient documentation' : ''
+        status === 'rejected' ? 'Insufficient documentation' : '',
+        accountNumber
       ]
     );
   }
@@ -318,7 +319,7 @@ async function seed() {
   console.log('Seeding announcements...');
   run(
     `INSERT INTO announcements (title, message, priority, target_role, created_by, status) VALUES (?, ?, ?, ?, ?, ?)`,
-    ['System Maintenance Notice', 'Scheduled maintenance on Saturday from 2:00 AM to 4:00 AM. Some services may be temporarily unavailable.', 'high', 'all', 1, 'active']
+    ['System Maintenance Notice', 'Scheduled maintenance on Saturday from 2:00 AM to 4:00 AM. Some services may be temporarily unavailable.', 'important', 'all', 1, 'active']
   );
   run(
     `INSERT INTO announcements (title, message, priority, target_role, created_by, status) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -410,7 +411,7 @@ async function seed() {
   console.log('  Employee: sara.ibrahim / employee123 (Teller)');
   console.log('  Employee: hassan.ali / employee123 (Customer Service)');
   console.log('  Employee: mina.warsame / employee123 (Accountant)');
-  console.log('  Employee: abdirahman.hussein / employee123 (Loan Officer)');
+  console.log('  Employee: abdirahman.hussein / employee123 (Manager)');
   console.log('  Employee: zainab.osman / employee123 (ICT Officer)');
   console.log('  Customer: abdi.hassan / customer123');
 }

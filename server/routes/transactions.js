@@ -14,7 +14,7 @@ async function verifyPin(userId, pin) {
 }
 
 function isStaff(user) {
-  return ['super_admin', 'branch_manager', 'teller', 'customer_service', 'accountant', 'ict_staff'].includes(user.role);
+  return ['super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'accountant', 'ict_staff'].includes(user.role);
 }
 
 function buildReceipt(txn, account, customerName, processedByName) {

@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
+import { ProfileUpload } from "@/components/ui/profile-upload";
 import api from "@/lib/api";
 import { formatDate, getRoleLabel } from "@/lib/utils";
 import {
@@ -40,6 +41,7 @@ function ProfileContent() {
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [settingPin, setSettingPin] = useState(false);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
 
   const [profileForm, setProfileForm] = useState({
     full_name: user?.full_name || "",
@@ -60,6 +62,12 @@ function ProfileContent() {
     new_pin: "",
     confirm_pin: "",
   });
+
+  const [helpForm, setHelpForm] = useState({
+    request_type: "password",
+    message: "",
+  });
+  const [sendingRequest, setSendingRequest] = useState(false);
 
   const handleProfileUpdate = async () => {
     try {
@@ -145,6 +153,30 @@ function ProfileContent() {
     }
   };
 
+  const handleHelpRequest = async () => {
+    if (!helpForm.message.trim()) {
+      toastError("Please describe your issue");
+      return;
+    }
+    try {
+      setSendingRequest(true);
+      const endpoint = helpForm.request_type === "password"
+        ? "/auth/request-password-reset"
+        : "/auth/request-pin-reset";
+      await api.post(endpoint, { message: helpForm.message });
+      success("Your request has been sent to the admin team. They will contact you soon.");
+      setHelpForm({ request_type: "password", message: "" });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : (err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to send request";
+      toastError(message);
+    } finally {
+      setSendingRequest(false);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -186,9 +218,30 @@ function ProfileContent() {
                     .slice(0, 2)}
                 </span>
               </div>
-              <button className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-white text-blue-600 shadow-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-gray-700">
-                <Camera className="h-4 w-4" />
-              </button>
+              <div className="absolute bottom-0 right-0">
+                <ProfileUpload
+                  value={user.profile_picture || ""}
+                  onChange={async (file) => {
+                    if (!file) return;
+                    setUploadingPicture(true);
+                    try {
+                      const reader = new FileReader();
+                      reader.onloadend = async () => {
+                        const base64 = reader.result as string;
+                        await api.put("/auth/profile-picture", { profile_picture: base64 });
+                        updateUser({ ...user!, profile_picture: base64 });
+                        success("Profile picture updated");
+                        setUploadingPicture(false);
+                      };
+                      reader.readAsDataURL(file);
+                    } catch {
+                      toastError("Failed to update profile picture");
+                      setUploadingPicture(false);
+                    }
+                  }}
+                  size="sm"
+                />
+              </div>
             </div>
             <h2 className="mt-3 text-xl font-bold text-white">{user.full_name}</h2>
             <p className="text-sm text-blue-100">@{user.username}</p>
@@ -275,6 +328,10 @@ function ProfileContent() {
               <TabsTrigger value="pin" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 <Key className="h-4 w-4" />
                 Transaction PIN
+              </TabsTrigger>
+              <TabsTrigger value="help" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <Phone className="h-4 w-4" />
+                Help Request
               </TabsTrigger>
             </TabsList>
 
@@ -526,6 +583,77 @@ function ProfileContent() {
                       <Key className="mr-2 h-4 w-4" />
                     )}
                     {user.hasPin ? "Update PIN" : "Set PIN"}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="help">
+              <Card className="shadow-md">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+                      <Phone className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Password / PIN Help</CardTitle>
+                      <CardDescription>
+                        Forgot your password or PIN? Send a request to our admin team.
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Request Type</Label>
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant={helpForm.request_type === "password" ? "default" : "outline"}
+                        onClick={() => setHelpForm({ ...helpForm, request_type: "password" })}
+                        className="flex-1"
+                      >
+                        <Lock className="mr-2 h-4 w-4" />
+                        Password Reset
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={helpForm.request_type === "pin" ? "default" : "outline"}
+                        onClick={() => setHelpForm({ ...helpForm, request_type: "pin" })}
+                        className="flex-1"
+                      >
+                        <Key className="mr-2 h-4 w-4" />
+                        PIN Reset
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Describe Your Issue</Label>
+                    <textarea
+                      value={helpForm.message}
+                      onChange={(e) => setHelpForm({ ...helpForm, message: e.target.value })}
+                      placeholder="Please describe why you need a reset (e.g., forgot password, locked out, etc.)"
+                      className="w-full min-h-[120px] rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                  <div className="rounded-xl bg-amber-50 border border-amber-100 p-4">
+                    <p className="text-sm text-amber-800">
+                      Your request will be sent to the admin team (Admin, ICT Staff, or Branch Manager). They will reset your {helpForm.request_type === "password" ? "password" : "PIN"} and notify you.
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-end border-t border-gray-100 pt-4">
+                  <Button
+                    onClick={handleHelpRequest}
+                    disabled={sendingRequest || !helpForm.message.trim()}
+                    className="bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-200 hover:from-amber-600 hover:to-orange-700 h-11 px-8"
+                  >
+                    {sendingRequest ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Phone className="mr-2 h-4 w-4" />
+                    )}
+                    Send Request
                   </Button>
                 </CardFooter>
               </Card>

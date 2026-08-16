@@ -18,6 +18,7 @@ class OfflineDatabase extends Dexie {
       loans: "++id, user_id, status, sync_status, created_at",
       pendingSync: "++id, operation, entity, entity_id, status, created_at",
       syncMeta: "key",
+      pendingAccounts: "++id, customer_id, status, created_at",
     });
   }
 }
@@ -152,6 +153,42 @@ export async function deleteLoanOffline(id: number): Promise<void> {
 
 export async function getPendingLoansOffline(): Promise<(Loan & { sync_status?: string })[]> {
   return db.loans.where("sync_status").equals("pending").toArray();
+}
+
+// Pending Account Registrations for Offline Mode
+export interface PendingAccountRegistration {
+  id?: number;
+  customer_id: number;
+  customer_username: string;
+  customer_password: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  mother_name: string;
+  id_card_image: string;
+  account_type: string;
+  purpose: string;
+  status: "pending" | "synced" | "failed";
+  created_at: string;
+  error?: string;
+}
+
+export async function savePendingAccountOffline(registration: Omit<PendingAccountRegistration, "id" | "status" | "created_at">): Promise<void> {
+  await db.table("pendingAccounts").add({
+    ...registration,
+    status: "pending",
+    created_at: new Date().toISOString(),
+  });
+}
+
+export async function getPendingAccountsOffline(): Promise<PendingAccountRegistration[]> {
+  return db.table("pendingAccounts").where("status").equals("pending").toArray();
+}
+
+export async function updatePendingAccountStatus(id: number, status: "pending" | "synced" | "failed", error?: string): Promise<void> {
+  const update: Partial<PendingAccountRegistration> = { status };
+  if (error) update.error = error;
+  await db.table("pendingAccounts").update(id, update);
 }
 
 export async function clearOfflineDatabase(): Promise<void> {

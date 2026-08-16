@@ -26,6 +26,10 @@ import {
   Building2,
   FileText,
   UserCircle,
+  Mail,
+  KeyRound,
+  Crown,
+  MessageSquare,
 } from "lucide-react";
 
 interface NavItem {
@@ -45,40 +49,45 @@ const navSections: NavSection[] = [
   {
     title: "MAIN",
     items: [
-      { label: "dashboard", href: "/dashboard", icon: <LayoutDashboard className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "teller", "customer_service", "accountant", "ict_staff", "customer"] },
+      { label: "dashboard", href: "/dashboard", icon: <LayoutDashboard className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff", "customer"] },
+      { label: "loans", href: "/loans", icon: <FileText className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "customer"] },
     ],
   },
   {
     title: "BANKING",
     items: [
-      { label: "accounts", href: "/accounts", icon: <CreditCard className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "teller", "customer_service", "customer"] },
-      { label: "transactions", href: "/transactions", icon: <ArrowLeftRight className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "teller", "customer_service", "accountant", "customer"] },
-      { label: "transfers", href: "/transfer", icon: <Banknote className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "teller", "customer_service", "customer"] },
-      { label: "loans", href: "/loans", icon: <FileText className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "accountant", "customer"] },
+      { label: "accounts", href: "/accounts", icon: <CreditCard className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "accountant", "ict_staff", "customer"] },
+      { label: "transactions", href: "/transactions", icon: <ArrowLeftRight className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "accountant", "customer"] },
+      { label: "transfers", href: "/transfer", icon: <Banknote className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "accountant", "customer"] },
     ],
   },
   {
     title: "MANAGEMENT",
     items: [
-      { label: "users", href: "/users", icon: <Users className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "teller", "customer_service", "accountant", "ict_staff"] },
-      { label: "customers", href: "/customers", icon: <Users className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "customer_service"] },
-      { label: "employees", href: "/employees", icon: <UserCog className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager"] },
+      { label: "users", href: "/users", icon: <Users className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff"] },
+      { label: "customers", href: "/customers", icon: <Users className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "ict_staff"] },
+      { label: "employees", href: "/employees", icon: <UserCog className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "ict_staff"] },
     ],
   },
   {
     title: "SYSTEM",
     items: [
-      { label: "reports", href: "/reports", icon: <BarChart3 className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "accountant"] },
-      { label: "audit_logs", href: "/audit-logs", icon: <Shield className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "ict_staff"] },
-      { label: "settings", href: "/settings", icon: <Settings className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager"] },
+      { label: "credentials", href: "/credentials", icon: <KeyRound className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "ict_staff"] },
+      { label: "reports", href: "/reports", icon: <BarChart3 className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "accountant"] },
+
+      { label: "audit_logs", href: "/audit-logs", icon: <Shield className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "ict_staff"] },
+      { label: "top_users", href: "/top-users", icon: <Crown className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager"] },
+      { label: "settings", href: "/settings", icon: <Settings className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager"] },
     ],
   },
   {
     title: "OTHER",
     items: [
-      { label: "notifications", href: "/notifications", icon: <Bell className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "teller", "customer_service", "accountant", "ict_staff", "customer"] },
-      { label: "announcements", href: "/announcements", icon: <Megaphone className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager"] },
-      { label: "profile", href: "/profile", icon: <UserCircle className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "teller", "customer_service", "accountant", "ict_staff", "customer"] },
+      { label: "my_profile", href: "/my-profile", icon: <UserCircle className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff"] },
+      { label: "notifications", href: "/notifications", icon: <Bell className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff", "customer"] },
+      { label: "messages", href: "/chat", icon: <MessageSquare className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff", "customer"] },
+      { label: "announcements", href: "/announcements", icon: <Megaphone className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager"] },
+      { label: "profile", href: "/profile", icon: <UserCircle className="h-[18px] w-[18px]" />, roles: ["customer"] },
     ],
   },
 ];
@@ -90,6 +99,7 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
 
   const theme = {
     sidebar: "bg-gradient-to-b from-[#176B3D] via-[#155c34] to-[#104628]",
@@ -141,6 +151,13 @@ export function Sidebar() {
       if (res.ok) {
         const data = await res.json();
         setUnreadCount(data.count || 0);
+      }
+      const chatRes = await fetch("/api/chat/unread-count", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (chatRes.ok) {
+        const chatData = await chatRes.json();
+        setChatUnreadCount(chatData.count || 0);
       }
     } catch {
       // ignore
@@ -239,6 +256,7 @@ export function Sidebar() {
                 {section.items.map((item) => {
                   const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                   const isNotifications = item.href === "/notifications";
+                  const isChat = item.href === "/chat";
                   return (
                     <li key={item.href}>
                       <Link
@@ -278,10 +296,18 @@ export function Sidebar() {
                                 {unreadCount > 99 ? "99+" : unreadCount}
                               </span>
                             )}
+                            {isChat && chatUnreadCount > 0 && (
+                              <span className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-[#1A1918] dark:text-white" style={{ backgroundColor: theme.sidebarAccent }}>
+                                {chatUnreadCount > 99 ? "99+" : chatUnreadCount}
+                              </span>
+                            )}
                           </>
                         )}
 
                         {collapsed && isNotifications && unreadCount > 0 && (
+                          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full" style={{ backgroundColor: theme.sidebarAccent }} />
+                        )}
+                        {collapsed && isChat && chatUnreadCount > 0 && (
                           <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full" style={{ backgroundColor: theme.sidebarAccent }} />
                         )}
                       </Link>
@@ -362,10 +388,10 @@ export function Sidebar() {
               "text-white/50 hover:bg-red-500/15 hover:text-red-300 hover:border-red-500/20",
               collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"
             )}
-            title={collapsed ? "Logout" : undefined}
+            title={collapsed ? t("logout") : undefined}
           >
             <LogOut className="h-[18px] w-[18px] shrink-0" />
-            {!collapsed && <span>Logout</span>}
+            {!collapsed && <span>{t("logout")}</span>}
           </button>
         </div>
       </aside>

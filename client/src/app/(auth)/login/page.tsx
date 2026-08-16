@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { AuthCard } from "@/components/layout/auth-card";
 import {
   Eye, EyeOff, Loader2, Lock, User, ArrowRight,
-  Shield, Fingerprint, WifiOff, KeyRound,
+  Shield, Fingerprint, WifiOff, KeyRound, ArrowLeft,
 } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 
@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [pendingError, setPendingError] = useState(false);
+  const [rejectedError, setRejectedError] = useState(false);
   const { login } = useAuth();
   const { success, error: showError } = useToast();
   const { isOnline } = useOnlineStatus();
@@ -33,6 +34,7 @@ export default function LoginPage() {
     }
     setLoading(true);
     setPendingError(false);
+    setRejectedError(false);
     try {
       await login(username, password);
       success("Login successful");
@@ -42,6 +44,9 @@ export default function LoginPage() {
       if (errorMsg.includes("pending approval")) {
         setPendingError(true);
       }
+      if (errorMsg.includes("rejected")) {
+        setRejectedError(true);
+      }
       showError(errorMsg);
     } finally {
       setLoading(false);
@@ -50,6 +55,12 @@ export default function LoginPage() {
 
   return (
     <AuthCard>
+      {/* Back to Home */}
+      <Link href="/" className="flex items-center gap-1.5 text-[12px] text-white/40 hover:text-[#F8CC58] transition-colors duration-200 group mb-6">
+        <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform duration-200" />
+        <span>Home</span>
+      </Link>
+
       {/* Header */}
       <div className="mb-8 text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#F8CC58]/10 border border-[#F8CC58]/20 px-4 py-1.5 mb-5 animate-float">
@@ -75,6 +86,14 @@ export default function LoginPage() {
         <div className="mb-6 flex items-center gap-3 rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-3.5 text-sm text-yellow-300 animate-slide-up">
           <Shield className="h-4 w-4 shrink-0" />
           <span>Your account is pending approval. Please wait for an admin to activate your account.</span>
+        </div>
+      )}
+
+      {/* Rejected banner */}
+      {rejectedError && (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-sm text-red-300 animate-slide-up">
+          <Shield className="h-4 w-4 shrink-0" />
+          <span>Your registration has been rejected. Please contact support for more information.</span>
         </div>
       )}
 

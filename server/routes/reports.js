@@ -1,10 +1,10 @@
 const express = require('express');
 const { queryOne, queryAll } = require('../db');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/daily', authenticateToken, (req, res) => {
+router.get('/daily', authenticateToken, authorize('super_admin', 'branch_manager', 'manager', 'accountant'), (req, res) => {
   try {
     const { date } = req.query;
     const targetDate = date || new Date().toISOString().split('T')[0];
@@ -27,7 +27,7 @@ router.get('/daily', authenticateToken, (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.get('/monthly', authenticateToken, (req, res) => {
+router.get('/monthly', authenticateToken, authorize('super_admin', 'branch_manager', 'manager', 'accountant'), (req, res) => {
   try {
     const { month } = req.query;
     const targetMonth = month || new Date().toISOString().slice(0, 7);
@@ -54,7 +54,7 @@ router.get('/monthly', authenticateToken, (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.get('/analytics', authenticateToken, (req, res) => {
+router.get('/analytics', authenticateToken, authorize('super_admin', 'branch_manager', 'manager', 'accountant'), (req, res) => {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
 
@@ -85,7 +85,7 @@ router.get('/analytics', authenticateToken, (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-router.get('/export/:type', authenticateToken, (req, res) => {
+router.get('/export/:type', authenticateToken, authorize('super_admin', 'branch_manager', 'manager', 'accountant'), (req, res) => {
   try {
     const { type } = req.params;
     let data, filename;
