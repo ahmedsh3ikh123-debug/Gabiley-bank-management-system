@@ -64,7 +64,6 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string; bgClass: s
 const TARGET_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
   all: { label: "All Users", icon: <Users className="h-3.5 w-3.5" /> },
   customer: { label: "Customers", icon: <User className="h-3.5 w-3.5" /> },
-  teller: { label: "Tellers", icon: <User className="h-3.5 w-3.5" /> },
   accountant: { label: "Accountants", icon: <User className="h-3.5 w-3.5" /> },
 };
 
@@ -380,7 +379,6 @@ export default function AnnouncementsPage() {
                     <SelectContent>
                       <SelectItem value="all">All Users</SelectItem>
                       <SelectItem value="customer">Customers</SelectItem>
-                      <SelectItem value="teller">Tellers</SelectItem>
                       <SelectItem value="accountant">Accountants</SelectItem>
                     </SelectContent>
                   </Select>

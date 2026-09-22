@@ -49,23 +49,23 @@ const navSections: NavSection[] = [
   {
     title: "MAIN",
     items: [
-      { label: "dashboard", href: "/dashboard", icon: <LayoutDashboard className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff", "customer"] },
-      { label: "loans", href: "/loans", icon: <FileText className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "customer"] },
+      { label: "dashboard", href: "/dashboard", icon: <LayoutDashboard className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "customer_service", "accountant", "ict_staff", "customer"] },
+      { label: "loans", href: "/loans", icon: <FileText className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "customer_service", "customer"] },
     ],
   },
   {
     title: "BANKING",
     items: [
-      { label: "accounts", href: "/accounts", icon: <CreditCard className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "accountant", "ict_staff", "customer"] },
-      { label: "transactions", href: "/transactions", icon: <ArrowLeftRight className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "accountant", "customer"] },
-      { label: "transfers", href: "/transfer", icon: <Banknote className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "accountant", "customer"] },
+      { label: "accounts", href: "/accounts", icon: <CreditCard className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "accountant", "ict_staff", "customer"] },
+      { label: "transactions", href: "/transactions", icon: <ArrowLeftRight className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "accountant", "customer"] },
+      { label: "transfers", href: "/transfer", icon: <Banknote className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "accountant"] },
     ],
   },
   {
     title: "MANAGEMENT",
     items: [
-      { label: "users", href: "/users", icon: <Users className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff"] },
-      { label: "customers", href: "/customers", icon: <Users className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "ict_staff"] },
+      { label: "users", href: "/users", icon: <Users className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "customer_service", "accountant", "ict_staff"] },
+      { label: "customers", href: "/customers", icon: <Users className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "customer_service", "ict_staff"] },
       { label: "employees", href: "/employees", icon: <UserCog className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "ict_staff"] },
     ],
   },
@@ -83,9 +83,9 @@ const navSections: NavSection[] = [
   {
     title: "OTHER",
     items: [
-      { label: "my_profile", href: "/my-profile", icon: <UserCircle className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff"] },
-      { label: "notifications", href: "/notifications", icon: <Bell className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff", "customer"] },
-      { label: "messages", href: "/chat", icon: <MessageSquare className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff", "customer"] },
+      { label: "my_profile", href: "/my-profile", icon: <UserCircle className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "customer_service", "accountant", "ict_staff"] },
+      { label: "notifications", href: "/notifications", icon: <Bell className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "customer_service", "accountant", "ict_staff", "customer"] },
+      { label: "messages", href: "/chat", icon: <MessageSquare className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager", "customer_service", "accountant", "ict_staff", "customer"] },
       { label: "announcements", href: "/announcements", icon: <Megaphone className="h-[18px] w-[18px]" />, roles: ["super_admin", "branch_manager", "manager"] },
       { label: "profile", href: "/profile", icon: <UserCircle className="h-[18px] w-[18px]" />, roles: ["customer"] },
     ],

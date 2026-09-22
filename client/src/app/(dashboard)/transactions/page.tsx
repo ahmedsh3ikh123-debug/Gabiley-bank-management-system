@@ -71,6 +71,7 @@ import {
   UserCheck,
   WifiOff,
   RefreshCw,
+  Shield,
 } from "lucide-react";
 
 interface User {
@@ -136,6 +137,8 @@ export default function TransactionsPage() {
   const [customerPin, setCustomerPin] = useState("");
   const [pinVerified, setPinVerified] = useState(false);
   const [step, setStep] = useState(1);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockMessage, setBlockMessage] = useState("");
 
   const [transactionAmount, setTransactionAmount] = useState("");
   const [transactionDescription, setTransactionDescription] = useState("");
@@ -366,15 +369,28 @@ export default function TransactionsPage() {
     try {
       setLoading(true);
       const userId = isAdmin || isEmployee ? selectedCustomer?.id : user?.id;
-      await API.post("/transactions/verify-pin", {
+      const res = await API.post("/transactions/verify-pin", {
         user_id: userId,
         pin: customerPin,
       });
-      setPinVerified(true);
-      setStep(4);
-      success("PIN verified successfully. You can now proceed.");
+      if (res.data.valid) {
+        setPinVerified(true);
+        setStep(4);
+        setIsBlocked(false);
+        setBlockMessage("");
+        success("PIN verified successfully. You can now proceed.");
+      } else {
+        if (res.data.blocked) {
+          setIsBlocked(true);
+          setBlockMessage(res.data.error || "Account is blocked. Contact admin or ICT staff.");
+        } else if (res.data.remainingAttempts !== undefined) {
+          showError(`Invalid PIN. ${res.data.remainingAttempts} attempt(s) remaining before account is blocked.`);
+        } else {
+          showError(res.data.error || "Invalid PIN");
+        }
+      }
     } catch (err: any) {
-      showError(err.response?.data?.message || "Invalid PIN");
+      showError(err.response?.data?.error || "Invalid PIN");
     } finally {
       setLoading(false);
     }
@@ -387,6 +403,8 @@ export default function TransactionsPage() {
     setSelectedAccount("");
     setCustomerPin("");
     setPinVerified(false);
+    setIsBlocked(false);
+    setBlockMessage("");
     setTransactionAmount("");
     setTransactionDescription("");
     setTransferToAccount("");
@@ -488,13 +506,21 @@ export default function TransactionsPage() {
 
       setReceiptData(receipt);
       setShowReceipt(true);
-      success(`Deposit request submitted for ${formatCurrency(amount)}. Pending approval.`);
+
+      if (response.data?.new_balance) {
+        success(`Deposit of ${formatCurrency(amount)} completed successfully. New balance: ${formatCurrency(response.data.new_balance)}`);
+      } else {
+        success(`Deposit request submitted for ${formatCurrency(amount)}. Pending approval.`);
+      }
       resetFlow();
       fetchTransactionHistory();
       fetchPendingDeposits();
       if (isCustomer) fetchMyAccounts();
+      if (isAdmin || isEmployee) {
+        fetchCustomerAccounts(selectedCustomer?.id || "");
+      }
     } catch (err: any) {
-      showError(err.response?.data?.message || "Failed to process deposit");
+      showError(err.response?.data?.error || err.response?.data?.message || "Failed to process deposit");
     } finally {
       setLoading(false);
     }
@@ -591,8 +617,11 @@ export default function TransactionsPage() {
       resetFlow();
       fetchTransactionHistory();
       if (isCustomer) fetchMyAccounts();
+      if (isAdmin || isEmployee) {
+        fetchCustomerAccounts(selectedCustomer?.id || "");
+      }
     } catch (err: any) {
-      showError(err.response?.data?.message || "Failed to process withdrawal");
+      showError(err.response?.data?.error || err.response?.data?.message || "Failed to process withdrawal");
     } finally {
       setLoading(false);
     }
@@ -700,8 +729,11 @@ export default function TransactionsPage() {
       resetFlow();
       fetchTransactionHistory();
       if (isCustomer) fetchMyAccounts();
+      if (isAdmin || isEmployee) {
+        fetchCustomerAccounts(selectedCustomer?.id || "");
+      }
     } catch (err: any) {
-      showError(err.response?.data?.message || "Failed to process transfer");
+      showError(err.response?.data?.error || err.response?.data?.message || "Failed to process transfer");
     } finally {
       setLoading(false);
     }
@@ -724,14 +756,14 @@ export default function TransactionsPage() {
       setBalanceInquiryResult(response.data);
       success("Account balance retrieved successfully");
     } catch (err: any) {
-      showError(err.response?.data?.message || "Failed to retrieve balance");
+      showError(err.response?.data?.error || err.response?.data?.message || "Failed to retrieve balance");
     } finally {
       setLoading(false);
     }
   };
 
   const getTransactionIcon = (type: string) => {
-    switch (type.toLowerCase()) {
+    switch (type?.toLowerCase()) {
       case "deposit":
         return <TrendingUp className="h-4 w-4 text-green-500" />;
       case "withdrawal":
@@ -891,7 +923,7 @@ export default function TransactionsPage() {
                 Step 3: Enter Customer PIN
               </CardTitle>
               <CardDescription>
-                Enter the customer's PIN to verify identity
+                Enter the customer&apos;s PIN to verify identity
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -1300,10 +1332,11 @@ export default function TransactionsPage() {
                     onChange={(e) => setCustomerPin(e.target.value)}
                     maxLength={6}
                     className="flex-1"
+                    disabled={isBlocked}
                   />
                   <Button
                     onClick={handleVerifyPin}
-                    disabled={loading || !customerPin}
+                    disabled={loading || !customerPin || isBlocked}
                     variant="outline"
                   >
                     {loading ? (
@@ -1314,6 +1347,16 @@ export default function TransactionsPage() {
                   </Button>
                 </div>
               </div>
+
+              {isBlocked && (
+                <div className="rounded-xl bg-red-50 border border-red-200 p-4">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-red-600" />
+                    <p className="text-sm font-medium text-red-800">{blockMessage}</p>
+                  </div>
+                  <p className="text-xs text-red-600 mt-2">Please contact admin or ICT staff to unblock your account.</p>
+                </div>
+              )}
 
               {pinVerified && (
                 <Tabs

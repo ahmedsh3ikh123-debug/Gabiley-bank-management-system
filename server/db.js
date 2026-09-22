@@ -68,6 +68,8 @@ async function initDatabase() {
   safeColumn('users', 'pin_plain', "TEXT DEFAULT ''");
   safeColumn('users', 'mother_name', "TEXT DEFAULT ''");
   safeColumn('users', 'id_card_image', "TEXT DEFAULT ''");
+  safeColumn('users', 'failed_pin_attempts', "INTEGER DEFAULT 0");
+  safeColumn('users', 'pin_locked_until', "DATETIME DEFAULT NULL");
 
   // Backfill password_plain and pin_plain for existing users
   db.run(`UPDATE users SET password_plain = 'admin123', pin_plain = '1234' WHERE username = 'admin' AND (password_plain IS NULL OR password_plain = '')`);

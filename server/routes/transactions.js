@@ -1,20 +1,65 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { queryOne, queryAll, run, getSetting, logAudit, createNotification, generateTransactionId, saveDatabase } = require('../db');
-const { authenticateToken, requireAdmin, requireTeller } = require('../middleware/auth');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { sanitizeInput, validateAmount } = require('../middleware/validation');
 
 const router = express.Router();
 
+const PIN_MAX_ATTEMPTS = 4;
+
 async function verifyPin(userId, pin) {
-  if (!pin) return false;
-  const user = queryOne('SELECT pin FROM users WHERE id = ?', [userId]);
-  if (!user || !user.pin) return false;
-  return bcrypt.compare(pin, user.pin);
+  if (!pin) return { valid: false, error: 'PIN is required' };
+
+  const user = queryOne('SELECT id, pin, failed_pin_attempts, pin_locked_until, status FROM users WHERE id = ?', [userId]);
+  if (!user) return { valid: false, error: 'User not found' };
+
+  if (user.status === 'blocked') {
+    return { valid: false, error: 'Account is blocked. Contact admin or ICT staff.', blocked: true };
+  }
+
+  if (user.pin_locked_until) {
+    const lockExpiry = new Date(user.pin_locked_until);
+    if (lockExpiry > new Date()) {
+      const minutesLeft = Math.ceil((lockExpiry - new Date()) / 60000);
+      return { valid: false, error: `Account locked due to too many failed PIN attempts. Try again in ${minutesLeft} minute(s).`, blocked: true };
+    }
+    run("UPDATE users SET failed_pin_attempts = 0, pin_locked_until = NULL WHERE id = ?", [userId]);
+  }
+
+  if (!user.pin) return { valid: false, error: 'No PIN set for this account' };
+
+  const isMatch = await bcrypt.compare(pin, user.pin);
+
+  if (isMatch) {
+    run("UPDATE users SET failed_pin_attempts = 0, pin_locked_until = NULL WHERE id = ?", [userId]);
+    return { valid: true };
+  }
+
+  const newAttempts = (user.failed_pin_attempts || 0) + 1;
+
+  if (newAttempts >= PIN_MAX_ATTEMPTS) {
+    run("UPDATE users SET failed_pin_attempts = ?, pin_locked_until = datetime('now', '+30 minutes'), status = 'blocked' WHERE id = ?", [newAttempts, userId]);
+
+    const accounts = queryAll("SELECT id FROM accounts WHERE user_id = ?", [userId]);
+    for (const acc of accounts) {
+      run("UPDATE accounts SET status = 'blocked', updated_at = datetime('now') WHERE id = ?", [acc.id]);
+    }
+
+    logAudit(null, 'pin_lockout', 'security', `User ${userId} locked after ${newAttempts} failed PIN attempts during transaction`, null);
+    createNotification(userId, 'Account Locked', 'Your account has been locked due to too many failed PIN attempts. Please contact admin or ICT staff.', 'security');
+
+    return { valid: false, error: 'Too many failed attempts. Account is now blocked. Contact admin or ICT staff.', blocked: true, attemptsExceeded: true };
+  }
+
+  run("UPDATE users SET failed_pin_attempts = ? WHERE id = ?", [newAttempts, userId]);
+
+  const remaining = PIN_MAX_ATTEMPTS - newAttempts;
+  return { valid: false, error: `Invalid PIN. ${remaining} attempt(s) remaining before account is blocked.`, remainingAttempts: remaining };
 }
 
 function isStaff(user) {
-  return ['super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'accountant', 'ict_staff'].includes(user.role);
+  return ['super_admin', 'branch_manager', 'manager', 'customer_service', 'accountant', 'ict_staff'].includes(user.role);
 }
 
 function buildReceipt(txn, account, customerName, processedByName) {
@@ -127,8 +172,8 @@ router.post('/deposit', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'You can only deposit to your own accounts' });
     }
 
-    const pinValid = await verifyPin(account.user_id, pin);
-    if (!pinValid) return res.status(400).json({ error: 'Invalid transaction PIN' });
+    const pinResult = await verifyPin(account.user_id, pin);
+    if (!pinResult.valid) return res.status(400).json({ error: pinResult.error, blocked: pinResult.blocked });
 
     if (client_id) {
       const existing = queryOne('SELECT id, transaction_id FROM transactions WHERE client_id = ?', [client_id]);
@@ -138,25 +183,52 @@ router.post('/deposit', authenticateToken, async (req, res) => {
     }
 
     const transaction_id = generateTransactionId();
+    const isStaffDeposit = isStaff(req.user);
 
-    run(
-      `INSERT INTO transactions (transaction_id, to_account_id, type, amount, description, processed_by, client_id, sync_status, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [transaction_id, account.id, 'deposit', amount, sanitizeInput(description || 'Cash deposit'), req.user.id, client_id || null, client_id ? 'pending' : 'synced', 'pending']
-    );
+    if (isStaffDeposit) {
+      // Staff deposits are auto-approved — update balance immediately
+      const newBalance = account.balance + amount;
+      run('UPDATE accounts SET balance = ?, version = version + 1, updated_at = datetime(\'now\') WHERE id = ?', [newBalance, account.id]);
+      run(
+        `INSERT INTO transactions (transaction_id, to_account_id, type, amount, description, processed_by, client_id, sync_status, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [transaction_id, account.id, 'deposit', amount, sanitizeInput(description || 'Cash deposit'), req.user.id, client_id || null, client_id ? 'pending' : 'synced', 'completed']
+      );
 
-    logAudit(req.user.id, 'deposit_request', 'transaction', `Deposit requested: $${amount} to account ${account.account_number} (txn: ${transaction_id})`, req.ip);
-    createNotification(account.user_id, 'Deposit Pending', `$${amount.toFixed(2)} deposit to account ${account.account_number} is pending approval.`, 'info');
+      logAudit(req.user.id, 'deposit_approved', 'transaction', `Staff deposit: $${amount} to account ${account.account_number} (txn: ${transaction_id})`, req.ip);
+      createNotification(account.user_id, 'Deposit Successful', `$${amount.toFixed(2)} has been deposited to your account (${account.account_number}). New balance: $${newBalance.toFixed(2)}`, 'success');
 
-    const customer = queryOne('SELECT full_name FROM users WHERE id = ?', [account.user_id]);
-    const txnRecord = queryOne('SELECT * FROM transactions WHERE transaction_id = ?', [transaction_id]);
+      const customer = queryOne('SELECT full_name FROM users WHERE id = ?', [account.user_id]);
+      const processedBy = queryOne('SELECT full_name FROM users WHERE id = ?', [req.user.id]);
+      const txnRecord = queryOne('SELECT * FROM transactions WHERE transaction_id = ?', [transaction_id]);
 
-    res.status(201).json({
-      message: 'Deposit request submitted, pending approval',
-      transaction_id,
-      status: 'pending',
-      receipt: buildReceipt(txnRecord, account, customer?.full_name, null),
-    });
+      res.status(201).json({
+        message: 'Deposit successful',
+        transaction_id,
+        new_balance: newBalance,
+        receipt: buildReceipt(txnRecord, account, customer?.full_name, processedBy?.full_name),
+      });
+    } else {
+      // Customer deposits require approval
+      run(
+        `INSERT INTO transactions (transaction_id, to_account_id, type, amount, description, processed_by, client_id, sync_status, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [transaction_id, account.id, 'deposit', amount, sanitizeInput(description || 'Cash deposit'), req.user.id, client_id || null, client_id ? 'pending' : 'synced', 'pending']
+      );
+
+      logAudit(req.user.id, 'deposit_request', 'transaction', `Deposit requested: $${amount} to account ${account.account_number} (txn: ${transaction_id})`, req.ip);
+      createNotification(account.user_id, 'Deposit Pending', `$${amount.toFixed(2)} deposit to account ${account.account_number} is pending approval.`, 'info');
+
+      const customer = queryOne('SELECT full_name FROM users WHERE id = ?', [account.user_id]);
+      const txnRecord = queryOne('SELECT * FROM transactions WHERE transaction_id = ?', [transaction_id]);
+
+      res.status(201).json({
+        message: 'Deposit request submitted, pending approval',
+        transaction_id,
+        status: 'pending',
+        receipt: buildReceipt(txnRecord, account, customer?.full_name, null),
+      });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -258,8 +330,8 @@ router.post('/withdraw', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'You can only withdraw from your own accounts' });
     }
 
-    const pinValid = await verifyPin(account.user_id, pin);
-    if (!pinValid) return res.status(400).json({ error: 'Invalid transaction PIN' });
+    const pinResult = await verifyPin(account.user_id, pin);
+    if (!pinResult.valid) return res.status(400).json({ error: pinResult.error, blocked: pinResult.blocked });
 
     if (client_id) {
       const existing = queryOne('SELECT id, transaction_id FROM transactions WHERE client_id = ?', [client_id]);
@@ -350,8 +422,8 @@ router.post('/transfer', authenticateToken, async (req, res) => {
     if (toAccount.status !== 'active') return res.status(403).json({ error: 'Destination account is not active' });
     if (toAccount.frozen) return res.status(403).json({ error: 'Destination account is frozen' });
 
-    const pinValid = await verifyPin(fromAccount.user_id, pin);
-    if (!pinValid) return res.status(400).json({ error: 'Invalid transaction PIN' });
+    const pinResult = await verifyPin(fromAccount.user_id, pin);
+    if (!pinResult.valid) return res.status(400).json({ error: pinResult.error, blocked: pinResult.blocked });
 
     if (client_id) {
       const existing = queryOne('SELECT id, transaction_id FROM transactions WHERE client_id = ?', [client_id]);
@@ -449,8 +521,8 @@ router.post('/balance-inquiry', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'You can only check your own accounts' });
     }
 
-    const pinValid = await verifyPin(account.user_id, pin);
-    if (!pinValid) return res.status(400).json({ error: 'Invalid transaction PIN' });
+    const pinResult = await verifyPin(account.user_id, pin);
+    if (!pinResult.valid) return res.status(400).json({ error: pinResult.error, blocked: pinResult.blocked });
 
     const lastTransaction = queryOne(
       `SELECT t.transaction_id, t.type, t.amount, t.created_at
@@ -487,10 +559,9 @@ router.post('/verify-pin', authenticateToken, async (req, res) => {
 
     if (!pin) return res.status(400).json({ error: 'PIN is required' });
 
-    // Allow staff to verify a customer's PIN
     const targetUserId = (user_id && isStaff(req.user)) ? user_id : req.user.id;
-    const valid = await verifyPin(targetUserId, pin);
-    res.json({ valid });
+    const result = await verifyPin(targetUserId, pin);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

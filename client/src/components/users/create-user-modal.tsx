@@ -80,11 +80,11 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
   const [createdUser, setCreatedUser] = useState<{ username: string; password: string; role: string } | null>(null);
 
   const isAdmin = user?.role === "super_admin" || user?.role === "branch_manager" || user?.role === "manager";
-  const isEmployee = ["teller", "customer_service", "accountant", "ict_staff"].includes(user?.role || "");
+  const isEmployee = ["customer_service", "accountant", "ict_staff"].includes(user?.role || "");
 
   // Employee can only create customers
   const availableRoles = isAdmin
-    ? ["customer", "teller", "customer_service", "accountant", "ict_staff", "branch_manager", "manager", "super_admin"]
+    ? ["customer", "customer_service", "accountant", "ict_staff", "branch_manager", "manager", "super_admin"]
     : ["customer"];
 
   const passwordChecks = {
@@ -202,7 +202,7 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
 
   const getRoleColor = (role: string) => {
     if (role === "super_admin" || role === "branch_manager" || role === "manager") return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-    if (["teller", "customer_service", "accountant", "ict_staff"].includes(role)) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+    if (["customer_service", "accountant", "ict_staff"].includes(role)) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
     return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
   };
 
@@ -572,7 +572,6 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="customer">Customer</SelectItem>
-                  <SelectItem value="teller">Teller</SelectItem>
                   <SelectItem value="customer_service">Customer Service</SelectItem>
                   <SelectItem value="accountant">Accountant</SelectItem>
                   <SelectItem value="ict_staff">ICT Staff</SelectItem>

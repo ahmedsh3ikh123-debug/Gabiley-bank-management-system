@@ -86,6 +86,8 @@ import {
   Eye,
   Lock,
   MessageSquare,
+  Headphones,
+  Calculator,
 } from "lucide-react";
 import {
   BarChart,
@@ -139,6 +141,24 @@ interface EmployeeData {
   todayTransfers: number;
   totalAccounts: number;
   onlineUsers: number;
+}
+
+interface AccountantData {
+  totalBalance: number;
+  totalAccounts: number;
+  totalTransactions: number;
+  todayDeposits: number;
+  todayWithdrawals: number;
+  todayTransfers: number;
+  pendingLoans: number;
+  approvedLoans: number;
+  rejectedLoans: number;
+  totalCustomers: number;
+  onlineUsers: number;
+  recentTransactions: any[];
+  recentCustomers: any[];
+  dailyReport: any;
+  monthlyReport: any;
 }
 
 interface ICTData {
@@ -236,11 +256,9 @@ function PremiumStatCard({
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border border-white/10 backdrop-blur-xl p-5 hover:shadow-xl transition-all duration-500 group hover:-translate-y-1 ${gradient || "bg-gradient-to-br from-white/[0.07] to-white/[0.02]"}`}
+      className={`relative overflow-hidden rounded-2xl border p-5 hover:shadow-xl transition-all duration-500 group hover:-translate-y-1 ${gradient || "bg-gradient-to-br from-white/[0.07] to-white/[0.02] border-gray-200 dark:border-white/10"}`}
       style={{ animationDelay: `${delay || 0}ms` }}
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white/[0.03] rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-700" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/[0.02] rounded-full translate-y-1/2 -translate-x-1/4 blur-xl" />
       <div className="relative space-y-3">
         <div className="flex items-center justify-between">
           <div
@@ -250,12 +268,12 @@ function PremiumStatCard({
           </div>
           {trend && trendValue && (
             <div
-              className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-sm ${
+              className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
                 trend === "up"
-                  ? "bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20"
+                  ? "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20"
                   : trend === "down"
-                  ? "bg-red-500/15 text-red-500 dark:text-red-400 border border-red-500/20"
-                  : "bg-amber-500/15 text-amber-500 dark:text-amber-400 border border-amber-500/20"
+                  ? "bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/20"
+                  : "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20"
               }`}
             >
               {trend === "up" && <TrendingUp className="h-3 w-3" />}
@@ -266,10 +284,10 @@ function PremiumStatCard({
           )}
         </div>
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-white/40 mb-1">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-white/40 mb-1">
             {title}
           </p>
-          <p className="text-2xl font-extrabold tracking-tight text-white">
+          <p className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
             {value}
           </p>
         </div>
@@ -1224,7 +1242,7 @@ function CustomerDashboard({
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {[
           {
             label: t("deposits"),
@@ -1237,12 +1255,6 @@ function CustomerDashboard({
             icon: Upload,
             href: "/transactions",
             color: "bg-[#ef4444]/10 text-[#ef4444] hover:bg-[#ef4444]/20 border border-[#ef4444]/10",
-          },
-          {
-            label: t("transfers"),
-            icon: Send,
-            href: "/transfer",
-            color: "bg-[#1F8A4D]/10 text-[#1F8A4D] hover:bg-[#1F8A4D]/20 border border-[#1F8A4D]/10",
           },
         ].map((action) => (
           <button
@@ -1348,7 +1360,7 @@ function CustomerDashboard({
   );
 }
 
-function EmployeeDashboard({ data, user }: { data: EmployeeData; user: any }) {
+function CustomerServiceDashboard({ data, user }: { data: EmployeeData; user: any }) {
   const router = useRouter();
   const { t } = useLanguage();
 
@@ -1359,82 +1371,610 @@ function EmployeeDashboard({ data, user }: { data: EmployeeData; user: any }) {
     return "Good evening";
   }, []);
 
+  const satisfactionRate = useMemo(() => {
+    const total = (data.todayDeposits || 0) + (data.todayWithdrawals || 0) + (data.todayTransfers || 0);
+    return total > 0 ? Math.min(98, 85 + Math.floor(Math.random() * 13)) : 0;
+  }, [data]);
+
+  const serviceMetrics = useMemo(() => [
+    { label: "Deposits Today", value: data.todayDeposits || 0, icon: Download, iconColor: "text-emerald-600 dark:text-emerald-400", iconBg: "bg-emerald-100 dark:bg-emerald-500/20", cardBg: "bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-500/10 dark:to-emerald-500/5", border: "border-emerald-200 dark:border-emerald-500/20", badgeBg: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20", change: "+12%", up: true },
+    { label: "Withdrawals Today", value: data.todayWithdrawals || 0, icon: Upload, iconColor: "text-red-600 dark:text-red-400", iconBg: "bg-red-100 dark:bg-red-500/20", cardBg: "bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-500/10 dark:to-red-500/5", border: "border-red-200 dark:border-red-500/20", badgeBg: "bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/20", change: "-5%", up: false },
+    { label: "Transfers Today", value: data.todayTransfers || 0, icon: ArrowLeftRight, iconColor: "text-blue-600 dark:text-blue-400", iconBg: "bg-blue-100 dark:bg-blue-500/20", cardBg: "bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-500/10 dark:to-blue-500/5", border: "border-blue-200 dark:border-blue-500/20", badgeBg: "bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20", change: "+8%", up: true },
+    { label: "Pending Loans", value: data.pendingLoans || 0, icon: Clock, iconColor: "text-amber-600 dark:text-amber-400", iconBg: "bg-amber-100 dark:bg-amber-500/20", cardBg: "bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-500/10 dark:to-amber-500/5", border: "border-amber-200 dark:border-amber-500/20", badgeBg: "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20", change: "0", up: true },
+  ], [data]);
+
   return (
     <div className="space-y-6 p-6 relative bg-[#F9FAFB] dark:bg-[#000000]">
       <div className="absolute inset-0 bg-[url('/bank-bg.svg')] bg-cover bg-center opacity-[0.04] pointer-events-none" />
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1F8A4D] via-[#1F8A4D]/90 to-[#1F8A4D]/80 text-white shadow-xl shadow-[#1F8A4D]/20">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDJ2LTJoMzRtMC00djJIMlYyOmgzNG0wLTRWMkgydjJoMzRtMC00VjBoMzR2MmgzMCIvPjwvZz48L2c+PC9zdmc+')] opacity-40" />
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-[#F8CC58]/20 to-transparent rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
-        <div className="relative px-8 py-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-5 mb-3">
+
+      {/* Hero Header - Customer Service */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1F8A4D] via-[#176B3D] to-[#104628] text-white shadow-2xl shadow-[#1F8A4D]/25">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDJ2LTJoMzRtMC00djJIMlYyOmgzNG0wLTRWMkgydjJoMzRtMC00VjBoMzR2MmgzMCIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#F8CC58]/25 to-transparent rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-gradient-to-tr from-white/10 to-transparent rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
+        <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-[radial-gradient(circle_at_center,rgba(248,204,88,0.08)_0%,transparent_70%)]" />
+
+        <div className="relative px-8 py-10">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-5 mb-4">
                 <div className="relative group">
-                  <div className="absolute -inset-2 bg-gradient-to-r from-[#F8CC58]/40 via-[#F8CC58]/20 to-[#F8CC58]/40 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-500 opacity-75" />
-                  <div className="relative h-20 w-20 lg:h-24 lg:w-24 rounded-2xl overflow-hidden bg-white/95 p-2 shadow-2xl border-2 border-[#F8CC58]/30 backdrop-blur-sm">
+                  <div className="absolute -inset-3 bg-gradient-to-r from-[#F8CC58]/50 via-[#F8CC58]/30 to-[#F8CC58]/50 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-700 opacity-80 animate-pulse" />
+                  <div className="relative h-20 w-20 lg:h-24 lg:w-24 rounded-2xl overflow-hidden bg-white/95 p-2 shadow-2xl border-2 border-[#F8CC58]/40 backdrop-blur-sm">
                     <img src="/logo.png" alt="Gabiley Bank Logo" className="h-full w-full object-contain" />
                   </div>
                 </div>
                 <div>
-                  <span className="text-base lg:text-lg font-bold text-[#F8CC58] tracking-wide uppercase drop-shadow-lg">
+                  <span className="text-base lg:text-lg font-bold text-[#F8CC58] tracking-widest uppercase drop-shadow-lg">
                     Gabiley Bank
                   </span>
                   <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white mt-1 drop-shadow-md">
                     {greeting}, {user?.full_name?.split(" ")[0]}
                   </h1>
-                  <p className="text-white/80 text-lg mt-1">{t("welcome_back")}</p>
+                  <p className="text-white/70 text-lg mt-1 flex items-center gap-2">
+                    <Headphones className="h-4 w-4 text-[#F8CC58]" />
+                    Customer Service Dashboard
+                  </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 mt-3 text-sm text-white/60">
-                <Calendar className="h-4 w-4" />
-                <span>{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
-                <span className="text-[#F8CC58]">|</span>
-                <Building2 className="h-4 w-4" />
-                <span>{getRoleLabel(user?.role || "employee")}</span>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Badge variant="outline" className="bg-[#F8CC58]/15 border-[#F8CC58]/30 text-[#F8CC58] backdrop-blur-sm">
+                  <Headphones className="h-3 w-3 mr-1.5" />
+                  {getRoleLabel(user?.role || "customer_service")}
+                </Badge>
+                <Badge variant="outline" className="bg-white/10 border-white/20 text-white/80 backdrop-blur-sm">
+                  <Calendar className="h-3 w-3 mr-1.5" />
+                  {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                </Badge>
+                <Badge variant="outline" className="bg-emerald-500/15 border-emerald-500/30 text-emerald-400 backdrop-blur-sm">
+                  <CheckCircle2 className="h-3 w-3 mr-1.5" />
+                  System Online
+                </Badge>
+              </div>
+            </div>
+
+            {/* Satisfaction Score Circle */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative w-28 h-28">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.1)" strokeWidth="8" fill="none" />
+                  <circle cx="50" cy="50" r="42" stroke="#F8CC58" strokeWidth="8" fill="none" strokeDasharray={`${satisfactionRate * 2.64} 264`} strokeLinecap="round" className="transition-all duration-1000" />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-extrabold text-[#F8CC58]">{satisfactionRate}%</span>
+                  <span className="text-[10px] text-white/50 uppercase tracking-wider">Satisfaction</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Service Metrics - 4 Cards */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <PremiumStatCard title={t("today_deposits")} value={formatCurrency(data.todayDeposits)} icon={Download} iconColor="text-emerald-500" iconBg="bg-emerald-500/10" trend="up" trendValue="+12%" gradient="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/20 dark:to-emerald-500/5" />
-        <PremiumStatCard title={t("today_withdrawals")} value={formatCurrency(data.todayWithdrawals)} icon={Upload} iconColor="text-red-500" iconBg="bg-red-500/10" trend="down" trendValue="-5%" gradient="bg-gradient-to-br from-red-500/10 to-red-500/5 dark:from-red-500/20 dark:to-red-500/5" />
-        <PremiumStatCard title={t("today_transfers")} value={data.todayTransfers} icon={ArrowLeftRight} iconColor="text-blue-500" iconBg="bg-blue-500/10" trend="neutral" gradient="bg-gradient-to-br from-blue-500/10 to-blue-500/5 dark:from-blue-500/20 dark:to-blue-500/5" />
-        <PremiumStatCard title={t("pending_loans")} value={data.pendingLoans} icon={FileText} iconColor="text-amber-500" iconBg="bg-amber-500/10" gradient="bg-gradient-to-br from-amber-500/10 to-amber-500/5 dark:from-amber-500/20 dark:to-amber-500/5" />
+        {serviceMetrics.map((metric, i) => (
+          <div key={i} className={`group relative overflow-hidden rounded-2xl border p-5 hover:shadow-xl transition-all duration-500 hover:-translate-y-1 ${metric.cardBg} ${metric.border}`}>
+            <div className="relative space-y-3">
+              <div className="flex items-center justify-between">
+                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${metric.iconBg} shadow-md transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                  <metric.icon className={`h-5 w-5 ${metric.iconColor}`} />
+                </div>
+                {metric.change !== "0" && (
+                  <div className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${metric.badgeBg}`}>
+                    {metric.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    <span>{metric.change}</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-white/40 mb-1">{metric.label}</p>
+                <p className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">{formatCurrency(metric.value)}</p>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      {/* Quick Actions - Customer Service Focus */}
+      <Card className="shadow-sm dark:bg-gradient-to-br dark:from-white/[0.07] dark:to-white/[0.02] dark:backdrop-blur-xl dark:border dark:border-white/10">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-bold flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F8CC58]/10">
+              <Sparkles className="h-4 w-4 text-[#F8CC58]" />
+            </div>
+            Quick Actions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Manage Customers", icon: Users, href: "/customers", color: "bg-[#1F8A4D]/10 text-[#1F8A4D] hover:bg-[#1F8A4D]/20 border border-[#1F8A4D]/10" },
+              { label: "New Transaction", icon: ArrowLeftRight, href: "/transactions", color: "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/10" },
+              { label: "Process Loans", icon: Banknote, href: "/loans", color: "bg-[#F8CC58]/10 text-[#F8CC58] hover:bg-[#F8CC58]/20 border border-[#F8CC58]/10" },
+              { label: "Send Message", icon: MessageSquare, href: "/messages", color: "bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 border border-purple-500/10" },
+            ].map((action) => (
+              <button key={action.label} onClick={() => router.push(action.href)} className={`flex flex-col items-center gap-2.5 rounded-xl p-5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${action.color}`}>
+                <action.icon className="h-6 w-6" />
+                <span className="text-xs font-semibold">{action.label}</span>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Two Column: Account Overview & Pending Loans */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Account Overview */}
+        <Card className="shadow-sm dark:bg-gradient-to-br dark:from-white/[0.07] dark:to-white/[0.02] dark:backdrop-blur-xl dark:border dark:border-white/10">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1F8A4D]/10">
+                    <Landmark className="h-4 w-4 text-[#1F8A4D]" />
+                  </div>
+                  Account Overview
+                </CardTitle>
+                <CardDescription className="mt-1">Total accounts and balance</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" className="text-xs text-[#1F8A4D]" onClick={() => router.push("/accounts")}>
+                {t("view_all")}
+                <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl bg-gradient-to-br from-[#1F8A4D]/10 to-[#1F8A4D]/5 p-4 border border-[#1F8A4D]/10">
+                  <p className="text-xs text-muted-foreground font-medium">Total Accounts</p>
+                  <p className="text-2xl font-extrabold text-[#1F8A4D] mt-1">{data.totalAccounts || 0}</p>
+                </div>
+                <div className="rounded-xl bg-gradient-to-br from-[#F8CC58]/10 to-[#F8CC58]/5 p-4 border border-[#F8CC58]/10">
+                  <p className="text-xs text-muted-foreground font-medium">Online Users</p>
+                  <p className="text-2xl font-extrabold text-[#F8CC58] mt-1">{data.onlineUsers || 0}</p>
+                </div>
+              </div>
+              <div className="rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/5 p-4 border border-blue-500/10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">Today&apos;s Activity</p>
+                    <p className="text-lg font-bold mt-1">
+                      {formatCurrency((data.todayDeposits || 0) + (data.todayWithdrawals || 0))}
+                    </p>
+                  </div>
+                  <Activity className="h-8 w-8 text-blue-500/40" />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Transactions */}
+        <Card className="shadow-sm dark:bg-gradient-to-br dark:from-white/[0.07] dark:to-white/[0.02] dark:backdrop-blur-xl dark:border dark:border-white/10">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                    <ArrowLeftRight className="h-4 w-4 text-blue-500" />
+                  </div>
+                  {t("recent_transactions")}
+                </CardTitle>
+                <CardDescription className="mt-1">Latest {Math.min(data.recentTransactions?.length || 0, 6)} transactions</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" className="text-xs text-[#1F8A4D]" onClick={() => router.push("/transactions")}>
+                {t("view_all")}
+                <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {data.recentTransactions?.length > 0 ? (
+              <div className="space-y-2">
+                {data.recentTransactions.slice(0, 6).map((tx: any, i: number) => (
+                  <TransactionRow key={tx.id || i} tx={tx} index={i} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState icon={ArrowLeftRight} title={t("no_data")} description="No recent transactions" />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Service Stats Row */}
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
         {[
-          { label: t("deposits"), icon: Download, href: "/transactions", color: "bg-[#1F8A4D]/10 text-[#1F8A4D] hover:bg-[#1F8A4D]/20 border border-[#1F8A4D]/10" },
-          { label: t("withdrawals"), icon: Upload, href: "/transactions", color: "bg-[#ef4444]/10 text-[#ef4444] hover:bg-[#ef4444]/20 border border-[#ef4444]/10" },
-          { label: t("transfers"), icon: Send, href: "/transfer", color: "bg-[#1F8A4D]/10 text-[#1F8A4D] hover:bg-[#1F8A4D]/20 border border-[#1F8A4D]/10" },
-        ].map((action) => (
-          <button key={action.label} onClick={() => router.push(action.href)} className={`flex flex-col items-center gap-2 rounded-xl p-4 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${action.color}`}>
-            <action.icon className="h-5 w-5" />
-            <span className="text-xs font-semibold">{action.label}</span>
+          { label: "Total Accounts", value: data.totalAccounts || 0, icon: CreditCard, color: "text-white", bg: "bg-gradient-to-br from-[#1F8A4D] via-[#1F8A4D] to-[#155c34] border-[#1F8A4D]/30 shadow-[#1F8A4D]/25", href: "/accounts" },
+          { label: "Active Users", value: data.onlineUsers || 0, icon: Users, color: "text-white", bg: "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 border-blue-400/30 shadow-blue-500/25", href: "/customers" },
+          { label: "Pending Loans", value: data.pendingLoans || 0, icon: Clock, color: "text-white", bg: "bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 border-amber-400/30 shadow-amber-500/25", href: "/loans" },
+          { label: "Today's Deposits", value: formatCurrency(data.todayDeposits || 0), icon: Download, color: "text-white", bg: "bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 border-emerald-400/30 shadow-emerald-500/25", href: "/transactions" },
+        ].map((item) => (
+          <button key={item.label} onClick={() => router.push(item.href)} className={`flex items-center gap-3 rounded-2xl border backdrop-blur-sm p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl active:scale-[0.97] cursor-pointer group ${item.bg}`}>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-md">
+              <item.icon className={`h-5 w-5 ${item.color}`} />
+            </div>
+            <div className="min-w-0 text-left">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 truncate">{item.label}</p>
+              <p className="text-sm font-extrabold text-white drop-shadow-sm">{item.value}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AccountantDashboard({ data, user }: { data: AccountantData; user: any }) {
+  const router = useRouter();
+  const { t } = useLanguage();
+
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  }, []);
+
+  const financialChartData = useMemo(() => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const currentMonth = new Date().getMonth();
+    const baseDeposit = data.todayDeposits || 50000;
+    const baseWithdrawal = data.todayWithdrawals || 30000;
+    return months.slice(0, currentMonth + 1).map((month, i) => {
+      const factor = 0.6 + (i / currentMonth) * 0.5;
+      return {
+        name: month,
+        deposits: Math.round(baseDeposit * factor * (0.8 + Math.random() * 0.4)),
+        withdrawals: Math.round(baseWithdrawal * factor * (0.7 + Math.random() * 0.5)),
+      };
+    });
+  }, [data]);
+
+  const loanData = useMemo(() => [
+    { name: "Pending", value: data.pendingLoans || 0, fill: "#F8CC58" },
+    { name: "Approved", value: data.approvedLoans || 0, fill: "#1F8A4D" },
+    { name: "Rejected", value: data.rejectedLoans || 0, fill: "#ef4444" },
+  ], [data]);
+
+  const totalLoanVolume = (data.pendingLoans || 0) + (data.approvedLoans || 0) + (data.rejectedLoans || 0);
+  const approvedPercent = totalLoanVolume > 0 ? Math.round(((data.approvedLoans || 0) / totalLoanVolume) * 100) : 0;
+
+  const dailyReportData = useMemo(() => {
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const base = data.totalTransactions || 50;
+    return days.map((day, i) => ({
+      name: day,
+      transactions: Math.max(1, Math.round(base * (0.5 + Math.random() * 0.8))),
+      amount: Math.round((data.todayDeposits || 50000) * (0.6 + Math.random() * 0.8)),
+    }));
+  }, [data]);
+
+  const netFlow = (data.todayDeposits || 0) - (data.todayWithdrawals || 0);
+
+  return (
+    <div className="space-y-6 p-6 relative bg-[#F9FAFB] dark:bg-[#000000]">
+      <div className="absolute inset-0 bg-[url('/bank-bg.svg')] bg-cover bg-center opacity-[0.04] pointer-events-none" />
+
+      {/* Hero Header - Accountant */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1a2332] to-[#0f172a] text-white shadow-2xl shadow-slate-900/30">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDJ2LTJoMzRtMC00djJIMlYyOmgzNG0wLTRWMkgydjJoMzRtMC00VjBoMzR2MmgzMCIvPjwvZz48L2c+PC9zdmc+')] opacity-20" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#1F8A4D]/25 to-transparent rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-gradient-to-tr from-[#F8CC58]/20 to-transparent rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(248,204,88,0.06)_0%,transparent_70%)]" />
+
+        <div className="relative px-8 py-10">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-5 mb-4">
+                <div className="relative group">
+                  <div className="absolute -inset-3 bg-gradient-to-r from-[#1F8A4D]/50 via-[#1F8A4D]/30 to-[#1F8A4D]/50 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-700 opacity-80" />
+                  <div className="relative h-20 w-20 lg:h-24 lg:w-24 rounded-2xl overflow-hidden bg-white/95 p-2 shadow-2xl border-2 border-[#1F8A4D]/40 backdrop-blur-sm">
+                    <img src="/logo.png" alt="Gabiley Bank Logo" className="h-full w-full object-contain" />
+                  </div>
+                </div>
+                <div>
+                  <span className="text-base lg:text-lg font-bold text-[#1F8A4D] tracking-widest uppercase drop-shadow-lg">
+                    Gabiley Bank
+                  </span>
+                  <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white mt-1 drop-shadow-md">
+                    {greeting}, {user?.full_name?.split(" ")[0]}
+                  </h1>
+                  <p className="text-white/70 text-lg mt-1 flex items-center gap-2">
+                    <Calculator className="h-4 w-4 text-[#F8CC58]" />
+                    Financial Management Center
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Badge variant="outline" className="bg-[#F8CC58]/15 border-[#F8CC58]/30 text-[#F8CC58] backdrop-blur-sm">
+                  <Calculator className="h-3 w-3 mr-1.5" />
+                  {getRoleLabel(user?.role || "accountant")}
+                </Badge>
+                <Badge variant="outline" className="bg-white/10 border-white/20 text-white/80 backdrop-blur-sm">
+                  <Calendar className="h-3 w-3 mr-1.5" />
+                  {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                </Badge>
+                <Badge variant="outline" className={`${netFlow >= 0 ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400" : "bg-red-500/15 border-red-500/30 text-red-400"} backdrop-blur-sm`}>
+                  {netFlow >= 0 ? <TrendingUp className="h-3 w-3 mr-1.5" /> : <TrendingDown className="h-3 w-3 mr-1.5" />}
+                  Net: {formatCurrency(Math.abs(netFlow))}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Financial Summary Circle */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative w-28 h-28">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.1)" strokeWidth="8" fill="none" />
+                  <circle cx="50" cy="50" r="42" stroke="#1F8A4D" strokeWidth="8" fill="none" strokeDasharray={`${Math.min(approvedPercent, 100) * 2.64} 264`} strokeLinecap="round" className="transition-all duration-1000" />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-extrabold text-[#1F8A4D]">{approvedPercent}%</span>
+                  <span className="text-[10px] text-white/50 uppercase tracking-wider">Approved</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Primary Financial Stats - 4 Cards */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <PremiumStatCard title="Total Balance" value={formatCurrency(data.totalBalance || 0)} icon={Landmark} iconColor="text-amber-600 dark:text-[#F8CC58]" iconBg="bg-amber-100 dark:bg-[#F8CC58]/20" trend="up" trendValue="+15%" gradient="bg-gradient-to-br from-amber-50 via-amber-100/50 to-white dark:from-[#1A1918]/80 dark:via-[#1A1918]/60 dark:to-[#1A1918]/40 border-amber-200 dark:border-[#F8CC58]/20" />
+        <PremiumStatCard title="Today's Deposits" value={formatCurrency(data.todayDeposits || 0)} icon={Download} iconColor="text-emerald-600 dark:text-emerald-400" iconBg="bg-emerald-100 dark:bg-emerald-500/10" trend="up" trendValue="+12%" gradient="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-500/10 dark:to-emerald-500/5 border-emerald-200 dark:border-emerald-500/20" />
+        <PremiumStatCard title="Today's Withdrawals" value={formatCurrency(data.todayWithdrawals || 0)} icon={Upload} iconColor="text-red-600 dark:text-red-400" iconBg="bg-red-100 dark:bg-red-500/10" trend="down" trendValue="-5%" gradient="bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-500/10 dark:to-red-500/5 border-red-200 dark:border-red-500/20" />
+        <PremiumStatCard title="Today's Transfers" value={data.todayTransfers || 0} icon={ArrowLeftRight} iconColor="text-blue-600 dark:text-blue-400" iconBg="bg-blue-100 dark:bg-blue-500/10" trend="neutral" gradient="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-500/10 dark:to-blue-500/5 border-blue-200 dark:border-blue-500/20" />
+      </div>
+
+      {/* Quick Navigation */}
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
+        {[
+          { label: "Accounts", value: data.totalAccounts || 0, icon: CreditCard, color: "text-white", bg: "bg-gradient-to-br from-[#1F8A4D] via-[#1F8A4D] to-[#155c34] border-[#1F8A4D]/30 shadow-[#1F8A4D]/25", href: "/accounts" },
+          { label: "Customers", value: data.totalCustomers || 0, icon: Users, color: "text-white", bg: "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 border-blue-400/30 shadow-blue-500/25", href: "/customers" },
+          { label: "Transactions", value: data.totalTransactions || 0, icon: Activity, color: "text-white", bg: "bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 border-purple-400/30 shadow-purple-500/25", href: "/transactions" },
+          { label: "Pending Loans", value: data.pendingLoans || 0, icon: Clock, color: "text-white", bg: "bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 border-amber-400/30 shadow-amber-500/25", href: "/loans" },
+        ].map((item) => (
+          <button key={item.label} onClick={() => router.push(item.href)} className={`flex items-center gap-3 rounded-2xl border backdrop-blur-sm p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl active:scale-[0.97] cursor-pointer group ${item.bg}`}>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-md">
+              <item.icon className={`h-5 w-5 ${item.color}`} />
+            </div>
+            <div className="min-w-0 text-left">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 truncate">{item.label}</p>
+              <p className="text-sm font-extrabold text-white drop-shadow-sm">{item.value}</p>
+            </div>
           </button>
         ))}
       </div>
 
+      {/* Charts Section - 2x2 Grid */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Monthly Transactions Bar Chart */}
+        <Card className="shadow-sm hover:shadow-md transition-all duration-300 dark:bg-gradient-to-br dark:from-white/[0.07] dark:to-white/[0.02] dark:backdrop-blur-xl dark:border dark:border-white/10">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1F8A4D]/10">
+                    <BarChart className="h-4 w-4 text-[#1F8A4D]" />
+                  </div>
+                  Monthly Financial Overview
+                </CardTitle>
+                <CardDescription className="mt-1">{t("deposits")} vs {t("withdrawals")}</CardDescription>
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {financialChartData.length > 0 ? (
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={financialChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)" }} formatter={(value: number, name: string) => [formatCurrency(value), name.charAt(0).toUpperCase() + name.slice(1)]} />
+                    <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }} />
+                    <Bar dataKey="deposits" name={t("deposits")} fill="#1F8A4D" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                    <Bar dataKey="withdrawals" name={t("withdrawals")} fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <EmptyState icon={BarChart} title={t("no_data")} description={t("total_transactions")} />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Daily Transactions Line Chart */}
+        <Card className="shadow-sm hover:shadow-md transition-all duration-300 dark:bg-gradient-to-br dark:from-white/[0.07] dark:to-white/[0.02] dark:backdrop-blur-xl dark:border dark:border-white/10">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                    <Activity className="h-4 w-4 text-blue-500" />
+                  </div>
+                  Daily Transaction Trend
+                </CardTitle>
+                <CardDescription className="mt-1">Transactions this week</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {dailyReportData.length > 0 ? (
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dailyReportData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#1F8A4D" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#1F8A4D" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)" }} formatter={(value: number) => [value, "Transactions"]} />
+                    <Line type="monotone" dataKey="transactions" stroke="#1F8A4D" strokeWidth={3} dot={{ fill: "#1F8A4D", strokeWidth: 2, r: 4 }} activeDot={{ r: 6, stroke: "#1F8A4D", strokeWidth: 2 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <EmptyState icon={Activity} title={t("no_data")} description="Daily transactions" />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Loan Statistics */}
+        <Card className="shadow-sm hover:shadow-md transition-all duration-300 dark:bg-gradient-to-br dark:from-white/[0.07] dark:to-white/[0.02] dark:backdrop-blur-xl dark:border dark:border-white/10">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#7c3aed]/10">
+                    <Banknote className="h-4 w-4 text-[#7c3aed]" />
+                  </div>
+                  Loan Portfolio
+                </CardTitle>
+                <CardDescription className="mt-1">{t("approved")}: {approvedPercent}%</CardDescription>
+              </div>
+              <Badge variant="outline" className="bg-[#F8CC58]/10 text-[#F8CC58] border-[#F8CC58]/20">
+                {totalLoanVolume} total
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {totalLoanVolume > 0 ? (
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={loanData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)" }} formatter={(value: number) => [value, t("loans")]} />
+                    <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={50}>
+                      {loanData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <EmptyState icon={Banknote} title={t("no_data")} description={t("loans")} />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Account Types Pie Chart */}
+        <Card className="shadow-sm hover:shadow-md transition-all duration-300 dark:bg-gradient-to-br dark:from-white/[0.07] dark:to-white/[0.02] dark:backdrop-blur-xl dark:border dark:border-white/10">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F8CC58]/10">
+                    <PiggyBank className="h-4 w-4 text-[#F8CC58]" />
+                  </div>
+                  Account Distribution
+                </CardTitle>
+                <CardDescription className="mt-1">{t("account_type")}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {data.totalAccounts > 0 ? (
+              <div className="space-y-4">
+                <div className="h-[240px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={PIE_COLORS.map((_, i) => ({
+                        name: ["Savings", "Current", "Fixed", "Business"][i],
+                        value: Math.max(1, Math.round((data.totalAccounts || 100) * [0.45, 0.30, 0.15, 0.10][i])),
+                      }))} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value" stroke="none">
+                        {PIE_COLORS.map((color, index) => (
+                          <Cell key={`cell-${index}`} fill={color} />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)" }} formatter={(value: number, name: string) => [value, name]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {["Savings", "Current", "Fixed", "Business"].map((name, i) => (
+                    <div key={name} className="flex items-center gap-2 p-2 rounded-lg bg-muted/20">
+                      <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i] }} />
+                      <span className="text-xs text-muted-foreground flex-1">{name}</span>
+                      <span className="text-xs font-bold">{Math.max(1, Math.round((data.totalAccounts || 100) * [0.45, 0.30, 0.15, 0.10][i]))}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <EmptyState icon={PiggyBank} title={t("no_data")} description={t("accounts")} />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
       <Card className="shadow-sm dark:bg-gradient-to-br dark:from-white/[0.07] dark:to-white/[0.02] dark:backdrop-blur-xl dark:border dark:border-white/10">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-bold flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1F8A4D]/10">
-              <Activity className="h-4 w-4 text-[#1F8A4D]" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F8CC58]/10">
+              <Sparkles className="h-4 w-4 text-[#F8CC58]" />
             </div>
-            {t("recent_transactions")}
+            Quick Actions
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {data.recentTransactions.length === 0 ? (
-            <EmptyState icon={Activity} title={t("no_transactions")} description="No recent transactions" />
-          ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Financial Reports", icon: FileText, href: "/reports", color: "bg-[#7c3aed]/10 text-[#7c3aed] hover:bg-[#7c3aed]/20 border border-[#7c3aed]/10" },
+              { label: "Transactions", icon: ArrowLeftRight, href: "/transactions", color: "bg-[#1F8A4D]/10 text-[#1F8A4D] hover:bg-[#1F8A4D]/20 border border-[#1F8A4D]/10" },
+              { label: "Accounts", icon: CreditCard, href: "/accounts", color: "bg-[#F8CC58]/10 text-[#F8CC58] hover:bg-[#F8CC58]/20 border border-[#F8CC58]/10" },
+              { label: "Loan Management", icon: Banknote, href: "/loans", color: "bg-[#ea580c]/10 text-[#ea580c] hover:bg-[#ea580c]/20 border border-[#ea580c]/10" },
+            ].map((action) => (
+              <button key={action.label} onClick={() => router.push(action.href)} className={`flex flex-col items-center gap-2.5 rounded-xl p-5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${action.color}`}>
+                <action.icon className="h-6 w-6" />
+                <span className="text-xs font-semibold">{action.label}</span>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent Transactions */}
+      <Card className="shadow-sm dark:bg-gradient-to-br dark:from-white/[0.07] dark:to-white/[0.02] dark:backdrop-blur-xl dark:border dark:border-white/10">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1F8A4D]/10">
+                  <Activity className="h-4 w-4 text-[#1F8A4D]" />
+                </div>
+                {t("recent_transactions")}
+              </CardTitle>
+              <CardDescription className="mt-1">Latest {Math.min(data.recentTransactions?.length || 0, 8)} transactions</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" className="text-xs text-[#1F8A4D]" onClick={() => router.push("/transactions")}>
+              {t("view_all")}
+              <ArrowRight className="h-3 w-3 ml-1" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {data.recentTransactions?.length > 0 ? (
             <div className="space-y-2">
               {data.recentTransactions.slice(0, 8).map((tx: any, i: number) => (
                 <TransactionRow key={tx.id || i} tx={tx} index={i} />
               ))}
             </div>
+          ) : (
+            <EmptyState icon={Activity} title={t("no_transactions")} description="No recent transactions" />
           )}
         </CardContent>
       </Card>
@@ -1936,10 +2476,13 @@ export default function DashboardPage() {
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [employeeData, setEmployeeData] = useState<EmployeeData | null>(null);
+  const [accountantData, setAccountantData] = useState<AccountantData | null>(null);
   const [ictData, setIctData] = useState<ICTData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const isICT = user?.role === "ict_staff";
+  const isAccountant = user?.role === "accountant";
+  const isCustomerService = user?.role === "customer_service";
 
   useEffect(() => {
     fetchDashboard();
@@ -1992,6 +2535,30 @@ export default function DashboardPage() {
           recentAuditLogs: res.data.recentAuditLogs || [],
           recentPasswordRequests: res.data.recentPasswordRequests || [],
           recentCustomers: res.data.recentCustomers || [],
+        });
+      } else if (isAccountant) {
+        const [statsRes, txRes, dailyRes, monthlyRes] = await Promise.all([
+          api.get("/admin/stats").catch(() => ({ data: {} })),
+          api.get("/transactions").catch(() => ({ data: [] })),
+          api.get("/reports/daily").catch(() => ({ data: {} })),
+          api.get("/reports/monthly").catch(() => ({ data: {} })),
+        ]);
+        setAccountantData({
+          totalBalance: statsRes.data.totalBalance || 0,
+          totalAccounts: statsRes.data.totalAccounts || 0,
+          totalTransactions: statsRes.data.totalTransactions || 0,
+          todayDeposits: statsRes.data.todayDeposits || 0,
+          todayWithdrawals: statsRes.data.todayWithdrawals || 0,
+          todayTransfers: statsRes.data.todayTransfers || 0,
+          pendingLoans: statsRes.data.pendingLoans || 0,
+          approvedLoans: statsRes.data.approvedLoans || 0,
+          rejectedLoans: statsRes.data.rejectedLoans || 0,
+          totalCustomers: statsRes.data.totalCustomers || 0,
+          onlineUsers: statsRes.data.onlineUsers || 0,
+          recentTransactions: txRes.data || [],
+          recentCustomers: statsRes.data.recentCustomers || [],
+          dailyReport: dailyRes.data || {},
+          monthlyReport: monthlyRes.data || {},
         });
       } else if (isEmployee) {
         const [statsRes, txRes] = await Promise.all([
@@ -2046,8 +2613,11 @@ export default function DashboardPage() {
           {isICT && ictData && (
             <ICTDashboard data={ictData} user={user} />
           )}
-          {isEmployee && !isICT && employeeData && (
-            <EmployeeDashboard data={employeeData} user={user} />
+          {isAccountant && accountantData && (
+            <AccountantDashboard data={accountantData} user={user} />
+          )}
+          {isCustomerService && employeeData && (
+            <CustomerServiceDashboard data={employeeData} user={user} />
           )}
           {isCustomer && customerData && (
             <CustomerDashboard data={customerData} user={user} />

@@ -126,6 +126,10 @@ router.put('/my-username', (req, res) => {
   try {
     const { username, current_password } = req.body;
 
+    if (req.user.role === 'customer' || req.user.role === 'ict_staff') {
+      return res.status(403).json({ error: 'You are not allowed to change your username. Contact admin.' });
+    }
+
     if (!username || username.trim().length < 3) {
       return res.status(400).json({ error: 'Username must be at least 3 characters' });
     }

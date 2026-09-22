@@ -40,7 +40,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import api from "@/lib/api";
 import { useDataRefresh } from "@/contexts/data-refresh-context";
-import { formatDate, formatCurrency, getStatusColor, DEPARTMENTS } from "@/lib/utils";
+import { formatDate, formatCurrency, getStatusColor, getRoleLabel, DEPARTMENTS } from "@/lib/utils";
 import { ProfileUpload } from "@/components/ui/profile-upload";
 import type { Employee } from "@/types";
 import {
@@ -56,6 +56,7 @@ import {
   Eye,
   Users,
   ShieldCheck,
+  Shield,
   XCircle,
   Loader2,
   KeyRound,
@@ -83,15 +84,22 @@ import {
 const MAX_EMPLOYEES = 10;
 
 const POSITIONS = [
-  { value: "Teller", label: "Teller", department: "Operations" },
   { value: "Customer Service Officer", label: "Customer Service Officer", department: "Customer Service" },
   { value: "Accountant", label: "Accountant", department: "Finance" },
   { value: "Loan Officer", label: "Loan Officer", department: "Loans" },
   { value: "ICT Officer", label: "ICT Officer", department: "ICT" },
 ] as const;
 
+const ROLE_POSITION_MAP: Record<string, { position: string; department: string }> = {
+  customer_service: { position: "Customer Service Officer", department: "Customer Service" },
+  accountant: { position: "Accountant", department: "Finance" },
+  ict_staff: { position: "ICT Officer", department: "ICT" },
+  branch_manager: { position: "Manager", department: "Operations" },
+  manager: { position: "Manager", department: "Operations" },
+  super_admin: { position: "Manager", department: "Operations" },
+};
+
 const POSITION_DEPARTMENT_MAP: Record<string, string> = {
-  Teller: "Operations",
   "Customer Service Officer": "Customer Service",
   Accountant: "Finance",
   "Loan Officer": "Loans",
@@ -138,6 +146,7 @@ interface EmployeePerformance {
 
 interface EmployeeForm {
   full_name: string;
+  username: string;
   email: string;
   phone: string;
   position: string;
@@ -152,6 +161,7 @@ interface EmployeeForm {
 
 const initialForm: EmployeeForm = {
   full_name: "",
+  username: "",
   email: "",
   phone: "",
   position: "",
@@ -182,7 +192,9 @@ export default function EmployeesPage() {
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [showUsernameDialog, setShowUsernameDialog] = useState(false);
   const [newRole, setNewRole] = useState("");
+  const [newUsername, setNewUsername] = useState("");
 
   const [form, setForm] = useState<EmployeeForm>(initialForm);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -233,7 +245,25 @@ export default function EmployeesPage() {
     } catch {
       toast.error("Failed to load performance data");
     } finally {
-      setPerformanceLoading(false);
+      setSubmitting(false);
+    }
+  };
+
+  const handleUsernameChange = async () => {
+    if (!selectedEmployee || !newUsername.trim()) return;
+    try {
+      setSubmitting(true);
+      await api.put(`/admin/users/${selectedEmployee.user_id}/change-username`, { username: newUsername.trim() });
+      toast.success("Username changed successfully");
+      setShowUsernameDialog(false);
+      const updatedEmployee = { ...selectedEmployee, user_username: newUsername.trim() } as any;
+      setSelectedEmployee(updatedEmployee);
+      setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
+      setNewUsername("");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to change username");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -253,6 +283,7 @@ export default function EmployeesPage() {
     setSelectedEmployee(employee);
     setForm({
       full_name: employee.full_name,
+      username: employee.user_username || "",
       email: employee.user_email || employee.email,
       phone: employee.phone || "",
       position: employee.position || "",
@@ -289,11 +320,23 @@ export default function EmployeesPage() {
     if (!selectedEmployee || !newRole) return;
     try {
       setSubmitting(true);
-      await api.put(`/admin/employees/${selectedEmployee.id}/role`, { role: newRole });
+      const roleMapping = ROLE_POSITION_MAP[newRole];
+      await api.put(`/admin/employees/${selectedEmployee.id}/role`, {
+        role: newRole,
+        position: roleMapping?.position,
+        department: roleMapping?.department,
+      });
+      const updatedEmployee = {
+        ...selectedEmployee,
+        user_role: newRole,
+        ...(roleMapping ? { position: roleMapping.position, department: roleMapping.department } : {}),
+      } as any;
       toast.success(`Role changed to ${newRole}`);
       setShowRoleDialog(false);
-      setSelectedEmployee(null);
-      fetchEmployees();
+      const updatedList = employees.map(e => e.id === updatedEmployee.id ? updatedEmployee : e);
+      setEmployees(updatedList);
+      setSelectedEmployee(updatedEmployee);
+      setShowDetailsDialog(true);
       notifyChange("employees");
       notifyChange("users");
     } catch (err: any) {
@@ -724,6 +767,24 @@ export default function EmployeesPage() {
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4">
+                <div className="flex flex-col items-center gap-3 pb-2">
+                  <ProfileUpload
+                    value={form.profile_picture}
+                    onChange={(_file, preview) => {
+                      if (preview) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setForm({ ...form, profile_picture: reader.result as string });
+                        };
+                        reader.readAsDataURL(_file!);
+                      } else {
+                        setForm({ ...form, profile_picture: "" });
+                      }
+                    }}
+                    size="lg"
+                  />
+                  <p className="text-xs text-muted-foreground">Click to upload profile picture</p>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="create-name">Full Name *</Label>
                   <Input
@@ -731,6 +792,16 @@ export default function EmployeesPage() {
                     placeholder="Enter full name"
                     value={form.full_name}
                     onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="create-username">Username *</Label>
+                  <Input
+                    id="create-username"
+                    placeholder="Enter username"
+                    value={form.username}
+                    onChange={(e) => setForm({ ...form, username: e.target.value })}
                     required
                   />
                 </div>
@@ -884,6 +955,16 @@ export default function EmployeesPage() {
                     required
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-username">Username *</Label>
+                  <Input
+                    id="edit-username"
+                    placeholder="Enter username"
+                    value={form.username}
+                    onChange={(e) => setForm({ ...form, username: e.target.value })}
+                    required
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-email">Email *</Label>
@@ -1026,6 +1107,12 @@ export default function EmployeesPage() {
                         <Badge variant="secondary">
                           {selectedEmployee.position || "N/A"}
                         </Badge>
+                        {(selectedEmployee as any).user_role && (
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            <Shield className="h-3 w-3 mr-1" />
+                            {getRoleLabel((selectedEmployee as any).user_role)}
+                          </Badge>
+                        )}
                         {selectedEmployee.department && (
                           <Badge className="bg-primary/10 text-primary">
                             {selectedEmployee.department}
@@ -1087,6 +1174,13 @@ export default function EmployeesPage() {
                             <p className="text-sm font-medium flex items-center gap-1.5">
                               <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
                               {selectedEmployee.position || "N/A"}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wide">Role</p>
+                            <p className="text-sm font-medium flex items-center gap-1.5">
+                              <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+                              {getRoleLabel((selectedEmployee as any).user_role || "")}
                             </p>
                           </div>
                           <div className="space-y-1">
@@ -1227,7 +1321,7 @@ export default function EmployeesPage() {
                           Login Credentials
                         </h4>
                         <p className="text-xs text-muted-foreground mb-4">
-                          View this employee's username, password, and PIN
+                          View this employee&apos;s username, password, and PIN
                         </p>
                         {credentialsLoading ? (
                           <div className="flex items-center justify-center py-8">
@@ -1238,7 +1332,22 @@ export default function EmployeesPage() {
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-1">
                                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Username</p>
-                                <p className="text-sm font-medium font-mono bg-muted p-2 rounded">{employeeCredentials.username}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-medium font-mono bg-muted p-2 rounded flex-1">{employeeCredentials.username}</p>
+                                  {user?.role === "super_admin" && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        setNewUsername(employeeCredentials.username);
+                                        setShowUsernameDialog(true);
+                                      }}
+                                      className="gap-1 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
+                                    >
+                                      <UserCog className="h-3.5 w-3.5" />
+                                      Change
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                               <div className="space-y-1">
                                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Full Name</p>
@@ -1278,31 +1387,44 @@ export default function EmployeesPage() {
                           <Edit className="h-4 w-4" />
                           Edit Employee
                         </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setShowDetailsDialog(false);
-                          openResetPasswordDialog(selectedEmployee);
-                        }}
-                        className="gap-2"
-                      >
-                        <KeyRound className="h-4 w-4" />
-                        Reset Password
-                      </Button>
-                      </div>
-                      {user?.role === "super_admin" && (
                         <Button
                           variant="outline"
                           onClick={() => {
                             setShowDetailsDialog(false);
-                            openRoleDialog(selectedEmployee);
+                            openResetPasswordDialog(selectedEmployee);
                           }}
                           className="gap-2"
                         >
-                          <UserCog className="h-4 w-4" />
-                          Change Role
+                          <KeyRound className="h-4 w-4" />
+                          Reset Password
                         </Button>
-                      )}
+                        {user?.role === "super_admin" && (
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setShowDetailsDialog(false);
+                              openRoleDialog(selectedEmployee);
+                            }}
+                            className="gap-2"
+                          >
+                            <UserCog className="h-4 w-4" />
+                            Change Role
+                          </Button>
+                        )}
+                        {user?.role === "super_admin" && (
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setNewUsername(selectedEmployee.user_username || "");
+                              setShowUsernameDialog(true);
+                            }}
+                            className="gap-2"
+                          >
+                            <UserCog className="h-4 w-4" />
+                            Change Username
+                          </Button>
+                        )}
+                      </div>
                       <div className="rounded-lg border p-4">
                         <div className="flex items-center justify-between">
                           <div>
@@ -1424,13 +1546,11 @@ export default function EmployeesPage() {
                       <SelectValue placeholder="Choose a role" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="customer">Customer</SelectItem>
-                      <SelectItem value="teller">Teller</SelectItem>
                       <SelectItem value="customer_service">Customer Service</SelectItem>
                       <SelectItem value="accountant">Accountant</SelectItem>
                       <SelectItem value="ict_staff">ICT Staff</SelectItem>
                       <SelectItem value="branch_manager">Branch Manager</SelectItem>
-                      <SelectItem value="super_admin">Super Admin</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1438,12 +1558,11 @@ export default function EmployeesPage() {
                   <div className="rounded-lg border p-3 bg-muted/50">
                     <p className="text-sm text-muted-foreground">
                       {newRole === "customer" && "Employee will become a customer with limited access. They will lose all staff privileges."}
-                      {newRole === "teller" && "Employee will have teller access — can process transactions for customers."}
                       {newRole === "customer_service" && "Employee will have customer service access — can manage customer accounts."}
                       {newRole === "accountant" && "Employee will have accountant access — can view financial reports and manage accounts."}
                       {newRole === "ict_staff" && "Employee will have ICT staff access — can manage system settings."}
                       {newRole === "branch_manager" && "Employee will become a branch manager with full admin access."}
-                      {newRole === "super_admin" && "Employee will become a super admin with unrestricted access to everything."}
+                      {newRole === "manager" && "Employee will become a manager with admin access."}
                     </p>
                   </div>
                 )}
@@ -1455,6 +1574,50 @@ export default function EmployeesPage() {
                 <Button onClick={handleRoleChange} disabled={submitting || !newRole}>
                   {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Change Role
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showUsernameDialog} onOpenChange={setShowUsernameDialog}>
+            <DialogContent className="sm:max-w-[420px]">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <UserCog className="h-4 w-4 text-primary" />
+                  </div>
+                  Change Username
+                </DialogTitle>
+                <DialogDescription>
+                  Change the username for{" "}
+                  <span className="font-semibold text-foreground">{selectedEmployee?.full_name}</span>.
+                  They will need to use the new username to log in.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-username">New Username</Label>
+                  <Input
+                    id="new-username"
+                    type="text"
+                    placeholder="Enter new username"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value.replace(/[^a-zA-Z0-9._]/g, ""))}
+                    required
+                    minLength={3}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Current username: <span className="font-medium text-foreground">{selectedEmployee?.user_username}</span>
+                </p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setShowUsernameDialog(false); setNewUsername(""); }}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUsernameChange} disabled={submitting || !newUsername.trim() || newUsername.trim().length < 3}>
+                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Change Username
                 </Button>
               </DialogFooter>
             </DialogContent>

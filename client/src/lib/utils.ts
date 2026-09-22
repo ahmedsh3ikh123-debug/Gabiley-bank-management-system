@@ -45,7 +45,6 @@ export function getRoleLabel(role: string): string {
   const labels: Record<string, string> = {
     super_admin: "Super Admin",
     branch_manager: "Branch Manager",
-    teller: "Teller",
     customer_service: "Customer Service",
     accountant: "Accountant",
     ict_staff: "ICT Staff",
@@ -62,7 +61,6 @@ export function getRoleColor(role: string): string {
   const colors: Record<string, string> = {
     super_admin: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     branch_manager: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-    teller: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
     customer_service: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
     accountant: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
     ict_staff: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
@@ -107,7 +105,6 @@ export const ADMIN_ROLES = [
 ] as const;
 
 export const EMPLOYEE_ROLES = [
-  "teller",
   "customer_service",
   "accountant",
   "ict_staff",

@@ -497,7 +497,7 @@ export default function MyProfilePage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">Mother's Name</Label>
+                      <Label className="text-sm font-medium text-gray-700">Mother&apos;s Name</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         <Input

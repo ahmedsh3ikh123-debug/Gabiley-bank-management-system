@@ -193,8 +193,9 @@ export default function LoansPage() {
     setShowDetailDialog(true);
   };
 
-  const filteredLoans = loans.filter((loan) => {
-    if (!(loan as any).account_number) return false;
+  const validLoans = loans.filter((loan) => (loan as any).account_number);
+
+  const filteredLoans = validLoans.filter((loan) => {
     if (statusFilter !== "all" && loan.status !== statusFilter) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -207,18 +208,17 @@ export default function LoansPage() {
   });
 
   const loanStats = {
-    total: loans.length,
-    pending: loans.filter((l) => l.status === "pending").length,
-    approved: loans.filter((l) => l.status === "approved").length,
-    disbursed: loans.filter((l) => l.status === "disbursed").length,
-    rejected: loans.filter((l) => l.status === "rejected").length,
-    totalAmount: loans.reduce((sum, l) => sum + l.amount, 0),
+    pending: validLoans.filter((l) => l.status === "pending").length,
+    approved: validLoans.filter((l) => l.status === "approved" || l.status === "disbursed").length,
+    rejected: validLoans.filter((l) => l.status === "rejected").length,
+    total: validLoans.filter((l) => ["pending", "approved", "disbursed", "rejected"].includes(l.status)).length,
+    totalAmount: validLoans.reduce((sum, l) => sum + l.amount, 0),
   };
 
   const loanStatsCards = [
     { label: "Total Loans", value: loanStats.total, icon: <FileText className="h-5 w-5" />, color: "from-blue-500 to-indigo-600" },
     { label: "Pending", value: loanStats.pending, icon: <Clock className="h-5 w-5" />, color: "from-amber-500 to-orange-600" },
-    { label: "Disbursed", value: loanStats.disbursed, icon: <CheckCircle className="h-5 w-5" />, color: "from-emerald-500 to-green-600" },
+    { label: "Approved", value: loanStats.approved, icon: <CheckCircle className="h-5 w-5" />, color: "from-emerald-500 to-green-600" },
     { label: "Rejected", value: loanStats.rejected, icon: <XCircle className="h-5 w-5" />, color: "from-red-500 to-rose-600" },
   ];
 

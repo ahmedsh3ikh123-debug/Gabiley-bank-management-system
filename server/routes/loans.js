@@ -40,7 +40,7 @@ router.post('/', authenticateToken, async (req, res) => {
     if (!amount || !term_months) return res.status(400).json({ error: 'Amount and term are required' });
     if (!account_number) return res.status(400).json({ error: 'Account is required. Please select an account for this loan.' });
 
-    const STAFF_ROLES = ['super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'accountant', 'ict_staff'];
+    const STAFF_ROLES = ['super_admin', 'branch_manager', 'manager', 'customer_service', 'accountant', 'ict_staff'];
     const isStaff = STAFF_ROLES.includes(req.user.role);
     const targetUserId = (customer_id && isStaff) ? parseInt(customer_id) : req.user.id;
 

@@ -129,14 +129,14 @@ async function seed() {
 
   console.log('Seeding 5 employees...');
   const employeeData = [
-    { username: 'sara.ibrahim', name: 'Sara Ibrahim', dept: 'Operations', pos: 'Teller', salary: 1200 },
-    { username: 'hassan.ali', name: 'Hassan Ali Mohamed', dept: 'Customer Service', pos: 'Customer Service Officer', salary: 1400 },
+    { username: 'sara.ibrahim', name: 'Sara Ibrahim', dept: 'Operations', pos: 'Customer Service Officer', salary: 1200 },
+    { username: 'naasir.cambe', name: 'Hassan Ali Mohamed', dept: 'Customer Service', pos: 'Customer Service Officer', salary: 1400 },
     { username: 'mina.warsame', name: 'Mina Warsame Abdi', dept: 'Finance', pos: 'Accountant', salary: 1600 },
     { username: 'abdirahman.hussein', name: 'Abdirahman Hussein Farah', dept: 'Operations', pos: 'Manager', salary: 1500 },
     { username: 'zainab.osman', name: 'Zainab Osman Ahmed', dept: 'ICT', pos: 'ICT Officer', salary: 1800 },
   ];
 
-  const dbRoles = ['teller', 'customer_service', 'accountant', 'manager', 'ict_staff'];
+  const dbRoles = ['customer_service', 'accountant', 'manager', 'ict_staff'];
 
   for (let i = 0; i < employeeData.length; i++) {
     const emp = employeeData[i];
@@ -408,8 +408,8 @@ async function seed() {
   console.log(`Loans: ${stats.loans}`);
   console.log('\nLogin credentials:');
   console.log('  Admin:    admin / admin123');
-  console.log('  Employee: sara.ibrahim / employee123 (Teller)');
-  console.log('  Employee: hassan.ali / employee123 (Customer Service)');
+  console.log('  Employee: sara.ibrahim / employee123 (Customer Service)');
+  console.log('  Employee: naasir.cambe / employee123 (Customer Service)');
   console.log('  Employee: mina.warsame / employee123 (Accountant)');
   console.log('  Employee: abdirahman.hussein / employee123 (Manager)');
   console.log('  Employee: zainab.osman / employee123 (ICT Officer)');

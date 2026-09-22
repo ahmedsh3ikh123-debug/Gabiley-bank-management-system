@@ -33,21 +33,21 @@ async function seed() {
     // Create employee
     const empPass = await bcrypt.hash('employee123', 12);
     run('INSERT INTO users (username, email, password, full_name, phone, role, status, pin, pin_plain) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      ['employee', 'employee@gabileybank.com', empPass, 'Employee User', '+252-61-2345678', 'teller', 'active', await bcrypt.hash('1234', 10), '1234']);
+      ['employee', 'employee@gabileybank.com', empPass, 'Employee User', '+252-61-2345678', 'customer_service', 'active', await bcrypt.hash('1234', 10), '1234']);
     const emp = queryOne('SELECT id FROM users WHERE username = \'employee\'');
 
     run('INSERT INTO employees (user_id, employee_id, full_name, email, phone, department, position, salary, hire_date, branch) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [emp.id, 'EMP00001', 'Employee User', 'employee@gabileybank.com', '+252-61-2345678', 'Operations', 'Teller', 2500, '2024-01-15', 'Gabiley HQ']);
+      [emp.id, 'EMP00001', 'Employee User', 'employee@gabileybank.com', '+252-61-2345678', 'Operations', 'Customer Service Officer', 2500, '2024-01-15', 'Gabiley HQ']);
 
-    // Create Sara Ibrahim - Teller
+    // Create Sara Ibrahim - Customer Service
     const saraPass = await bcrypt.hash('employee123', 12);
     const saraPin = await bcrypt.hash('1234', 10);
     run('INSERT INTO users (username, email, password, full_name, phone, role, status, pin, pin_plain) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      ['sara.ibrahim', 'sara.ibrahim@gabileybank.com', saraPass, 'Sara Ibrahim', '+252-61-3456789', 'teller', 'active', saraPin, '1234']);
+      ['sara.ibrahim', 'sara.ibrahim@gabileybank.com', saraPass, 'Sara Ibrahim', '+252-61-3456789', 'customer_service', 'active', saraPin, '1234']);
     const sara = queryOne('SELECT id FROM users WHERE username = \'sara.ibrahim\'');
 
     run('INSERT INTO employees (user_id, employee_id, full_name, email, phone, department, position, salary, hire_date, branch) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [sara.id, 'EMP00002', 'Sara Ibrahim', 'sara.ibrahim@gabileybank.com', '+252-61-3456789', 'Operations', 'Teller', 1200, '2024-02-01', 'Gabiley HQ']);
+      [sara.id, 'EMP00002', 'Sara Ibrahim', 'sara.ibrahim@gabileybank.com', '+252-61-3456789', 'Operations', 'Customer Service Officer', 1200, '2024-02-01', 'Gabiley HQ']);
 
     // Create sample employees
     const depts = ['Operations', 'Finance', 'Customer Service', 'IT', 'Human Resources'];
@@ -93,7 +93,7 @@ async function seed() {
     console.log('\n=== Seed Complete ===');
     console.log('Admin: admin / admin123');
     console.log('Employee: employee / employee123');
-    console.log('Sara Ibrahim (Teller): sara.ibrahim / employee123 (PIN: 1234)');
+    console.log('Sara Ibrahim (Customer Service): sara.ibrahim / employee123 (PIN: 1234)');
     console.log('Customer: customer / customer123');
     process.exit(0);
   } catch (error) {

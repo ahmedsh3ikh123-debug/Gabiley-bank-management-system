@@ -145,11 +145,11 @@ router.get('/users', (req, res) => {
 
 // Support request categories with target roles
 const SUPPORT_CATEGORIES = [
-  { id: 'account', label: 'Account Issues', targetRoles: ['branch_manager', 'manager', 'teller', 'customer_service'] },
+  { id: 'account', label: 'Account Issues', targetRoles: ['branch_manager', 'manager', 'customer_service'] },
   { id: 'loan', label: 'Loan Support', targetRoles: ['branch_manager', 'manager', 'customer_service'] },
   { id: 'technical', label: 'Technical Support', targetRoles: ['ict_staff'] },
   { id: 'complaint', label: 'Complaints', targetRoles: ['branch_manager', 'manager'] },
-  { id: 'general', label: 'General Inquiry', targetRoles: ['customer_service', 'teller'] },
+  { id: 'general', label: 'General Inquiry', targetRoles: ['customer_service'] },
 ];
 
 // Get support categories

@@ -422,7 +422,7 @@ export default function AccountsPage() {
             </DialogHeader>
             <form onSubmit={handleCreateAccount} className="space-y-5">
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Mother's Full Name</Label>
+                <Label className="text-sm font-medium text-gray-700">Mother&apos;s Full Name</Label>
                 <Input
                   type="text"
                   placeholder="Enter mother's full name"

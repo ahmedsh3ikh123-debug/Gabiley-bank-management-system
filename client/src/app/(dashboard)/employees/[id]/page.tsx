@@ -111,8 +111,16 @@ const DEPARTMENT_COLORS: Record<string, string> = {
   ICT: "from-cyan-500 to-cyan-600",
 };
 
+const ROLE_POSITION_MAP: Record<string, { position: string; department: string }> = {
+  customer_service: { position: "Customer Service Officer", department: "Customer Service" },
+  accountant: { position: "Accountant", department: "Finance" },
+  ict_staff: { position: "ICT Officer", department: "ICT" },
+  branch_manager: { position: "Manager", department: "Operations" },
+  manager: { position: "Manager", department: "Operations" },
+  super_admin: { position: "Manager", department: "Operations" },
+};
+
 const POSITIONS = [
-  { value: "Teller", department: "Operations" },
   { value: "Customer Service Officer", department: "Customer Service" },
   { value: "Accountant", department: "Finance" },
   { value: "Loan Officer", department: "Loans" },
@@ -120,7 +128,6 @@ const POSITIONS = [
 ] as const;
 
 const POSITION_DEPARTMENT_MAP: Record<string, string> = {
-  Teller: "Operations",
   "Customer Service Officer": "Customer Service",
   Accountant: "Finance",
   "Loan Officer": "Loans",
@@ -155,6 +162,7 @@ export default function EmployeeProfilePage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editForm, setEditForm] = useState({
     full_name: "",
+    username: "",
     email: "",
     phone: "",
     position: "",
@@ -168,7 +176,7 @@ export default function EmployeeProfilePage() {
   const [editSaving, setEditSaving] = useState(false);
 
   const canViewCredentials = ["super_admin", "branch_manager", "ict_staff"].includes(user?.role || "");
-  const canChangeRole = ["super_admin", "branch_manager"].includes(user?.role || "");
+  const canChangeRole = user?.role === "super_admin";
   const canEditEmployee = ["super_admin", "branch_manager", "manager"].includes(user?.role || "");
 
   const fetchEmployee = useCallback(async () => {
@@ -207,7 +215,12 @@ export default function EmployeeProfilePage() {
   const handleRoleChange = async () => {
     if (!newRole || !employee) return;
     try {
-      await api.put(`/admin/employees/${employee.id}/role`, { role: newRole });
+      const roleMapping = ROLE_POSITION_MAP[newRole];
+      await api.put(`/admin/employees/${employee.id}/role`, {
+        role: newRole,
+        position: roleMapping?.position,
+        department: roleMapping?.department,
+      });
       success(`Role changed to ${newRole}`);
       setShowRoleDialog(false);
       fetchEmployee();
@@ -243,6 +256,7 @@ export default function EmployeeProfilePage() {
     if (!employee) return;
     setEditForm({
       full_name: employee.full_name,
+      username: employee.user?.username || "",
       email: employee.user?.email || employee.email,
       phone: employee.user?.phone || employee.phone || "",
       position: employee.position || "",
@@ -831,7 +845,6 @@ export default function EmployeeProfilePage() {
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="teller">Teller</SelectItem>
                   <SelectItem value="customer_service">Customer Service</SelectItem>
                   <SelectItem value="accountant">Accountant</SelectItem>
                   <SelectItem value="ict_staff">ICT Staff</SelectItem>
@@ -926,6 +939,14 @@ export default function EmployeeProfilePage() {
                   value={editForm.full_name}
                   onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
                   placeholder="Enter full name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Username *</Label>
+                <Input
+                  value={editForm.username}
+                  onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                  placeholder="Enter username"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">

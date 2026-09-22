@@ -211,7 +211,6 @@ export default function ChatPage() {
       case 'super_admin': return 'bg-red-500/10 text-red-600';
       case 'branch_manager':
       case 'manager': return 'bg-blue-500/10 text-blue-600';
-      case 'teller':
       case 'customer_service': return 'bg-green-500/10 text-green-600';
       case 'customer': return 'bg-purple-500/10 text-purple-600';
       default: return 'bg-gray-500/10 text-gray-600';
@@ -220,7 +219,7 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredRoles={['super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'accountant', 'ict_staff', 'customer']}>
+      <ProtectedRoute requiredRoles={['super_admin', 'branch_manager', 'manager', 'customer_service', 'accountant', 'ict_staff', 'customer']}>
         <DashboardLayout>
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -231,7 +230,7 @@ export default function ChatPage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={['super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'accountant', 'ict_staff', 'customer']}>
+    <ProtectedRoute requiredRoles={['super_admin', 'branch_manager', 'manager', 'customer_service', 'accountant', 'ict_staff', 'customer']}>
       <DashboardLayout>
         <div className="h-[calc(100vh-12rem)] flex gap-4">
           {/* Conversations List */}

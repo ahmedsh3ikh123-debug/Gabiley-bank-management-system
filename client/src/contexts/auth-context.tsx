@@ -48,7 +48,7 @@ interface RegisterData {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const ADMIN_ROLES = ["super_admin", "branch_manager", "manager"];
-const EMPLOYEE_ROLES = ["teller", "customer_service", "accountant", "ict_staff"];
+const EMPLOYEE_ROLES = ["customer_service", "accountant", "ict_staff"];
 const STAFF_ROLES = [...ADMIN_ROLES, ...EMPLOYEE_ROLES];
 
 export function AuthProvider({ children }: { children: ReactNode }) {

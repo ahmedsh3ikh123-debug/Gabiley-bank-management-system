@@ -31,23 +31,23 @@ const bcrypt = require('bcryptjs');
   if (existingEmp.length === 0 || existingEmp[0].values.length === 0) {
     const hashedPassword = await bcrypt.hash('employee123', 12);
     db.run(`INSERT INTO users (username, email, password, full_name, phone, address, role, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      ['employee', 'employee@gabileybank.com', hashedPassword, 'Bank Employee', '+252-61-7654321', 'Gabiley Branch', 'teller', 'active']);
+      ['employee', 'employee@gabileybank.com', hashedPassword, 'Bank Employee', '+252-61-7654321', 'Gabiley Branch', 'customer_service', 'active']);
     console.log('Employee user created (username: employee, password: employee123)');
   }
 
-  // Create Sara Ibrahim - Teller
+  // Create Sara Ibrahim - Customer Service
   const existingSara = db.exec("SELECT id FROM users WHERE username = 'sara.ibrahim'");
   if (existingSara.length === 0 || existingSara[0].values.length === 0) {
     const hashedPassword = await bcrypt.hash('employee123', 12);
     const hashedPin = await bcrypt.hash('1234', 10);
     db.run(`INSERT INTO users (username, email, password, full_name, phone, address, role, status, pin, pin_plain, password_plain) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ['sara.ibrahim', 'sara.ibrahim@gabileybank.com', hashedPassword, 'Sara Ibrahim', '+252-61-3456789', 'Gabiley Branch', 'teller', 'active', hashedPin, '1234', 'employee123']);
+      ['sara.ibrahim', 'sara.ibrahim@gabileybank.com', hashedPassword, 'Sara Ibrahim', '+252-61-3456789', 'Gabiley Branch', 'customer_service', 'active', hashedPin, '1234', 'employee123']);
     const sara = db.exec("SELECT id FROM users WHERE username = 'sara.ibrahim'");
     if (sara.length > 0 && sara[0].values.length > 0) {
       const saraId = sara[0].values[0][0];
       const existingEmpRecord = db.exec("SELECT id FROM employees WHERE user_id = ?", [saraId]);
       if (existingEmpRecord.length === 0 || existingEmpRecord[0].values.length === 0) {
-        db.run(`INSERT INTO employees (user_id, employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES (?, 'EMP00006', 'Sara Ibrahim', 'sara.ibrahim@gabileybank.com', '+252-61-3456789', 'Operations', 'Teller', 1200, '2024-02-01', 'active')`,
+        db.run(`INSERT INTO employees (user_id, employee_id, full_name, email, phone, department, position, salary, hire_date, status) VALUES (?, 'EMP00006', 'Sara Ibrahim', 'sara.ibrahim@gabileybank.com', '+252-61-3456789', 'Operations', 'Customer Service Officer', 1200, '2024-02-01', 'active')`,
           [saraId]);
       }
     }

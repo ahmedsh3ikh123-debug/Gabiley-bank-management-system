@@ -31,6 +31,7 @@ import {
   Clock,
   CheckCircle,
   Edit3,
+  AtSign,
 } from "lucide-react";
 
 function ProfileContent() {
@@ -68,6 +69,12 @@ function ProfileContent() {
     message: "",
   });
   const [sendingRequest, setSendingRequest] = useState(false);
+
+  const [usernameForm, setUsernameForm] = useState({
+    username: user?.username || "",
+    current_password: "",
+  });
+  const [changingUsername, setChangingUsername] = useState(false);
 
   const handleProfileUpdate = async () => {
     try {
@@ -174,6 +181,40 @@ function ProfileContent() {
       toastError(message);
     } finally {
       setSendingRequest(false);
+    }
+  };
+
+  const handleUsernameChange = async () => {
+    if (!usernameForm.username.trim()) {
+      toastError("Username cannot be empty");
+      return;
+    }
+    if (usernameForm.username.trim().length < 3) {
+      toastError("Username must be at least 3 characters");
+      return;
+    }
+    if (!usernameForm.current_password) {
+      toastError("Current password is required to change username");
+      return;
+    }
+    try {
+      setChangingUsername(true);
+      const res = await api.put("/profile/my-username", {
+        username: usernameForm.username.trim(),
+        current_password: usernameForm.current_password,
+      });
+      const newUsername = res.data.username;
+      updateUser({ ...user!, username: newUsername });
+      success("Username changed successfully");
+      setUsernameForm({ username: newUsername, current_password: "" });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : (err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Failed to change username";
+      toastError(message);
+    } finally {
+      setChangingUsername(false);
     }
   };
 
@@ -321,6 +362,12 @@ function ProfileContent() {
                 <Edit3 className="h-4 w-4" />
                 Edit Profile
               </TabsTrigger>
+              {user.role !== "customer" && user.role !== "ict_staff" && (
+                <TabsTrigger value="username" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                  <AtSign className="h-4 w-4" />
+                  Username
+                </TabsTrigger>
+              )}
               <TabsTrigger value="password" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 <Lock className="h-4 w-4" />
                 Password
@@ -426,6 +473,81 @@ function ProfileContent() {
                       <Save className="mr-2 h-4 w-4" />
                     )}
                     Save Changes
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+
+            {/* Change Username */}
+            <TabsContent value="username">
+              <Card className="shadow-md">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 text-white">
+                      <AtSign className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Change Username</CardTitle>
+                      <CardDescription>Update your login username. You will need to use the new username next time you sign in.</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Current Username</Label>
+                    <div className="relative">
+                      <AtSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                      <Input
+                        value={user.username}
+                        disabled
+                        className="pl-10 border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800 h-11 text-gray-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">New Username</Label>
+                    <div className="relative">
+                      <AtSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                      <Input
+                        value={usernameForm.username}
+                        onChange={(e) => setUsernameForm({ ...usernameForm, username: e.target.value })}
+                        placeholder="Enter new username"
+                        className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500">Username must be at least 3 characters long.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Current Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                      <Input
+                        type="password"
+                        value={usernameForm.current_password}
+                        onChange={(e) => setUsernameForm({ ...usernameForm, current_password: e.target.value })}
+                        placeholder="Enter current password to confirm"
+                        className="pl-10 border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 h-11"
+                      />
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4">
+                    <p className="text-sm text-emerald-800">
+                      After changing your username, you will need to use the new username to sign in to your account.
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-end border-t border-gray-100 pt-4">
+                  <Button
+                    onClick={handleUsernameChange}
+                    disabled={changingUsername || !usernameForm.username.trim() || !usernameForm.current_password}
+                    className="bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-200 hover:from-emerald-600 hover:to-green-700 h-11 px-8"
+                  >
+                    {changingUsername ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <AtSign className="mr-2 h-4 w-4" />
+                    )}
+                    Change Username
                   </Button>
                 </CardFooter>
               </Card>

@@ -218,7 +218,7 @@ export function CreateAccountModal({ open, onOpenChange, onAccountCreated }: Cre
             {t("create_account_for_customer")}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            {t("create_account_desc")}
+            {t("create_account_form_desc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -730,7 +730,7 @@ export function CreateAccountModal({ open, onOpenChange, onAccountCreated }: Cre
               ) : (
                 <Plus className="mr-2 h-4 w-4" />
               )}
-              {t("create_account")}
+              {t("create_account_button")}
             </Button>
           </DialogFooter>
         </form>

@@ -12,7 +12,7 @@ export function useUserManagement() {
   const [loading, setLoading] = useState(false);
 
   const isAdmin = user?.role === "super_admin" || user?.role === "branch_manager" || user?.role === "manager";
-  const isEmployee = ["teller", "customer_service", "accountant", "ict_staff"].includes(user?.role || "");
+  const isEmployee = ["customer_service", "accountant", "ict_staff"].includes(user?.role || "");
 
   const createUser = useCallback(async (data: any) => {
     setLoading(true);

@@ -6,7 +6,7 @@ const multer = require('multer');
 const archiver = require('archiver');
 const AdmZip = require('adm-zip');
 const { queryOne, queryAll, run, logAudit, logLoginHistory, getSetting, saveDatabase, getDb, initDatabase, createNotification } = require('../db');
-const { authenticateToken, authorize, requireAdmin, requireCSOrAdmin, requireICT, requireAdminOrICT, requireSuperAdmin } = require('../middleware/auth');
+const { authenticateToken, authorize, requireAdmin, requireCSOrAdmin, requireICT, requireAdminOrICT, requireSuperAdmin, removeAllRefreshTokens } = require('../middleware/auth');
 const { sanitizeInput, validateEmail, validateAmount } = require('../middleware/validation');
 
 const upload = multer({
@@ -185,7 +185,7 @@ ictRouter.put('/users/:id/unblock', async (req, res) => {
     const existing = queryOne('SELECT id, role, full_name FROM users WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'User not found' });
 
-    run("UPDATE users SET status = 'active', failed_login_attempts = 0, locked_until = NULL, updated_at = datetime('now') WHERE id = ?", [req.params.id]);
+    run("UPDATE users SET status = 'active', failed_login_attempts = 0, locked_until = NULL, failed_pin_attempts = 0, pin_locked_until = NULL, updated_at = datetime('now') WHERE id = ?", [req.params.id]);
 
     const accounts = queryAll("SELECT id, account_number FROM accounts WHERE user_id = ? AND status = 'blocked'", [req.params.id]);
     for (const acc of accounts) {
@@ -279,7 +279,7 @@ ictRouter.get('/stats', async (req, res) => {
   try {
     const totalUsers = queryOne('SELECT COUNT(*) as count FROM users').count;
     const totalCustomers = queryOne("SELECT COUNT(*) as count FROM users WHERE role = 'customer'").count;
-    const totalStaff = queryOne("SELECT COUNT(*) as count FROM users WHERE role IN ('teller', 'customer_service', 'accountant', 'ict_staff')").count;
+    const totalStaff = queryOne("SELECT COUNT(*) as count FROM users WHERE role IN ('customer_service', 'accountant', 'ict_staff')").count;
     const pendingUsers = queryOne("SELECT COUNT(*) as count FROM users WHERE status = 'pending'").count;
     const blockedUsers = queryOne("SELECT COUNT(*) as count FROM users WHERE status = 'blocked'").count;
     const activeUsers = queryOne("SELECT COUNT(*) as count FROM users WHERE status = 'active'").count;
@@ -443,7 +443,7 @@ router.post('/users', requireAdmin, async (req, res) => {
     if (!phone || phone.trim().length < 6) return res.status(400).json({ error: 'Valid phone number is required' });
     if (!pin || !/^\d{4,6}$/.test(pin)) return res.status(400).json({ error: 'PIN must be 4-6 digits' });
 
-    const validRoles = ['customer', 'teller', 'customer_service', 'accountant', 'ict_staff', 'branch_manager', 'manager', 'super_admin'];
+    const validRoles = ['customer', 'customer_service', 'accountant', 'ict_staff', 'branch_manager', 'manager', 'super_admin'];
     const userRole = role || 'customer';
     if (!validRoles.includes(userRole)) return res.status(400).json({ error: 'Invalid role' });
 
@@ -480,7 +480,7 @@ router.post('/users', requireAdmin, async (req, res) => {
     // Auto-create employee record for staff roles
     if (userRole !== 'customer' && userRole !== 'super_admin') {
       const employeeId = 'EMP' + String(user.id).padStart(5, '0');
-      const departments = { teller: 'Operations', customer_service: 'Customer Service', accountant: 'Finance', ict_staff: 'IT', branch_manager: 'Operations', manager: 'Operations' };
+      const departments = { customer_service: 'Customer Service', accountant: 'Finance', ict_staff: 'IT', branch_manager: 'Operations', manager: 'Operations' };
       run('INSERT INTO employees (user_id, employee_id, full_name, email, phone, department, position, hire_date, branch) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [user.id, employeeId, full_name.trim(), email, phone.trim(), departments[userRole] || 'Operations', userRole.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), new Date().toISOString().split('T')[0], branch || '']);
     }
@@ -534,15 +534,44 @@ router.put('/users/:id/profile-picture', requireAdmin, (req, res) => {
 router.put('/users/:id/role', requireAdmin, (req, res) => {
   try {
     const { role } = req.body;
-    if (!role) return res.status(400).json({ error: 'Role is required' });
+    const validRoles = ['customer', 'customer_service', 'accountant', 'ict_staff', 'branch_manager', 'manager', 'super_admin'];
+    if (!role || !validRoles.includes(role)) {
+      return res.status(400).json({ error: 'Valid role is required' });
+    }
 
     const existing = queryOne('SELECT id, role FROM users WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'User not found' });
 
     const oldRole = existing.role;
     run("UPDATE users SET role = ?, updated_at = datetime('now') WHERE id = ?", [role, req.params.id]);
+    removeAllRefreshTokens(Number(req.params.id));
+    createNotification(req.params.id, 'Role Changed', `Your role has been changed from ${oldRole} to ${role}. Please log in again.`, 'security');
     logAudit(req.user.id, 'role_change', 'user_management', `Changed role from ${oldRole} to ${role} for user ${req.params.id}`, req.ip);
-    res.json({ message: 'Role updated' });
+    const updatedUser = queryOne('SELECT id, username, email, full_name, phone, role, status, branch FROM users WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Role updated', user: updatedUser });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/users/:id/change-username', requireSuperAdmin, (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username || username.trim().length < 3) return res.status(400).json({ error: 'Username must be at least 3 characters' });
+    if (!/^[a-zA-Z0-9._]+$/.test(username.trim())) return res.status(400).json({ error: 'Username can only contain letters, numbers, dots and underscores' });
+
+    const existing = queryOne('SELECT id, role FROM users WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ error: 'User not found' });
+    if (existing.role === 'super_admin') return res.status(403).json({ error: 'Cannot change super admin username' });
+
+    const duplicate = queryOne('SELECT id FROM users WHERE username = ? AND id != ?', [username.trim(), req.params.id]);
+    if (duplicate) return res.status(400).json({ error: 'Username already taken' });
+
+    const oldUsername = queryOne('SELECT username FROM users WHERE id = ?', [req.params.id])?.username;
+    run("UPDATE users SET username = ?, updated_at = datetime('now') WHERE id = ?", [username.trim(), req.params.id]);
+    createNotification(req.params.id, 'Username Changed', `Your username has been changed from ${oldUsername} to ${username.trim()} by an administrator.`, 'security');
+    logAudit(req.user.id, 'username_change', 'user_management', `Admin changed username from ${oldUsername} to ${username.trim()} for user ${req.params.id}`, req.ip);
+    res.json({ message: 'Username changed', username: username.trim() });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -567,9 +596,15 @@ router.put('/users/:id/unblock', requireAdmin, (req, res) => {
     const existing = queryOne('SELECT id FROM users WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'User not found' });
 
-    run("UPDATE users SET status = 'active', failed_login_attempts = 0, locked_until = NULL, updated_at = datetime('now') WHERE id = ?", [req.params.id]);
-    logAudit(req.user.id, 'user_unblock', 'user_management', `Unblocked user ${req.params.id}`, req.ip);
-    res.json({ message: 'User unblocked' });
+    run("UPDATE users SET status = 'active', failed_login_attempts = 0, locked_until = NULL, failed_pin_attempts = 0, pin_locked_until = NULL, updated_at = datetime('now') WHERE id = ?", [req.params.id]);
+
+    const accounts = queryAll("SELECT id, account_number FROM accounts WHERE user_id = ? AND status = 'blocked'", [req.params.id]);
+    for (const acc of accounts) {
+      run("UPDATE accounts SET status = 'active', updated_at = datetime('now') WHERE id = ?", [acc.id]);
+    }
+
+    logAudit(req.user.id, 'user_unblock', 'user_management', `Unblocked user ${req.params.id} and ${accounts.length} accounts`, req.ip);
+    res.json({ message: 'User and accounts unblocked', accounts_unblocked: accounts.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -962,7 +997,7 @@ router.get('/users/:id/timeline', requireCSOrAdmin, (req, res) => {
 router.get('/employees', requireAdmin, (req, res) => {
   try {
     const { search, department, status } = req.query;
-    let sql = 'SELECT e.*, u.profile_picture, u.email as user_email, u.username as user_username FROM employees e LEFT JOIN users u ON e.user_id = u.id WHERE 1=1';
+    let sql = 'SELECT e.*, u.profile_picture, u.email as user_email, u.username as user_username, u.role as user_role FROM employees e LEFT JOIN users u ON e.user_id = u.id WHERE 1=1';
     const params = [];
     if (search) {
       sql += ' AND (e.full_name LIKE ? OR e.email LIKE ? OR e.employee_id LIKE ?)';
@@ -1026,7 +1061,7 @@ router.get('/employees/:id', requireAdmin, (req, res) => {
 
 router.post('/employees', requireAdmin, async (req, res) => {
   try {
-    const { full_name, email, phone, department, position, salary, hire_date, branch, password, pin } = req.body;
+    const { full_name, email, phone, department, position, salary, hire_date, branch, password, pin, username } = req.body;
     if (!full_name || !email || !position || !hire_date) {
       return res.status(400).json({ error: 'full_name, email, position, and hire_date are required' });
     }
@@ -1039,16 +1074,14 @@ router.post('/employees', requireAdmin, async (req, res) => {
 
     // Map position to role
     const positionRoleMap = {
-      'Teller': 'teller',
       'Customer Service Officer': 'customer_service',
       'Accountant': 'accountant',
       'Loan Officer': 'accountant',
       'ICT Officer': 'ict_staff',
     };
-    const userRole = positionRoleMap[position] || 'teller';
+    const userRole = positionRoleMap[position] || 'customer_service';
 
     const departmentMap = {
-      'Teller': 'Operations',
       'Customer Service Officer': 'Customer Service',
       'Accountant': 'Finance',
       'Loan Officer': 'Loans',
@@ -1059,13 +1092,13 @@ router.post('/employees', requireAdmin, async (req, res) => {
     // Create user account for login
     const empPassword = password || 'Employee@123';
     const hashedPassword = await bcrypt.hash(empPassword, 12);
-    const username = email.split('@')[0];
+    const usernameBase = username || email.split('@')[0];
 
     // Ensure unique username
-    let usernameVal = username;
+    let usernameVal = usernameBase;
     let counter = 1;
     while (queryOne('SELECT id FROM users WHERE username = ?', [usernameVal])) {
-      usernameVal = username + counter;
+      usernameVal = usernameBase + counter;
       counter++;
     }
 
@@ -1097,7 +1130,7 @@ router.post('/employees', requireAdmin, async (req, res) => {
 
 router.put('/employees/:id', requireAdmin, (req, res) => {
   try {
-    const { full_name, email, phone, department, position, salary, hire_date, branch, status, profile_picture } = req.body;
+    const { full_name, email, phone, department, position, salary, hire_date, branch, status, profile_picture, username } = req.body;
     const existing = queryOne('SELECT id, user_id FROM employees WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'Employee not found' });
 
@@ -1105,11 +1138,20 @@ router.put('/employees/:id', requireAdmin, (req, res) => {
       [full_name, email, phone || '', department, position, salary || 0, hire_date, branch || '', status || 'active', req.params.id]);
 
     if (existing.user_id) {
+      if (username !== undefined && username.trim()) {
+        const existingUsername = queryOne('SELECT id FROM users WHERE username = ? AND id != ?', [username.trim(), existing.user_id]);
+        if (existingUsername) return res.status(400).json({ error: 'Username already exists' });
+      }
+
       const userUpdates = ["full_name=?", "email=?", "phone=?", "branch=?", "updated_at=datetime('now')"];
       const userParams = [full_name, email, phone || '', branch || ''];
       if (profile_picture !== undefined) {
         userUpdates.push("profile_picture=?");
         userParams.push(profile_picture || null);
+      }
+      if (username !== undefined) {
+        userUpdates.push("username=?");
+        userParams.push(username.trim());
       }
       userParams.push(existing.user_id);
       run(`UPDATE users SET ${userUpdates.join(', ')} WHERE id=?`, userParams);
@@ -1175,10 +1217,10 @@ router.put('/employees/branch/all', authorize('super_admin', 'branch_manager'), 
   }
 });
 
-router.put('/employees/:id/role', authorize('super_admin', 'branch_manager'), async (req, res) => {
+router.put('/employees/:id/role', requireSuperAdmin, async (req, res) => {
   try {
-    const { role } = req.body;
-    const validRoles = ['customer', 'teller', 'customer_service', 'accountant', 'ict_staff', 'branch_manager', 'manager', 'super_admin'];
+    const { role, position, department } = req.body;
+    const validRoles = ['customer_service', 'accountant', 'ict_staff', 'branch_manager', 'manager'];
     if (!role || !validRoles.includes(role)) {
       return res.status(400).json({ error: 'Valid role is required' });
     }
@@ -1189,6 +1231,9 @@ router.put('/employees/:id/role', authorize('super_admin', 'branch_manager'), as
 
     const oldUser = queryOne('SELECT role FROM users WHERE id = ?', [existing.user_id]);
     run("UPDATE users SET role = ?, updated_at = datetime('now') WHERE id = ?", [role, existing.user_id]);
+    run("UPDATE employees SET position = ?, department = ? WHERE id = ?", [position || '', department || '', req.params.id]);
+    removeAllRefreshTokens(existing.user_id);
+    createNotification(existing.user_id, 'Role Changed', `Your role has been changed from ${oldUser?.role} to ${role}. Please log in again.`, 'security');
     logAudit(req.user.id, 'role_change', 'employee_management', `Changed role from ${oldUser?.role} to ${role} for employee ${existing.employee_id} (${existing.full_name})`, req.ip);
 
     res.json({ message: `Role changed to ${role}` });
@@ -1881,7 +1926,7 @@ router.get('/top-users', requireAdmin, (req, res) => {
              COALESCE(SUM(t.amount), 0) as total_amount
       FROM users u
       JOIN transactions t ON u.id = t.processed_by
-      WHERE u.role IN ('teller', 'customer_service', 'accountant', 'manager', 'super_admin', 'branch_manager')
+      WHERE u.role IN ('customer_service', 'accountant', 'manager', 'super_admin', 'branch_manager')
       GROUP BY u.id
       ORDER BY processed_count DESC
       LIMIT 10

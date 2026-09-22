@@ -72,7 +72,7 @@ router.post('/register', async (req, res) => {
     // Map role values to database role values
     const dbRoleMap = {
       customer: 'customer',
-      employee: 'teller',
+      employee: 'customer_service',
       admin: 'branch_manager',
       manager: 'manager',
     };
@@ -116,7 +116,7 @@ router.post('/register', async (req, res) => {
     // Auto-create employee record for staff roles
     if (dbRole !== 'customer' && dbRole !== 'super_admin') {
       const employeeId = 'EMP' + String(user.id).padStart(5, '0');
-      const departments = { teller: 'Operations', customer_service: 'Customer Service', accountant: 'Finance', ict_staff: 'IT', branch_manager: 'Operations', manager: 'Operations' };
+      const departments = { customer_service: 'Customer Service', accountant: 'Finance', ict_staff: 'IT', branch_manager: 'Operations', manager: 'Operations' };
       run('INSERT INTO employees (user_id, employee_id, full_name, email, phone, department, position, hire_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [user.id, employeeId, full_name.trim(), email, phone.trim(), departments[dbRole] || 'Operations', dbRole.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), new Date().toISOString().split('T')[0]]);
     }
@@ -220,7 +220,7 @@ router.post('/refresh-token', async (req, res) => {
     removeRefreshToken(refreshToken);
     const tokens = generateTokens(user.id);
     storeRefreshToken(user.id, tokens.refreshToken, req.get('User-Agent') || '');
-    res.json(tokens);
+    res.json({ token: tokens.accessToken, refreshToken: tokens.refreshToken });
   } catch (err) {
     if (err.name === 'TokenExpiredError') return res.status(401).json({ error: 'Refresh token expired' });
     res.status(500).json({ error: err.message });
@@ -293,7 +293,7 @@ router.post('/change-password', authenticateToken, async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    const user = queryOne('SELECT id, full_name, email FROM users WHERE email = ?', [email]);
+    const user = queryOne('SELECT id, full_name, username, email FROM users WHERE email = ?', [email]);
     if (!user) return res.json({ message: 'If the email exists, a reset code has been sent' });
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -301,6 +301,21 @@ router.post('/forgot-password', async (req, res) => {
     run('INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)', [user.id, code, expiresAt]);
     logAudit(user.id, 'forgot_password', 'auth', `Password reset requested for ${email}`, req.ip);
     createNotification(user.id, 'Password Reset Requested', 'A password reset was requested. If you did not request this, contact support immediately.', 'security');
+
+    run(
+      `INSERT INTO password_requests (user_id, request_type, message, status) VALUES (?, 'password', ?, 'pending')`,
+      [user.id, 'Customer requested password reset via email (forgot password page)']
+    );
+
+    const admins = queryAll("SELECT id FROM users WHERE role IN ('super_admin', 'branch_manager', 'manager', 'ict_staff') AND status = 'active'");
+    for (const admin of admins) {
+      createNotification(
+        admin.id,
+        'Password Reset Request',
+        `${user.full_name} (${user.username}) has requested a password reset via email. A reset code has been sent to ${user.email}.`,
+        'warning'
+      );
+    }
 
     try {
       const { sendResetCode } = require('../utils/email');
@@ -315,6 +330,64 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
+// ─── Verify Account for Password Reset ───
+router.post('/verify-account', async (req, res) => {
+  try {
+    const { account_number, email_or_phone } = req.body;
+
+    if (!account_number) return res.status(400).json({ error: 'Account number is required' });
+    if (!email_or_phone) return res.status(400).json({ error: 'Email or phone number is required' });
+
+    const account = queryOne(
+      `SELECT a.id, a.user_id, a.account_number, u.full_name, u.email, u.phone, u.username, u.role
+       FROM accounts a JOIN users u ON a.user_id = u.id
+       WHERE a.account_number = ?`,
+      [account_number]
+    );
+
+    if (!account) {
+      return res.status(400).json({ error: 'Account not found' });
+    }
+
+    if (account.role !== 'customer') {
+      return res.status(400).json({ error: 'This feature is only available for customer accounts' });
+    }
+
+    const emailMatch = account.email.toLowerCase() === email_or_phone.toLowerCase();
+    const phoneMatch = account.phone === email_or_phone;
+
+    if (!emailMatch && !phoneMatch) {
+      return res.status(400).json({ error: 'Email or phone number does not match our records' });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 15 * 60000).toISOString();
+    run('INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)', [account.user_id, resetToken, expiresAt]);
+
+    logAudit(account.user_id, 'account_verified', 'auth', `Account verified for password reset: ${account_number}`, req.ip);
+    createNotification(account.user_id, 'Account Verified', 'Your identity has been verified. You can now set a new password.', 'security');
+
+    const admins = queryAll("SELECT id FROM users WHERE role IN ('super_admin', 'branch_manager', 'manager', 'ict_staff') AND status = 'active'");
+    for (const admin of admins) {
+      createNotification(
+        admin.id,
+        'Password Reset Request',
+        `${account.full_name} (${account.username}) has verified their identity and is resetting their password via account verification.`,
+        'warning'
+      );
+    }
+
+    res.json({
+      message: 'Account verified successfully',
+      reset_token: resetToken,
+      user_name: account.full_name,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Reset Password with Token ───
 router.post('/reset-password', async (req, res) => {
   try {
     const { token, new_password } = req.body;

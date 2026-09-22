@@ -5,7 +5,7 @@ const { authenticateToken, authorize } = require('../middleware/auth');
 const router = express.Router();
 router.use(authenticateToken);
 
-router.put('/users/:id/activate', authorize('super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'ict_staff'), (req, res) => {
+router.put('/users/:id/activate', authorize('super_admin', 'branch_manager', 'manager', 'customer_service', 'ict_staff'), (req, res) => {
   try {
     const existing = queryOne('SELECT id, full_name, role FROM users WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'User not found' });
@@ -19,7 +19,7 @@ router.put('/users/:id/activate', authorize('super_admin', 'branch_manager', 'ma
   }
 });
 
-router.get('/loans', authorize('super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'accountant', 'ict_staff'), (req, res) => {
+router.get('/loans', authorize('super_admin', 'branch_manager', 'manager', 'customer_service', 'accountant', 'ict_staff'), (req, res) => {
   try {
     const sql = `SELECT l.id, l.user_id, l.amount, l.term_months, l.purpose, l.loan_type, l.monthly_income, l.status, l.reviewed_by, l.review_notes, l.created_at, l.updated_at, l.disbursed_at, l.total_paid, l.interest_rate,
                  COALESCE(NULLIF(l.account_number, ''), ac.account_number) as account_number, ac.balance as account_balance,
@@ -32,7 +32,7 @@ router.get('/loans', authorize('super_admin', 'branch_manager', 'manager', 'tell
   }
 });
 
-router.put('/loans/:id/approve', authorize('super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'ict_staff'), (req, res) => {
+router.put('/loans/:id/approve', authorize('super_admin', 'branch_manager', 'manager', 'customer_service', 'ict_staff'), (req, res) => {
   try {
     const existing = queryOne('SELECT id, user_id, amount FROM loan_requests WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'Loan not found' });
@@ -64,7 +64,7 @@ router.put('/loans/:id/approve', authorize('super_admin', 'branch_manager', 'man
   }
 });
 
-router.put('/loans/:id/reject', authorize('super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'ict_staff'), (req, res) => {
+router.put('/loans/:id/reject', authorize('super_admin', 'branch_manager', 'manager', 'customer_service', 'ict_staff'), (req, res) => {
   try {
     const existing = queryOne('SELECT id, user_id, amount FROM loan_requests WHERE id = ?', [req.params.id]);
     if (!existing) return res.status(404).json({ error: 'Loan not found' });
@@ -139,7 +139,7 @@ router.put('/users/:id/credentials', authorize('super_admin', 'branch_manager', 
   }
 });
 
-router.get('/users', authorize('super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'accountant', 'ict_staff'), (req, res) => {
+router.get('/users', authorize('super_admin', 'branch_manager', 'manager', 'customer_service', 'accountant', 'ict_staff'), (req, res) => {
   try {
     const { search, role, status } = req.query;
     let sql = `
@@ -167,7 +167,7 @@ router.get('/users', authorize('super_admin', 'branch_manager', 'manager', 'tell
   }
 });
 
-router.get('/users/:id/details', authorize('super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'accountant', 'ict_staff'), (req, res) => {
+router.get('/users/:id/details', authorize('super_admin', 'branch_manager', 'manager', 'customer_service', 'accountant', 'ict_staff'), (req, res) => {
   try {
     const user = queryOne(`SELECT id, username, email, full_name, phone, address, dob, gender, national_id, profile_picture, role, status, branch, mother_name, id_card_image, failed_login_attempts, last_login, created_at, updated_at FROM users WHERE id = ?`, [req.params.id]);
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -191,7 +191,7 @@ router.get('/users/:id/details', authorize('super_admin', 'branch_manager', 'man
   }
 });
 
-router.get('/users/:id/accounts', authorize('super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'ict_staff'), (req, res) => {
+router.get('/users/:id/accounts', authorize('super_admin', 'branch_manager', 'manager', 'customer_service', 'ict_staff'), (req, res) => {
   try {
     const accounts = queryAll('SELECT id, user_id, account_number, balance, account_type, status, created_at FROM accounts WHERE user_id = ? ORDER BY created_at DESC', [req.params.id]);
     res.json(accounts);

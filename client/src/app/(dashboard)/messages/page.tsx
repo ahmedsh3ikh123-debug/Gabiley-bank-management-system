@@ -125,7 +125,7 @@ export default function MessagesPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff", "customer"]}>
+      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "customer_service", "accountant", "ict_staff", "customer"]}>
         <DashboardLayout>
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -136,7 +136,7 @@ export default function MessagesPage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff", "customer"]}>
+    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "customer_service", "accountant", "ict_staff", "customer"]}>
       <DashboardLayout>
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

@@ -741,11 +741,11 @@ export default function TransferPage() {
                             if (res.data.valid) {
                               setPinVerified(true);
                             } else {
-                              setPinError("PIN khaldan. Mar kale isku day.");
+                              setPinError(res.data.error || "PIN khaldan. Mar kale isku day.");
                               setViewPin("");
                             }
-                          } catch (err) {
-                            setPinError("PIN khaldan. Mar kale isku day.");
+                          } catch (err: any) {
+                            setPinError(err.response?.data?.error || "PIN khaldan. Mar kale isku day.");
                             setViewPin("");
                           }
                         }

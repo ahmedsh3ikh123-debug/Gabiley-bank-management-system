@@ -214,7 +214,7 @@ export default function UsersPage() {
       if (searchQuery) params.search = searchQuery;
       if (roleFilter !== "all") params.role = roleFilter;
       if (statusFilter !== "all") params.status = statusFilter;
-      const endpoint = ["teller", "customer_service", "accountant", "ict_staff"].includes(user?.role || "") ? "/employee/users" : "/admin/users";
+      const endpoint = ["customer_service", "accountant", "ict_staff"].includes(user?.role || "") ? "/employee/users" : "/admin/users";
       const res = await api.get(endpoint, { params });
       setUsers(res.data);
     } catch {
@@ -244,7 +244,7 @@ export default function UsersPage() {
     setDetailsTab("overview");
     setUserCredentials(null);
     try {
-      const endpoint = ["teller", "customer_service", "accountant", "ict_staff"].includes(user?.role || "") ? `/employee/users/${u.id}/details` : `/admin/users/${u.id}/details`;
+      const endpoint = ["customer_service", "accountant", "ict_staff"].includes(user?.role || "") ? `/employee/users/${u.id}/details` : `/admin/users/${u.id}/details`;
       const res = await api.get(endpoint);
       setUserDetails(res.data);
     } catch {
@@ -257,7 +257,7 @@ export default function UsersPage() {
   const fetchUserCredentials = async (userId: number) => {
     setCredentialsLoading(true);
     try {
-      const endpoint = ["teller", "customer_service", "ict_staff"].includes(user?.role || "") ? `/employee/users/${userId}/credentials` : `/admin/users/${userId}/credentials`;
+      const endpoint = ["customer_service", "ict_staff"].includes(user?.role || "") ? `/employee/users/${userId}/credentials` : `/admin/users/${userId}/credentials`;
       const res = await api.get(endpoint);
       setUserCredentials(res.data);
     } catch {
@@ -424,7 +424,6 @@ export default function UsersPage() {
       return u.role === "super_admin" || u.role === "branch_manager" || u.role === "manager";
     if (activeTab === "employee")
       return [
-        "teller",
         "customer_service",
         "accountant",
         "ict_staff",
@@ -459,7 +458,7 @@ export default function UsersPage() {
     if (role === "super_admin" || role === "branch_manager" || role === "manager")
       return "bg-red-100 text-red-800 border-red-200";
     if (
-      ["teller", "customer_service", "accountant", "ict_staff"].includes(role)
+      ["customer_service", "accountant", "ict_staff"].includes(role)
     )
       return "bg-green-100 text-green-800 border-green-200";
     return "bg-blue-100 text-blue-800 border-blue-200";
@@ -469,7 +468,7 @@ export default function UsersPage() {
     if (role === "super_admin" || role === "branch_manager" || role === "manager")
       return <Crown className="h-3 w-3" />;
     if (
-      ["teller", "customer_service", "accountant", "ict_staff"].includes(role)
+      ["customer_service", "accountant", "ict_staff"].includes(role)
     )
       return <UserCog className="h-3 w-3" />;
     return <UserIcon className="h-3 w-3" />;
@@ -480,7 +479,7 @@ export default function UsersPage() {
   ).length;
   const employeeCount = users.filter(
     (u) =>
-      ["teller", "customer_service", "accountant", "ict_staff"].includes(
+      ["customer_service", "accountant", "ict_staff"].includes(
         u.role
       )
   ).length;
@@ -489,7 +488,7 @@ export default function UsersPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff"]}>
+      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "customer_service", "accountant", "ict_staff"]}>
         <DashboardLayout>
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -500,7 +499,7 @@ export default function UsersPage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "teller", "customer_service", "accountant", "ict_staff"]}>
+    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "customer_service", "accountant", "ict_staff"]}>
       <DashboardLayout>
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -514,7 +513,7 @@ export default function UsersPage() {
               </p>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "ict_staff" && user?.role !== "teller" && (
+              {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "ict_staff" && (
                 <Button
                   variant="outline"
                   onClick={handleExport}
@@ -524,7 +523,7 @@ export default function UsersPage() {
                   Export
                 </Button>
               )}
-              {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "ict_staff" && user?.role !== "teller" && (
+              {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "ict_staff" && (
                 <Button
                   onClick={() => setShowCreateModal(true)}
                   className="gap-2 flex-1 sm:flex-none"
@@ -834,7 +833,7 @@ export default function UsersPage() {
                                         <Eye className="h-4 w-4" />
                                         View Details
                                       </DropdownMenuItem>
-                                      {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "teller" && user?.role !== "ict_staff" && (
+                                      {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "ict_staff" && (
                                         <DropdownMenuItem
                                           onClick={() => openEditDialog(u)}
                                           className="gap-2"
@@ -843,7 +842,7 @@ export default function UsersPage() {
                                           Edit User
                                         </DropdownMenuItem>
                                       )}
-                                    {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "teller" && user?.role !== "ict_staff" && (
+                                    {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "ict_staff" && (
                                       <>
                                     <DropdownMenuSeparator />
                                     {u.status === "active" ? (
@@ -1072,7 +1071,7 @@ export default function UsersPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-mother">Mother's Full Name</Label>
+                <Label htmlFor="edit-mother">Mother&apos;s Full Name</Label>
                 <Input
                   id="edit-mother"
                   placeholder="Enter mother's full name"
@@ -1358,7 +1357,7 @@ export default function UsersPage() {
                         </div>
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                            Mother's Name
+                            Mother&apos;s Name
                           </p>
                           <p className="text-sm font-medium flex items-center gap-1.5">
                             <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -1587,7 +1586,7 @@ export default function UsersPage() {
                         Login Credentials
                       </h4>
                       <p className="text-xs text-muted-foreground mb-4">
-                        View this user's username, password, and PIN
+                        View this user&apos;s username, password, and PIN
                       </p>
                       {credentialsLoading ? (
                         <div className="flex items-center justify-center py-8">
@@ -1629,7 +1628,7 @@ export default function UsersPage() {
                     value="settings"
                     className="space-y-4 mt-4"
                   >
-                    {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "teller" && user?.role !== "ict_staff" && (
+                    {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "ict_staff" && (
                       <div className="grid grid-cols-2 gap-3">
                         <Button
                           variant="outline"
@@ -1668,7 +1667,7 @@ export default function UsersPage() {
                         Reset Password
                       </Button>
                     )}
-                    {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "teller" && user?.role !== "ict_staff" && selectedUser?.role !== "super_admin" && (
+                    {user?.role !== "customer_service" && user?.role !== "accountant" && user?.role !== "ict_staff" && selectedUser?.role !== "super_admin" && (
                       <Button
                         variant="outline"
                         onClick={() => {

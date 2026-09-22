@@ -161,6 +161,7 @@ interface CustomerDetail {
 
 interface CustomerForm {
   full_name: string;
+  username: string;
   email: string;
   password: string;
   phone: string;
@@ -192,6 +193,7 @@ const AVATAR_COLORS = [
 
 const initialForm: CustomerForm = {
   full_name: "",
+  username: "",
   email: "",
   password: "",
   phone: "",
@@ -261,7 +263,7 @@ export default function CustomersPage() {
       const params: Record<string, string> = { role: "customer" };
       if (debouncedSearch) params.search = debouncedSearch;
       if (statusFilter !== "all") params.status = statusFilter;
-      const endpoint = ["teller", "customer_service", "ict_staff"].includes(user?.role || "") ? "/employee/users" : "/admin/users";
+      const endpoint = ["customer_service", "ict_staff"].includes(user?.role || "") ? "/employee/users" : "/admin/users";
       const res = await api.get(endpoint, { params });
       setCustomers(res.data);
     } catch {
@@ -287,7 +289,7 @@ export default function CustomersPage() {
     setDetailsTab("overview");
     setCustomerCredentials(null);
     try {
-      const endpoint = ["teller", "customer_service", "ict_staff"].includes(user?.role || "") ? `/employee/users/${customer.id}/details` : `/admin/users/${customer.id}/details`;
+      const endpoint = ["customer_service", "ict_staff"].includes(user?.role || "") ? `/employee/users/${customer.id}/details` : `/admin/users/${customer.id}/details`;
       const res = await api.get(endpoint);
       setCustomerDetails(res.data);
     } catch {
@@ -579,6 +581,7 @@ export default function CustomersPage() {
     setSelectedCustomer(customer);
     setForm({
       full_name: customer.full_name,
+      username: customer.username || "",
       email: customer.email,
       password: "",
       phone: customer.phone || "",
@@ -691,7 +694,7 @@ export default function CustomersPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "teller", "customer_service", "ict_staff"]}>
+      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "customer_service", "ict_staff"]}>
         <DashboardLayout>
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -702,7 +705,7 @@ export default function CustomersPage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "teller", "customer_service", "ict_staff"]}>
+    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "customer_service", "ict_staff"]}>
       <DashboardLayout>
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -931,7 +934,7 @@ export default function CustomersPage() {
                               <Eye className="h-3.5 w-3.5" />
                               View
                             </Button>
-                            {customer.status === "pending" && user?.role !== "teller" && (
+                            {customer.status === "pending" && (
                               <Button
                                 size="sm"
                                 className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -952,15 +955,13 @@ export default function CustomersPage() {
                                   <Eye className="h-4 w-4" />
                                   View Details
                                 </DropdownMenuItem>
-                                {user?.role !== "teller" && user?.role !== "ict_staff" && (
+                                {user?.role !== "ict_staff" && (
                                   <DropdownMenuItem onClick={() => openEditDialog(customer)} className="gap-2">
                                     <Edit className="h-4 w-4" />
                                     Edit Customer
                                   </DropdownMenuItem>
                                 )}
                               <DropdownMenuSeparator />
-                              {user?.role !== "teller" && (
-                                <>
                                   {customer.status === "pending" ? (
                                     <>
                                       <DropdownMenuItem onClick={() => handleActivate(customer)} className="gap-2 text-emerald-600">
@@ -983,8 +984,6 @@ export default function CustomersPage() {
                                       Unblock Customer
                                     </DropdownMenuItem>
                                   )}
-                                </>
-                              )}
                               {user?.role === "ict_staff" && (
                                 <>
                                   {customer.status === "active" ? (
@@ -1004,8 +1003,6 @@ export default function CustomersPage() {
                                   </DropdownMenuItem>
                                 </>
                               )}
-                              {user?.role !== "teller" && (
-                                <>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem onClick={() => openResetPasswordDialog(customer)} className="gap-2">
                                     <KeyRound className="h-4 w-4" />
@@ -1036,8 +1033,6 @@ export default function CustomersPage() {
                                       </DropdownMenuItem>
                                     </>
                                   )}
-                                </>
-                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                           </div>
@@ -1084,7 +1079,17 @@ export default function CustomersPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="create-mother">Mother's Full Name *</Label>
+                <Label htmlFor="create-username">Username *</Label>
+                <Input
+                  id="create-username"
+                  placeholder="Enter username"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-mother">Mother&apos;s Full Name *</Label>
                 <Input
                   id="create-mother"
                   placeholder="Enter mother's full name"
@@ -1254,7 +1259,7 @@ export default function CustomersPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-mother">Mother's Full Name *</Label>
+                <Label htmlFor="edit-mother">Mother&apos;s Full Name *</Label>
                 <Input
                   id="edit-mother"
                   placeholder="Enter mother's full name"
@@ -1755,7 +1760,7 @@ export default function CustomersPage() {
                           <p className="text-sm font-medium capitalize">{customerDetails.user.gender || "N/A"}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Mother's Name</p>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Mother&apos;s Name</p>
                           <p className="text-sm font-medium flex items-center gap-1.5">
                             <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
                             {customerDetails.user.mother_name || "N/A"}
@@ -2030,7 +2035,7 @@ export default function CustomersPage() {
                         Login Credentials
                       </h4>
                       <p className="text-xs text-muted-foreground mb-4">
-                        View this customer's username, password, and PIN
+                        View this customer&apos;s username, password, and PIN
                       </p>
                       {credentialsLoading ? (
                         <div className="flex items-center justify-center py-8">

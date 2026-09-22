@@ -61,7 +61,7 @@ interface Employee {
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "customer_service", "teller", "accountant", "ict_staff"]}>
+      <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "customer_service", "accountant", "ict_staff"]}>
         <DashboardLayout>
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -185,7 +185,7 @@ function SearchContent() {
   };
 
   return (
-    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "customer_service", "teller", "accountant", "ict_staff"]}>
+    <ProtectedRoute requiredRoles={["super_admin", "branch_manager", "manager", "customer_service", "accountant", "ict_staff"]}>
       <DashboardLayout>
         <div className="space-y-6">
           {/* Header */}

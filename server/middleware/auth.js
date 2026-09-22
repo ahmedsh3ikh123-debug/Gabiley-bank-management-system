@@ -76,18 +76,18 @@ function authorize(...roles) {
 }
 
 const requireAdmin = authorize('super_admin', 'branch_manager', 'manager');
-const requireTeller = authorize('super_admin', 'branch_manager', 'manager', 'teller');
 const requireCustomerService = authorize('super_admin', 'branch_manager', 'manager', 'customer_service');
 const requireAccountant = authorize('super_admin', 'branch_manager', 'manager', 'accountant');
 const requireICT = authorize('super_admin', 'branch_manager', 'manager', 'ict_staff');
-const requireStaff = authorize('super_admin', 'branch_manager', 'manager', 'teller', 'customer_service', 'accountant', 'ict_staff');
+const requireStaff = authorize('super_admin', 'branch_manager', 'manager', 'customer_service', 'accountant', 'ict_staff');
 const requireAdminOrICT = authorize('super_admin', 'branch_manager', 'manager', 'ict_staff');
-const requireCSOrAdmin = authorize('super_admin', 'branch_manager', 'manager', 'customer_service', 'ict_staff');
+const requireCSOrAdmin = authorize('super_admin', 'branch_manager', 'manager', 'customer_service', 'ict_staff', 'accountant');
+const requireEmployeeOrAdmin = authorize('super_admin', 'branch_manager', 'manager', 'customer_service', 'accountant', 'ict_staff');
 const requireSuperAdmin = authorize('super_admin');
 
 module.exports = {
   generateTokens, verifyAccessToken, verifyRefreshToken,
   storeRefreshToken, removeRefreshToken, removeAllRefreshTokens, isValidRefreshToken,
-  authenticateToken, authorize, requireAdmin, requireTeller,
-  requireCustomerService, requireAccountant, requireICT, requireStaff, requireAdminOrICT, requireCSOrAdmin, requireSuperAdmin,
+  authenticateToken, authorize, requireAdmin,
+  requireCustomerService, requireAccountant, requireICT, requireStaff, requireAdminOrICT, requireCSOrAdmin, requireSuperAdmin, requireEmployeeOrAdmin,
 };
